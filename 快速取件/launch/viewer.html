@@ -5,6 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>SPX 快速取件 Viewer</title>
     <link rel="stylesheet" href="../css/styles.css" />
+    <style>
+      /* 人工驗證專用樣式：只存在 Viewer，不影響主工作區與正式 renderer。 */
+      .verification-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 24px;
+        padding: 12px 16px;
+        border: 1px dashed #e27646;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        font-size: 13px;
+      }
+      .verification-bar strong {
+        color: #e27646;
+      }
+      .verification-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .verification-group > .verification-group-name {
+        opacity: 0.75;
+      }
+      .verification-bar label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+      }
+      .verification-bar input[type="color"] {
+        inline-size: 28px;
+        block-size: 28px;
+        padding: 0;
+        border: none;
+        background: none;
+        cursor: pointer;
+      }
+      .verification-note {
+        flex-basis: 100%;
+        margin: 0;
+        opacity: 0.75;
+      }
+      .verification-status {
+        flex-basis: 100%;
+        margin: 0;
+        min-height: 1em;
+      }
+      .verification-status.is-error {
+        color: #ff6b6b;
+      }
+      .verification-canvas-wrap {
+        position: relative;
+        display: inline-block;
+        line-height: 0;
+      }
+      .verification-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+    </style>
   </head>
   <body class="viewer-page">
     <main class="viewer-shell">
@@ -15,6 +79,47 @@
         </div>
         <p id="viewer-meta" class="preview-meta"></p>
       </header>
+      <div id="verification-bar" class="verification-bar" hidden>
+        <strong>人工驗證模式</strong>
+        <span class="verification-group">
+          <span class="verification-group-name">KV：</span>
+          <button id="kv-upload-button" type="button">上傳 KV</button>
+          <button id="kv-remove-button" type="button" disabled>移除 KV</button>
+          <input id="kv-file-input" type="file" accept="image/*" hidden />
+        </span>
+        <span class="verification-group">
+          <span class="verification-group-name">背景：</span>
+          <input id="color-background-input" type="color" value="#fee1d6" title="背景色" />
+        </span>
+        <span class="verification-group">
+          <span class="verification-group-name">文字：</span>
+          <label>主標<input id="color-title-input" type="color" value="#e27646" /></label>
+          <label>副標<input id="color-subtitle-input" type="color" value="#c80c0c" /></label>
+          <label>小字<input id="color-small-input" type="color" value="#e27646" /></label>
+        </span>
+        <span class="verification-group">
+          <span class="verification-group-name">Logo：</span>
+          <label><input type="radio" name="verification-logo-mode" value="auto" checked />auto</label>
+          <label><input type="radio" name="verification-logo-mode" value="orange" />orange</label>
+          <label><input type="radio" name="verification-logo-mode" value="white" />white</label>
+        </span>
+        <span class="verification-group">
+          <span class="verification-group-name">對位：</span>
+          <label>
+            <input id="overlay-toggle" type="checkbox" />
+            顯示對位圖 overlay
+          </label>
+          <label>
+            透明度
+            <input id="overlay-opacity" type="range" min="10" max="90" value="50" />
+          </label>
+        </span>
+        <p id="verification-status" class="verification-status"></p>
+        <p class="verification-note">
+          測試文字、驗證控制項與對位 overlay 僅供 Viewer 人工驗證使用，不是正式 Workspace default，
+          不進入正式 renderer、Export、Workspace 或 JSON。上傳的 KV 只存在 Viewer 記憶體，不寫入 Repository。
+        </p>
+      </div>
       <div id="viewer-preview" class="preview-viewport" aria-live="polite"></div>
     </main>
 
@@ -22,12 +127,31 @@
       import { getItem } from "../js/registry.js";
       import { createInitialState } from "../js/workspace.js";
       import { createPreviewController } from "../js/preview.js";
+      import { fileToKv } from "../js/kv.js";
+      import "../js/renderers/index.js";
 
       const itemId = new URLSearchParams(window.location.search).get("item");
       const item = getItem(itemId);
       const title = document.querySelector("#viewer-title");
       const meta = document.querySelector("#viewer-meta");
       const viewport = document.querySelector("#viewer-preview");
+
+      // 01 Viewer 人工驗證專用 test state（viewer-only、僅存在記憶體）。
+      // 不修改 createInitialState() 全域 defaults；文字內容只是驗證用，不是正式 default。
+      // 顏色與 Logo mode 初始沿用 Workspace defaults（#fee1d6／#e27646／#c80c0c／#e27646、auto）。
+      const VERIFICATION_TEST_TEXT = Object.freeze({
+        "01": Object.freeze({
+          title: "商城優選",
+          subtitle: "免運$490%",
+          small: "天天取件更方便"
+        })
+      });
+
+      // 對位圖 overlay：開發／人工驗證專用，只存在 launch/viewer.html。
+      // 不進 renderer、不進 Export、不進 Workspace、不進 JSON、不改 canvas pixels。
+      const ALIGNMENT_OVERLAY_URLS = Object.freeze({
+        "01": new URL("../assets/對位/01_DDcard BN.png", import.meta.url).href
+      });
 
       if (!item) {
         title.textContent = "無效的快速取件版位";
@@ -39,9 +163,119 @@
       } else {
         title.textContent = item.name;
         meta.textContent = `${item.width}×${item.height} · ${item.format.toUpperCase()}`;
+
         const state = createInitialState();
         state.selectedItemId = item.id;
-        createPreviewController(viewport).render(state);
+        const testText = VERIFICATION_TEST_TEXT[item.id];
+        if (testText) state.shared.text = { ...testText };
+
+        const controller = createPreviewController(viewport);
+
+        if (!testText) {
+          await controller.render(state);
+        } else {
+          // --- 人工驗證模式（僅 01）---
+          const bar = document.querySelector("#verification-bar");
+          const status = document.querySelector("#verification-status");
+          bar.hidden = false;
+
+          const overlay = document.createElement("img");
+          overlay.className = "verification-overlay";
+          overlay.alt = "01 對位圖 overlay（人工驗證專用）";
+          overlay.src = ALIGNMENT_OVERLAY_URLS[item.id];
+          overlay.hidden = true;
+
+          const overlayToggle = document.querySelector("#overlay-toggle");
+          const overlayOpacity = document.querySelector("#overlay-opacity");
+          const applyOverlayOpacity = () => {
+            overlay.style.opacity = String(Number(overlayOpacity.value) / 100);
+          };
+          overlayToggle.addEventListener("change", () => {
+            overlay.hidden = !overlayToggle.checked;
+          });
+          overlayOpacity.addEventListener("input", applyOverlayOpacity);
+          applyOverlayOpacity();
+
+          function setStatus(message, isError = false) {
+            status.textContent = message;
+            status.classList.toggle("is-error", isError);
+          }
+
+          // 每次重新 render 後，preview controller 會替換 viewport 內容；
+          // 這裡把最新 canvas 包進同一 positioning container，讓 overlay 與最新 canvas 精確重疊。
+          function mountOverlay() {
+            const canvas = viewport.querySelector("canvas.preview-canvas");
+            if (!canvas) return;
+            const wrapper = document.createElement("span");
+            wrapper.className = "verification-canvas-wrap";
+            canvas.replaceWith(wrapper);
+            wrapper.append(canvas, overlay);
+          }
+
+          // 所有驗證控制項都只改 local verification state，
+          // 再重新走正式 createPreviewController → renderItemToCanvas call chain；
+          // Viewer 不自行繪製 Logo／文字／KV／CTA／背景。
+          let renderQueue = Promise.resolve();
+          function rerender() {
+            renderQueue = renderQueue
+              .then(() => controller.render(state))
+              .then(() => mountOverlay());
+            return renderQueue;
+          }
+
+          const kvFileInput = document.querySelector("#kv-file-input");
+          const kvRemoveButton = document.querySelector("#kv-remove-button");
+          document.querySelector("#kv-upload-button").addEventListener("click", () => {
+            kvFileInput.click();
+          });
+          kvFileInput.addEventListener("change", async () => {
+            const [file] = kvFileInput.files || [];
+            if (!file) return;
+            try {
+              // 重用正式 KV decode／validation（js/kv.js fileToKv），不另立規則。
+              const kv = await fileToKv(file);
+              state.shared.kv = kv;
+              kvRemoveButton.disabled = false;
+              setStatus(`KV：${kv.fileName}（${kv.width}×${kv.height}，僅存於 Viewer 記憶體）`);
+              rerender();
+            } catch (error) {
+              setStatus(`KV 上傳失敗：${error.message}`, true);
+            } finally {
+              kvFileInput.value = "";
+            }
+          });
+          kvRemoveButton.addEventListener("click", () => {
+            state.shared.kv = null;
+            kvRemoveButton.disabled = true;
+            setStatus("KV 已移除，KV 區恢復背景色。");
+            rerender();
+          });
+
+          [
+            ["#color-background-input", "background"],
+            ["#color-title-input", "title"],
+            ["#color-subtitle-input", "subtitle"],
+            ["#color-small-input", "small"]
+          ].forEach(([selector, field]) => {
+            const input = document.querySelector(selector);
+            input.addEventListener("input", () => {
+              state.shared.colors[field] = input.value.toLowerCase();
+              rerender();
+            });
+          });
+
+          document.querySelectorAll('input[name="verification-logo-mode"]').forEach((input) => {
+            input.addEventListener("change", () => {
+              if (!input.checked) return;
+              // Viewer 只改 state.shared.logoMode；
+              // Logo variant 一律由正式 renderer 內的 resolveLogoVariant() 決定。
+              state.shared.logoMode = input.value;
+              rerender();
+            });
+          });
+
+          await rerender();
+        }
       }
     </script>
   </body>

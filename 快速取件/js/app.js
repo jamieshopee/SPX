@@ -9,6 +9,7 @@ import { resolveLogoVariant } from "./logo-mode.js";
 import { restoreWorkspaceFile } from "./workspace-json.js";
 import { createPreviewController } from "./preview.js";
 import { exportWorkspace, ExportReadinessError } from "./export.js";
+import "./renderers/index.js";
 
 const workspace = createWorkspace();
 const itemList = document.querySelector("#item-list");

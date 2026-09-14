@@ -20,10 +20,20 @@ export function isEncoderPolicyReady(item) {
   const options = item?.encoderOptions;
   if (!options || typeof options !== "object") return false;
   if (item.format === "png") return true;
-  return item.format === "jpg" &&
+  const qualityReady = item.format === "jpg" &&
     typeof options.quality === "number" &&
     options.quality >= 0 &&
     options.quality <= 1;
+  if (!qualityReady) return false;
+  if (options.maxBytes === undefined || options.maxBytes === null) return true;
+  // 容量控制 policy（FSS 式壓縮機制）必須完整：上限、floor 與固定搜尋次數缺一即未就緒。
+  return Number.isInteger(options.maxBytes) &&
+    options.maxBytes > 0 &&
+    typeof options.qualityFloor === "number" &&
+    options.qualityFloor >= 0 &&
+    options.qualityFloor <= options.quality &&
+    Number.isInteger(options.searchSteps) &&
+    options.searchSteps > 0;
 }
 
 export function getUnreadyExportItems() {
@@ -45,10 +55,48 @@ function canvasToBlob(canvas, mimeType, quality) {
   });
 }
 
+// 結構性搬用 FSS BN 正式 JPG 容量機制（Jamie 裁決）：先以 initial quality encode，
+// 達標直接採用；未達標先驗 quality floor（仍超標 → 整次 Export fail-closed），
+// 再以固定次數 binary search 找「符合上限的最高 quality」。容量以 encode 後
+// blob.size 判定；快速取件無 DPI requirement，不做 FSS 的 72 dpi byte patch。
+async function encodeJpegWithinLimit(canvas, item) {
+  const { quality, maxBytes, qualityFloor, searchSteps } = item.encoderOptions;
+
+  const fullQualityBlob = await canvasToBlob(canvas, "image/jpeg", quality);
+  if (fullQualityBlob.size <= maxBytes) return fullQualityBlob;
+
+  const floorBlob = await canvasToBlob(canvas, "image/jpeg", qualityFloor);
+  if (floorBlob.size > maxBytes) {
+    throw new Error(
+      `${item.name} 在最低品質 ${qualityFloor} 下仍超過容量上限 ${maxBytes} bytes，無法輸出完整專案。`
+    );
+  }
+
+  let fittingQuality = qualityFloor;
+  let exceedingQuality = quality;
+  let bestBlob = floorBlob;
+  for (let step = 0; step < searchSteps; step += 1) {
+    const candidateQuality = (fittingQuality + exceedingQuality) / 2;
+    const candidate = await canvasToBlob(canvas, "image/jpeg", candidateQuality);
+    if (candidate.size <= maxBytes) {
+      bestBlob = candidate;
+      fittingQuality = candidateQuality;
+    } else {
+      exceedingQuality = candidateQuality;
+    }
+  }
+  return bestBlob;
+}
+
 async function encodeItem(canvas, item) {
+  const useJpegLimit = item.format === "jpg" &&
+    item.encoderOptions.maxBytes !== undefined &&
+    item.encoderOptions.maxBytes !== null;
   const blob = item.format === "png"
     ? await canvasToBlob(canvas, "image/png")
-    : await canvasToBlob(canvas, "image/jpeg", item.encoderOptions.quality);
+    : useJpegLimit
+      ? await encodeJpegWithinLimit(canvas, item)
+      : await canvasToBlob(canvas, "image/jpeg", item.encoderOptions.quality);
   const dpi = item.encoderOptions.dpi;
   if (dpi === undefined || dpi === null) return blob;
   const hook = metadataHooks.get(item.format);
