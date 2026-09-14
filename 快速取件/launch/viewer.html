@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant" data-spx-quick-pickup-viewer="true">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SPX 快速取件 Viewer</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+  </head>
+  <body class="viewer-page">
+    <main class="viewer-shell">
+      <header class="preview-header">
+        <div>
+          <p class="section-kicker">ITEM VIEWER</p>
+          <h1 id="viewer-title">快速取件 Viewer</h1>
+        </div>
+        <p id="viewer-meta" class="preview-meta"></p>
+      </header>
+      <div id="viewer-preview" class="preview-viewport" aria-live="polite"></div>
+    </main>
+
+    <script type="module">
+      import { getItem } from "../js/registry.js";
+      import { createInitialState } from "../js/workspace.js";
+      import { createPreviewController } from "../js/preview.js";
+
+      const itemId = new URLSearchParams(window.location.search).get("item");
+      const item = getItem(itemId);
+      const title = document.querySelector("#viewer-title");
+      const meta = document.querySelector("#viewer-meta");
+      const viewport = document.querySelector("#viewer-preview");
+
+      if (!item) {
+        title.textContent = "無效的快速取件版位";
+        meta.textContent = "Query 只接受 item=01～15";
+        const message = document.createElement("p");
+        message.className = "control-status is-error";
+        message.textContent = "無法載入 Viewer：未知或缺少 item query。";
+        viewport.append(message);
+      } else {
+        title.textContent = item.name;
+        meta.textContent = `${item.width}×${item.height} · ${item.format.toUpperCase()}`;
+        const state = createInitialState();
+        state.selectedItemId = item.id;
+        createPreviewController(viewport).render(state);
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SPX 快速取件</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <main class="workspace-shell">
+      <aside class="item-column" aria-labelledby="item-list-title">
+        <header class="column-header">
+          <p class="brand-kicker">SPX 生成器</p>
+          <h1 id="item-list-title">快速取件</h1>
+        </header>
+        <nav id="item-list" class="item-list" aria-label="15 個快速取件版位"></nav>
+      </aside>
+
+      <section class="preview-column" aria-labelledby="preview-title">
+        <header class="preview-header">
+          <div>
+            <p class="section-kicker">PREVIEW</p>
+            <h2 id="preview-title">01_DDcard BN</h2>
+          </div>
+          <p id="preview-meta" class="preview-meta">531×792 · JPG</p>
+        </header>
+        <div id="preview-viewport" class="preview-viewport" aria-live="polite"></div>
+      </section>
+
+      <aside class="control-column" aria-labelledby="controls-title">
+        <header class="column-header control-header">
+          <p class="brand-kicker">WORKSPACE</p>
+          <h2 id="controls-title">共用控制</h2>
+        </header>
+
+        <div id="shared-controls" class="control-scroll">
+          <section class="control-card" data-control-order="1">
+            <h3><span>01</span>匯入工單 Excel 或 暫存檔</h3>
+            <input id="excel-input" class="visually-hidden" type="file" accept=".xlsx,.xls" />
+            <input id="json-input" class="visually-hidden" type="file" accept="application/json,.json" />
+            <div class="import-actions">
+              <button id="excel-button" class="secondary-button" type="button">選擇 Excel</button>
+              <button id="json-button" class="secondary-button" type="button">選擇 JSON</button>
+            </div>
+            <p id="import-status" class="control-status" aria-live="polite">尚未匯入檔案</p>
+          </section>
+
+          <section class="control-card" data-control-order="2">
+            <h3><span>02</span>上傳／移除 KV</h3>
+            <input id="kv-input" class="visually-hidden" type="file" accept="image/*" />
+            <div id="kv-drop-zone" class="kv-drop-zone" role="button" tabindex="0">
+              點擊或拖曳圖片至此
+            </div>
+            <div class="button-row">
+              <button id="kv-remove" class="kv-remove-button" type="button">移除 KV</button>
+              <span id="kv-status" class="control-status" aria-live="polite">尚未上傳</span>
+            </div>
+          </section>
+
+          <section class="control-card color-setting-card" data-control-order="3">
+            <h3><span>03</span>背景色設定<span id="color-background" class="heading-color-control"></span></h3>
+          </section>
+
+          <section class="control-card" data-control-order="4">
+            <h3><span>04</span>Logo 模式</h3>
+            <div class="segmented-control" role="radiogroup" aria-label="Logo 模式">
+              <label><input type="radio" name="logo-mode" value="auto" checked />自動</label>
+              <label><input type="radio" name="logo-mode" value="orange" />橘色</label>
+              <label><input type="radio" name="logo-mode" value="white" />白色</label>
+            </div>
+            <p id="logo-resolved" class="control-status" aria-live="polite"></p>
+          </section>
+
+          <section class="control-card" data-control-order="5">
+            <h3><span>05</span>編輯文字＋顏色</h3>
+            <div class="combined-editor-row">
+              <div id="editor-title" class="editor"></div>
+              <span id="color-title" class="editor-color-control"></span>
+            </div>
+            <div class="combined-editor-row">
+              <div id="editor-subtitle" class="editor"></div>
+              <span id="color-subtitle" class="editor-color-control"></span>
+            </div>
+            <div class="combined-editor-row">
+              <div id="editor-small" class="editor"></div>
+              <span id="color-small" class="editor-color-control"></span>
+            </div>
+          </section>
+
+          <section class="control-card" data-control-order="6">
+            <h3><span>06</span>下載完整專案</h3>
+            <button id="export-button" class="primary-button" type="button">下載完整專案</button>
+            <p id="export-status" class="control-status" aria-live="polite"></p>
+          </section>
+
+          <section class="control-card" data-control-order="7">
+            <h3><span>07</span>重設工作區域</h3>
+            <button id="reset-button" class="danger-button" type="button">重設工作區域</button>
+          </section>
+        </div>
+
+        <div id="deferred-controls" class="deferred-controls" hidden>
+          <p class="section-kicker">DEFERRED</p>
+          <h3>此版位控制將於逐項製作時確認</h3>
+          <p>已保留空白的 Excel-managed data container；目前不推論欄位、控制或視覺。</p>
+        </div>
+      </aside>
+    </main>
+
+    <script src="./js/vendor/xlsx.full.min.js"></script>
+    <script src="./js/vendor/jszip.min.js"></script>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
