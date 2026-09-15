@@ -475,6 +475,9 @@ Investigation／Phase 3 Proposal 提出技術方案後交由 Jamie 裁決。
     跳到下一項。
 -   14、15 的右側欄與特殊需求必須在實際製作 14、15 時重新確認，不得直接
     套用 01～13。
+-   01～15 逐版位最終正式規格（renderer、geometry、assets、typography、
+    encoder、verification status）集中維護於
+    《快速取件_15版位_正式規格.md》。
 
 ## 20. Phase 流程與操作邊界
 

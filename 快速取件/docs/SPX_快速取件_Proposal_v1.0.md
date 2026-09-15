@@ -841,6 +841,10 @@ query。測試不得寫入 FSS 或啟動 FSS launcher。
     usage 與 visual composition。
 -   每項 renderer module 與專用 `.command` 的實際建立，仍依 01→15 gate。
 
+上列 per-item 內容經逐版位裁決定案後，統一記錄於
+《快速取件_15版位_正式規格.md》，不另立個別 per-item Proposal／
+Requirement。
+
 ## 32. Acceptance criteria
 
 本 Proposal 可進 Phase 4 的條件：
