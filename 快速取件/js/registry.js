@@ -10,7 +10,10 @@ export const ITEMS = Object.freeze([
   // 03 encoder policy（Jamie 裁決）：同 FSS LPBN 現行 JPG 機制 — quality 1.0、
   // 無容量上限、無 quality floor、無 binary search。快速取件無 DPI requirement，不設 dpi。
   { id: "03", name: "03_LPBN", width: 1200, height: 550, format: "jpg", controlsProfile: "shared-01-13", rendererKey: "03-lpbn", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) },
-  { id: "04", name: "04_POP UP", width: 580, height: 720, format: "png", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
+  // 04 encoder policy（Jamie 裁決）：完整比照 FSS BN D 樣式 POP UP 的 PNG 機制 —
+  // native PNG → pHYs 72 dpi patch → 上限 250,000 bytes → 超限以 UPNG 256 色 indexed
+  // fallback（再 patch dpi）→ 仍超限 fail-closed。
+  { id: "04", name: "04_POP UP", width: 580, height: 720, format: "png", controlsProfile: "shared-01-13", rendererKey: "04-pop-up", encoderOptions: Object.freeze({ maxBytes: 250000, dpi: 72, indexedFallbackColors: 256 }), excelData: Object.freeze({}) },
   { id: "05", name: "05_IG", width: 900, height: 1600, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
   { id: "06", name: "06_FB Post", width: 1200, height: 630, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
   { id: "07", name: "07_TVBN_有人店", width: 1599, height: 1080, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },

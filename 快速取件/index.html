@@ -109,6 +109,10 @@
 
     <script src="./js/vendor/xlsx.full.min.js"></script>
     <script src="./js/vendor/jszip.min.js"></script>
+    <!-- PNG export encoder vendor（04 容量 fallback 用；pako 必須先於 upng 載入）。
+         僅供 Export encoder，renderer／Viewer 不依賴。 -->
+    <script src="./js/vendor/pako.min.js"></script>
+    <script src="./js/vendor/upng.js"></script>
     <script type="module" src="./js/app.js"></script>
   </body>
 </html>

@@ -4,3 +4,4 @@
 import "./01-ddcard-bn.js";
 import "./02-hbn.js";
 import "./03-lpbn.js";
+import "./04-pop-up.js";
