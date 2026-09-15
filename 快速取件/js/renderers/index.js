@@ -3,3 +3,4 @@
 // 未列入的版位維持 deferred／unsupported，不建立 placeholder。
 import "./01-ddcard-bn.js";
 import "./02-hbn.js";
+import "./03-lpbn.js";

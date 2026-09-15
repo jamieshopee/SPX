@@ -7,7 +7,9 @@ export const ITEMS = Object.freeze([
   // initial quality 1.0、容量上限 145,000 bytes、quality floor 0.5、7 次 binary search、
   // floor 仍超標 fail-closed。快速取件無 DPI requirement，不設 dpi。
   { id: "02", name: "02_HBN", width: 1200, height: 360, format: "jpg", controlsProfile: "shared-01-13", rendererKey: "02-hbn", encoderOptions: Object.freeze({ quality: 1.0, maxBytes: 145000, qualityFloor: 0.5, searchSteps: 7 }), excelData: Object.freeze({}) },
-  { id: "03", name: "03_LPBN", width: 1200, height: 550, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
+  // 03 encoder policy（Jamie 裁決）：同 FSS LPBN 現行 JPG 機制 — quality 1.0、
+  // 無容量上限、無 quality floor、無 binary search。快速取件無 DPI requirement，不設 dpi。
+  { id: "03", name: "03_LPBN", width: 1200, height: 550, format: "jpg", controlsProfile: "shared-01-13", rendererKey: "03-lpbn", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) },
   { id: "04", name: "04_POP UP", width: 580, height: 720, format: "png", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
   { id: "05", name: "05_IG", width: 900, height: 1600, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
   { id: "06", name: "06_FB Post", width: 1200, height: 630, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
