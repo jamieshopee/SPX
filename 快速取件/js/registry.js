@@ -38,7 +38,9 @@ export const ITEMS = Object.freeze([
   // 12 encoder policy（Jamie 裁決）：同快速取件 JPG placements 現行機制 — quality 1.0、
   // 無容量上限、無 quality floor、無 binary search。快速取件無 DPI requirement，不設 dpi。
   { id: "12", name: "12_繳費機下方BN-立保", width: 1040, height: 578, format: "jpg", controlsProfile: "shared-01-13", rendererKey: "12-payment-bottom-libao", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) },
-  { id: "13", name: "13_繳費機下方BN-博辰", width: 984, height: 309, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
+  // 13 encoder policy（Jamie 裁決）：同快速取件 JPG placements 現行機制 — quality 1.0、
+  // 無容量上限、無 quality floor、無 binary search。快速取件無 DPI requirement，不設 dpi。
+  { id: "13", name: "13_繳費機下方BN-博辰", width: 984, height: 309, format: "jpg", controlsProfile: "shared-01-13", rendererKey: "13-payment-bottom-bochen", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) },
   { id: "14", name: "14_AR", width: 100, height: 100, format: "jpg", controlsProfile: "deferred", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
   { id: "15", name: "15_MSBN", width: 1200, height: 400, format: "jpg", controlsProfile: "deferred", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) }
 ]);
