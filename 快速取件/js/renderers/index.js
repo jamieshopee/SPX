@@ -8,3 +8,4 @@ import "./04-pop-up.js";
 import "./05-ig.js";
 import "./06-fb-post.js";
 import "./07-tvbn-manned.js";
+import "./08-tvbn-smart.js";
