@@ -11,3 +11,4 @@ import "./07-tvbn-manned.js";
 import "./08-tvbn-smart.js";
 import "./09-tvbn-flagship.js";
 import "./11-payment-vertical-bochen.js";
+import "./12-payment-bottom-libao.js";
