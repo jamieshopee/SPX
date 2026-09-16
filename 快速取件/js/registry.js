@@ -20,7 +20,9 @@ export const ITEMS = Object.freeze([
   // 06 encoder policy（Jamie 裁決）：同 FSS 07_FB POST 現行 JPG 機制 — quality 1.0、
   // 無容量上限、無 quality floor、無 binary search。快速取件無 DPI requirement，不設 dpi。
   { id: "06", name: "06_FB Post", width: 1200, height: 630, format: "jpg", controlsProfile: "shared-01-13", rendererKey: "06-fb-post", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) },
-  { id: "07", name: "07_TVBN_有人店", width: 1599, height: 1080, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
+  // 07 encoder policy（Jamie 裁決）：同 FSS 09_SPX TVBN_2 現行 JPG 機制 — quality 1.0、
+  // 無容量上限、無 quality floor、無 binary search。快速取件無 DPI requirement，不設 dpi。
+  { id: "07", name: "07_TVBN_有人店", width: 1599, height: 1080, format: "jpg", controlsProfile: "shared-01-13", rendererKey: "07-tvbn-manned", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) },
   { id: "08", name: "08_TVBN_智取店", width: 1080, height: 1920, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
   { id: "09", name: "09_TVBN_旗艦店", width: 1920, height: 1080, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
   { id: "10", name: "10_繳費機直式BN-立保", width: 1080, height: 1920, format: "jpg", controlsProfile: "shared-01-13", rendererKey: null, encoderOptions: null, excelData: Object.freeze({}) },
