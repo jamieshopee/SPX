@@ -6,3 +6,4 @@ import "./02-hbn.js";
 import "./03-lpbn.js";
 import "./04-pop-up.js";
 import "./05-ig.js";
+import "./06-fb-post.js";
