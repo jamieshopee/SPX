@@ -10,3 +10,4 @@ import "./06-fb-post.js";
 import "./07-tvbn-manned.js";
 import "./08-tvbn-smart.js";
 import "./09-tvbn-flagship.js";
+import "./11-payment-vertical-bochen.js";
