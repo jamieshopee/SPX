@@ -1,7 +1,13 @@
 import { ITEMS, formatItemDisplayName, getItem, isSharedControlsItem } from "./registry.js";
-import { createWorkspace } from "./workspace.js";
-import { createEditor, EDITOR_FIELDS } from "./editor.js";
-import { loadBanwordRules } from "./banwords.js";
+import {
+  createWorkspace,
+  AR_ITEM_ID,
+  AR_TEXT_FIELDS,
+  AR_COMBINED_LIMIT,
+  countArCombinedUnits
+} from "./workspace.js";
+import { createEditor, EDITOR_FIELDS, countTextUnits } from "./editor.js";
+import { applyBanwords, loadBanwordRules } from "./banwords.js";
 import { parseExcelCandidate } from "./excel-import.js";
 import { bindKvControls } from "./kv.js";
 import { createColorControl } from "./color-control.js";
@@ -60,6 +66,122 @@ const colorControllers = Object.fromEntries(
     })
   ])
 );
+
+// --- 14_AR 專屬文字控制（Jamie 裁決）---
+// 兩欄共用合計計數（ASCII=0.5／Non-ASCII=1，沿既有 countTextUnits），
+// 唯一上限：line1＋line2 合計 <= 5.5；超限 rollback＋inline error，不寫入 Workspace。
+// IME composition 期間不 commit（沿 editor.js 既有 pattern）；banwords 沿既有 applyBanwords。
+const arControlsElement = document.querySelector("#ar-controls");
+const deferredPlaceholder = document.querySelector("#deferred-placeholder");
+const arMessage = document.querySelector("#ar-message");
+const arCounter = document.querySelector("#ar-counter");
+let arRules = null;
+
+function formatArUnits(units) {
+  return Number.isInteger(units) ? String(units) : units.toFixed(1);
+}
+
+const arControls = new Map(
+  AR_TEXT_FIELDS.map((fieldId) => [
+    fieldId,
+    {
+      fieldId,
+      input: document.querySelector(`#ar-${fieldId}-input`),
+      composing: false,
+      lastValidValue: "",
+      skipTrailingValue: null
+    }
+  ])
+);
+
+function arStateValues() {
+  return workspace.getState().excel.items[AR_ITEM_ID];
+}
+
+function updateArCounter() {
+  const values = arStateValues();
+  const line1 = arControls.get("line1").input.value;
+  const line2 = arControls.get("line2").input.value;
+  void values;
+  arCounter.textContent = `${formatArUnits(countArCombinedUnits(line1, line2))}／${formatArUnits(AR_COMBINED_LIMIT)}`;
+}
+
+function setArMessage(text, isError) {
+  arMessage.textContent = text;
+  arMessage.classList.toggle("is-error", Boolean(isError));
+}
+
+function commitArField(control) {
+  if (!arRules) return;
+  const result = applyBanwords(control.input.value, arRules);
+  const otherId = control.fieldId === "line1" ? "line2" : "line1";
+  const otherValue = arControls.get(otherId).input.value;
+  const combined =
+    control.fieldId === "line1"
+      ? countArCombinedUnits(result.text, otherValue)
+      : countArCombinedUnits(otherValue, result.text);
+  if (combined > AR_COMBINED_LIMIT) {
+    control.input.value = control.lastValidValue;
+    control.input.setAttribute("aria-invalid", "true");
+    setArMessage(`兩行合計超過 ${formatArUnits(AR_COMBINED_LIMIT)} 字上限，已回復上一個合法內容。`, true);
+    updateArCounter();
+    return;
+  }
+  control.input.value = result.text;
+  control.lastValidValue = result.text;
+  control.input.removeAttribute("aria-invalid");
+  setArMessage(result.messages.length ? `⚠ ${result.messages.join("；")}` : "", false);
+  updateArCounter();
+  workspace.dispatch({
+    type: "UPDATE_ITEM_TEXT",
+    itemId: AR_ITEM_ID,
+    field: control.fieldId,
+    value: result.text
+  });
+}
+
+arControls.forEach((control) => {
+  const { input } = control;
+  input.addEventListener("compositionstart", () => {
+    control.composing = true;
+    control.skipTrailingValue = null;
+  });
+  input.addEventListener("compositionend", () => {
+    control.composing = false;
+    commitArField(control);
+    control.skipTrailingValue = input.value;
+  });
+  input.addEventListener("input", (event) => {
+    if (control.composing || event.isComposing) return;
+    if (control.skipTrailingValue !== null && input.value === control.skipTrailingValue) {
+      control.skipTrailingValue = null;
+      return;
+    }
+    control.skipTrailingValue = null;
+    commitArField(control);
+  });
+  input.addEventListener("blur", () => {
+    if (!control.composing) commitArField(control);
+  });
+});
+
+function syncArControls(state) {
+  const values = state.excel.items[AR_ITEM_ID];
+  arControls.forEach((control) => {
+    if (control.composing || document.activeElement === control.input) return;
+    const value = String(values[control.fieldId] || "");
+    control.input.value = value;
+    control.lastValidValue = value;
+  });
+  const total = countArCombinedUnits(values.line1, values.line2);
+  if (total > AR_COMBINED_LIMIT) {
+    arControls.forEach((control) => control.input.setAttribute("aria-invalid", "true"));
+    setArMessage(`匯入內容超過 ${formatArUnits(AR_COMBINED_LIMIT)} 字上限；後續編輯須符合上限。`, true);
+  } else if (!arMessage.classList.contains("is-error")) {
+    arControls.forEach((control) => control.input.removeAttribute("aria-invalid"));
+  }
+  updateArCounter();
+}
 
 const excelInput = document.querySelector("#excel-input");
 const importStatus = document.querySelector("#import-status");
@@ -159,6 +281,11 @@ function renderState(state) {
   const shared = isSharedControlsItem(item.id);
   sharedControls.hidden = !shared;
   deferredControls.hidden = shared;
+  // 14 顯示專屬 AR 控件；15 維持既有 deferred placeholder。
+  const isAr = item.id === AR_ITEM_ID;
+  arControlsElement.hidden = !isAr;
+  deferredPlaceholder.hidden = isAr;
+  syncArControls(state);
 
   editorControllers.forEach((controller) => controller.sync(state.shared.text));
   Object.entries(colorControllers).forEach(([field, controller]) => {
@@ -204,5 +331,13 @@ workspace.subscribe(renderState);
 renderState(workspace.getState());
 
 loadBanwordRules()
-  .then((rules) => editorControllers.forEach((controller) => controller.setRules(rules)))
-  .catch((error) => editorControllers.forEach((controller) => controller.setLoadError(error)));
+  .then((rules) => {
+    editorControllers.forEach((controller) => controller.setRules(rules));
+    arRules = rules;
+    arControls.forEach(({ input }) => { input.disabled = false; });
+  })
+  .catch((error) => {
+    editorControllers.forEach((controller) => controller.setLoadError(error));
+    arControls.forEach(({ input }) => { input.disabled = true; });
+    setArMessage(error.message, true);
+  });

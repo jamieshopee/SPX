@@ -100,9 +100,27 @@
         </div>
 
         <div id="deferred-controls" class="deferred-controls" hidden>
-          <p class="section-kicker">DEFERRED</p>
-          <h3>此版位控制將於逐項製作時確認</h3>
-          <p>已保留空白的 Excel-managed data container；目前不推論欄位、控制或視覺。</p>
+          <!-- 14_AR 專屬文字控制（Jamie 裁決）：line1／line2、兩行合計 <= 5.5 共用計數。 -->
+          <div id="ar-controls" class="control-card" hidden>
+            <h3><span>14</span>AR 文字</h3>
+            <div class="editor-field">
+              <label for="ar-line1-input">第一行</label>
+              <input id="ar-line1-input" type="text" autocomplete="off" disabled />
+            </div>
+            <div class="editor-field">
+              <label for="ar-line2-input">第二行</label>
+              <input id="ar-line2-input" type="text" autocomplete="off" disabled />
+            </div>
+            <div class="field-meta">
+              <span id="ar-message" class="field-message" aria-live="polite"></span>
+              <span id="ar-counter" class="field-counter"></span>
+            </div>
+          </div>
+          <div id="deferred-placeholder">
+            <p class="section-kicker">DEFERRED</p>
+            <h3>此版位控制將於逐項製作時確認</h3>
+            <p>已保留空白的 Excel-managed data container；目前不推論欄位、控制或視覺。</p>
+          </div>
         </div>
       </aside>
     </main>

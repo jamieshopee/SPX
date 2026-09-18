@@ -19,13 +19,32 @@ function isPlainObject(value) {
   return prototype === Object.prototype || prototype === null;
 }
 
-function validateEmptyItemContainers(value, issues, candidate) {
+// 14_AR（Jamie 裁決）：items["14"] 承載 line1／line2；舊 v1 的 14={} 向後相容為
+// 兩欄空字串（不列 issue、不升 schema version）。JSON Import 沿 shared.text 既有
+// 策略：合法字串原樣收納，不因合計 >5.5 裁切或改寫（上限由 Editor 後續 enforce）。
+function validateItemContainers(value, issues, candidate) {
   if (!isPlainObject(value)) {
     issues.push("excel.items 缺失或格式無效");
     return;
   }
   ITEMS.forEach(({ id }) => {
     const entry = value[id];
+    if (id === "14") {
+      const next = { line1: "", line2: "" };
+      if (!isPlainObject(entry)) {
+        issues.push("excel.items.14 缺失或格式無效");
+      } else {
+        ["line1", "line2"].forEach((field) => {
+          if (typeof entry[field] === "string") next[field] = entry[field];
+          else if (Object.hasOwn(entry, field)) issues.push(`excel.items.14.${field} 無效`);
+        });
+        if (Object.keys(entry).some((key) => key !== "line1" && key !== "line2")) {
+          issues.push("excel.items.14 含未知欄位，已忽略");
+        }
+      }
+      candidate.excel.items["14"] = next;
+      return;
+    }
     if (!isPlainObject(entry) || Object.keys(entry).length !== 0) {
       issues.push(`excel.items.${id} 必須是目前 v1 的空白 deferred structure`);
       candidate.excel.items[id] = {};
@@ -144,7 +163,7 @@ export async function parseWorkspaceJson(text) {
     } else {
       issues.push("excel.sourceName 缺失或無效");
     }
-    validateEmptyItemContainers(source.excel.items, issues, candidate);
+    validateItemContainers(source.excel.items, issues, candidate);
   }
 
   return { candidate, issues, level: issues.length ? "incomplete" : "complete" };

@@ -13,3 +13,4 @@ import "./09-tvbn-flagship.js";
 import "./11-payment-vertical-bochen.js";
 import "./12-payment-bottom-libao.js";
 import "./13-payment-bottom-bochen.js";
+import "./14-ar.js";
