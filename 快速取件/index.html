@@ -116,6 +116,64 @@
               <span id="ar-counter" class="field-counter"></span>
             </div>
           </div>
+          <!-- 15_MSBN 專屬控制（Jamie 裁決）：五個文字欄逐欄上限（7／10／8／18／18）＋
+               到貨後天數下拉（僅 空白／1～9，不開放自由文字）。 -->
+          <div id="msbn-controls" class="control-card" hidden>
+            <h3><span>15</span>MSBN 文字</h3>
+            <div class="editor-field">
+              <label for="msbn-main-title-input">主標題</label>
+              <input id="msbn-main-title-input" type="text" autocomplete="off" disabled />
+              <div class="field-meta">
+                <span id="msbn-main-title-counter" class="field-counter"></span>
+              </div>
+            </div>
+            <div class="editor-field">
+              <label for="msbn-days-input">到貨後天數</label>
+              <select id="msbn-days-input">
+                <option value=""></option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+              </select>
+            </div>
+            <div class="editor-field">
+              <label for="msbn-small-title-input">小標題</label>
+              <input id="msbn-small-title-input" type="text" autocomplete="off" disabled />
+              <div class="field-meta">
+                <span id="msbn-small-title-counter" class="field-counter"></span>
+              </div>
+            </div>
+            <div class="editor-field">
+              <label for="msbn-subtitle-input">副標題</label>
+              <input id="msbn-subtitle-input" type="text" autocomplete="off" disabled />
+              <div class="field-meta">
+                <span id="msbn-subtitle-counter" class="field-counter"></span>
+              </div>
+            </div>
+            <div class="editor-field">
+              <label for="msbn-small-line1-input">小字 - 第一行</label>
+              <input id="msbn-small-line1-input" type="text" autocomplete="off" disabled />
+              <div class="field-meta">
+                <span id="msbn-small-line1-counter" class="field-counter"></span>
+              </div>
+            </div>
+            <div class="editor-field">
+              <label for="msbn-small-line2-input">小字 - 第二行</label>
+              <input id="msbn-small-line2-input" type="text" autocomplete="off" disabled />
+              <div class="field-meta">
+                <span id="msbn-small-line2-counter" class="field-counter"></span>
+              </div>
+            </div>
+            <div class="field-meta">
+              <span id="msbn-message" class="field-message" aria-live="polite"></span>
+            </div>
+          </div>
           <div id="deferred-placeholder">
             <p class="section-kicker">DEFERRED</p>
             <h3>此版位控制將於逐項製作時確認</h3>

@@ -4,7 +4,11 @@ import {
   AR_ITEM_ID,
   AR_TEXT_FIELDS,
   AR_COMBINED_LIMIT,
-  countArCombinedUnits
+  countArCombinedUnits,
+  MSBN_ITEM_ID,
+  MSBN_TEXT_FIELDS,
+  MSBN_TEXT_LIMITS,
+  MSBN_DAYS_FIELD
 } from "./workspace.js";
 import { createEditor, EDITOR_FIELDS, countTextUnits } from "./editor.js";
 import { applyBanwords, loadBanwordRules } from "./banwords.js";
@@ -183,6 +187,130 @@ function syncArControls(state) {
   updateArCounter();
 }
 
+// --- 15_MSBN 專屬控制（Jamie 裁決）---
+// 五個文字欄逐欄獨立上限（mainTitle 7／smallTitle 10／subtitle 8／smallLine1 18／
+// smallLine2 18；沿既有 countTextUnits 加權）；超限 rollback＋inline error，不寫入
+// Workspace。banwords 套用五個文字欄；days 不套 banwords、不走 weighted limit，
+// 只能經下拉選（空白／1～9），由 Workspace reducer 驗 canonical。
+// IME composition 期間不 commit（沿 14 既有 pattern）。
+const msbnControlsElement = document.querySelector("#msbn-controls");
+const msbnMessage = document.querySelector("#msbn-message");
+const msbnDaysSelect = document.querySelector("#msbn-days-input");
+
+const MSBN_FIELD_ELEMENT_IDS = Object.freeze({
+  mainTitle: "main-title",
+  smallTitle: "small-title",
+  subtitle: "subtitle",
+  smallLine1: "small-line1",
+  smallLine2: "small-line2"
+});
+
+const msbnControls = new Map(
+  MSBN_TEXT_FIELDS.map((fieldId) => [
+    fieldId,
+    {
+      fieldId,
+      limit: MSBN_TEXT_LIMITS[fieldId],
+      input: document.querySelector(`#msbn-${MSBN_FIELD_ELEMENT_IDS[fieldId]}-input`),
+      counter: document.querySelector(`#msbn-${MSBN_FIELD_ELEMENT_IDS[fieldId]}-counter`),
+      composing: false,
+      lastValidValue: "",
+      skipTrailingValue: null
+    }
+  ])
+);
+
+function setMsbnMessage(text, isError) {
+  msbnMessage.textContent = text;
+  msbnMessage.classList.toggle("is-error", Boolean(isError));
+}
+
+function updateMsbnCounter(control) {
+  control.counter.textContent =
+    `${formatArUnits(countTextUnits(control.input.value))}／${formatArUnits(control.limit)}`;
+}
+
+function commitMsbnField(control) {
+  if (!arRules) return;
+  const result = applyBanwords(control.input.value, arRules);
+  if (countTextUnits(result.text) > control.limit) {
+    control.input.value = control.lastValidValue;
+    control.input.setAttribute("aria-invalid", "true");
+    setMsbnMessage(`超過 ${formatArUnits(control.limit)} 字上限，已回復上一個合法內容。`, true);
+    updateMsbnCounter(control);
+    return;
+  }
+  control.input.value = result.text;
+  control.lastValidValue = result.text;
+  control.input.removeAttribute("aria-invalid");
+  setMsbnMessage(result.messages.length ? `⚠ ${result.messages.join("；")}` : "", false);
+  updateMsbnCounter(control);
+  workspace.dispatch({
+    type: "UPDATE_ITEM_TEXT",
+    itemId: MSBN_ITEM_ID,
+    field: control.fieldId,
+    value: result.text
+  });
+}
+
+msbnControls.forEach((control) => {
+  const { input } = control;
+  input.addEventListener("compositionstart", () => {
+    control.composing = true;
+    control.skipTrailingValue = null;
+  });
+  input.addEventListener("compositionend", () => {
+    control.composing = false;
+    commitMsbnField(control);
+    control.skipTrailingValue = input.value;
+  });
+  input.addEventListener("input", (event) => {
+    if (control.composing || event.isComposing) return;
+    if (control.skipTrailingValue !== null && input.value === control.skipTrailingValue) {
+      control.skipTrailingValue = null;
+      return;
+    }
+    control.skipTrailingValue = null;
+    commitMsbnField(control);
+  });
+  input.addEventListener("blur", () => {
+    if (!control.composing) commitMsbnField(control);
+  });
+});
+
+msbnDaysSelect.addEventListener("change", () => {
+  workspace.dispatch({
+    type: "UPDATE_ITEM_TEXT",
+    itemId: MSBN_ITEM_ID,
+    field: MSBN_DAYS_FIELD,
+    value: msbnDaysSelect.value
+  });
+});
+
+function syncMsbnControls(state) {
+  const values = state.excel.items[MSBN_ITEM_ID];
+  let hasOverLimit = false;
+  msbnControls.forEach((control) => {
+    if (control.composing || document.activeElement === control.input) return;
+    const value = String(values[control.fieldId] || "");
+    control.input.value = value;
+    control.lastValidValue = value;
+    if (countTextUnits(value) > control.limit) {
+      control.input.setAttribute("aria-invalid", "true");
+      hasOverLimit = true;
+    } else if (!msbnMessage.classList.contains("is-error")) {
+      control.input.removeAttribute("aria-invalid");
+    }
+    updateMsbnCounter(control);
+  });
+  if (hasOverLimit) {
+    setMsbnMessage("匯入內容超過欄位字數上限；後續編輯須符合各欄上限。", true);
+  }
+  if (document.activeElement !== msbnDaysSelect) {
+    msbnDaysSelect.value = String(values[MSBN_DAYS_FIELD] || "");
+  }
+}
+
 const excelInput = document.querySelector("#excel-input");
 const importStatus = document.querySelector("#import-status");
 document.querySelector("#excel-button").addEventListener("click", () => excelInput.click());
@@ -281,11 +409,15 @@ function renderState(state) {
   const shared = isSharedControlsItem(item.id);
   sharedControls.hidden = !shared;
   deferredControls.hidden = shared;
-  // 14 顯示專屬 AR 控件；15 維持既有 deferred placeholder。
+  // 14 顯示專屬 AR 控件；15 顯示專屬 MSBN 控件；placeholder 僅保留給未完成版位
+  //（目前 01～15 已全數接線，不再顯示）。
   const isAr = item.id === AR_ITEM_ID;
+  const isMsbn = item.id === MSBN_ITEM_ID;
   arControlsElement.hidden = !isAr;
-  deferredPlaceholder.hidden = isAr;
+  msbnControlsElement.hidden = !isMsbn;
+  deferredPlaceholder.hidden = isAr || isMsbn;
   syncArControls(state);
+  syncMsbnControls(state);
 
   editorControllers.forEach((controller) => controller.sync(state.shared.text));
   Object.entries(colorControllers).forEach(([field, controller]) => {
@@ -335,9 +467,12 @@ loadBanwordRules()
     editorControllers.forEach((controller) => controller.setRules(rules));
     arRules = rules;
     arControls.forEach(({ input }) => { input.disabled = false; });
+    msbnControls.forEach(({ input }) => { input.disabled = false; });
   })
   .catch((error) => {
     editorControllers.forEach((controller) => controller.setLoadError(error));
     arControls.forEach(({ input }) => { input.disabled = true; });
     setArMessage(error.message, true);
+    msbnControls.forEach(({ input }) => { input.disabled = true; });
+    setMsbnMessage(error.message, true);
   });

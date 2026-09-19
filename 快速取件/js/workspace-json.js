@@ -1,5 +1,5 @@
 import { ITEMS, isItemId } from "./registry.js";
-import { createInitialState } from "./workspace.js";
+import { createInitialState, emptyMsbnData, isMsbnDaysValue, MSBN_DAYS_FIELD, MSBN_TEXT_FIELDS } from "./workspace.js";
 import { decodeImageSource } from "./kv.js";
 import { normalizeHex } from "./color-control.js";
 
@@ -22,6 +22,9 @@ function isPlainObject(value) {
 // 14_AR（Jamie 裁決）：items["14"] 承載 line1／line2；舊 v1 的 14={} 向後相容為
 // 兩欄空字串（不列 issue、不升 schema version）。JSON Import 沿 shared.text 既有
 // 策略：合法字串原樣收納，不因合計 >5.5 裁切或改寫（上限由 Editor 後續 enforce）。
+// 15_MSBN（Jamie 裁決）：items["15"] 承載六欄；舊 v1 的 15={} 向後相容為六欄空白
+//（不列 issue、不升 version）。文字欄不因 Editor weighted limit 拒絕；
+// days 只接受 ""｜"1"～"9"，非法值整份暫存檔 fail-closed reject（不 clamp）。
 function validateItemContainers(value, issues, candidate) {
   if (!isPlainObject(value)) {
     issues.push("excel.items 缺失或格式無效");
@@ -29,6 +32,29 @@ function validateItemContainers(value, issues, candidate) {
   }
   ITEMS.forEach(({ id }) => {
     const entry = value[id];
+    if (id === "15") {
+      const next = emptyMsbnData();
+      const knownFields = [...MSBN_TEXT_FIELDS, MSBN_DAYS_FIELD];
+      if (!isPlainObject(entry)) {
+        issues.push("excel.items.15 缺失或格式無效");
+      } else {
+        if (Object.hasOwn(entry, MSBN_DAYS_FIELD)) {
+          if (typeof entry[MSBN_DAYS_FIELD] !== "string" || !isMsbnDaysValue(entry[MSBN_DAYS_FIELD])) {
+            throw new WorkspaceJsonError("excel.items.15.days 只接受空白或 1～9，已拒絕整份暫存檔。");
+          }
+          next[MSBN_DAYS_FIELD] = entry[MSBN_DAYS_FIELD];
+        }
+        MSBN_TEXT_FIELDS.forEach((field) => {
+          if (typeof entry[field] === "string") next[field] = entry[field];
+          else if (Object.hasOwn(entry, field)) issues.push(`excel.items.15.${field} 無效`);
+        });
+        if (Object.keys(entry).some((key) => !knownFields.includes(key))) {
+          issues.push("excel.items.15 含未知欄位，已忽略");
+        }
+      }
+      candidate.excel.items["15"] = next;
+      return;
+    }
     if (id === "14") {
       const next = { line1: "", line2: "" };
       if (!isPlainObject(entry)) {

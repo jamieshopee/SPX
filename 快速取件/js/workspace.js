@@ -20,9 +20,41 @@ export function countArCombinedUnits(line1, line2) {
   return countTextUnits(line1) + countTextUnits(line2);
 }
 
+// 15_MSBN 專屬欄位（Jamie 裁決）：六欄存於既有 Excel-managed container。
+// 五個文字欄逐欄獨立上限（沿既有 ASCII=0.5／Non-ASCII=1 加權，不合計）；
+// days 不走 weighted limit，canonical 僅 ""｜"1"～"9"（不允許 0、10+、任意文字）。
+export const MSBN_ITEM_ID = "15";
+export const MSBN_TEXT_FIELDS = Object.freeze([
+  "mainTitle",
+  "smallTitle",
+  "subtitle",
+  "smallLine1",
+  "smallLine2"
+]);
+export const MSBN_TEXT_LIMITS = Object.freeze({
+  mainTitle: 7,
+  smallTitle: 10,
+  subtitle: 8,
+  smallLine1: 18,
+  smallLine2: 18
+});
+export const MSBN_DAYS_FIELD = "days";
+export const MSBN_DAYS_VALUES = Object.freeze(["", "1", "2", "3", "4", "5", "6", "7", "8", "9"]);
+
+export function isMsbnDaysValue(value) {
+  return MSBN_DAYS_VALUES.includes(value);
+}
+
+export function emptyMsbnData() {
+  return { mainTitle: "", days: "", smallTitle: "", subtitle: "", smallLine1: "", smallLine2: "" };
+}
+
 function emptyItemData() {
   return Object.fromEntries(
-    ITEMS.map(({ id }) => [id, id === AR_ITEM_ID ? { line1: "", line2: "" } : {}])
+    ITEMS.map(({ id }) => [
+      id,
+      id === AR_ITEM_ID ? { line1: "", line2: "" } : id === MSBN_ITEM_ID ? emptyMsbnData() : {}
+    ])
   );
 }
 
@@ -62,7 +94,29 @@ function reduce(state, action) {
 
     // 14_AR 專屬文字（Jamie 裁決）：只允許 itemId="14"、field=line1/line2；
     // 以更新後兩行合計 <= 5.5 准駁，超限即 no-op（不寫入 Workspace）。
+    // 15_MSBN（Jamie 裁決）：whitelist 六欄；五個文字欄逐欄獨立上限（超限 no-op）、
+    // days 僅接受 canonical（非法 no-op）。14 既有 combined <= 5.5 邏輯不變。
     case "UPDATE_ITEM_TEXT": {
+      if (action.itemId === MSBN_ITEM_ID) {
+        const { field } = action;
+        const value = String(action.value ?? "");
+        if (field === MSBN_DAYS_FIELD) {
+          if (!isMsbnDaysValue(value)) return state;
+        } else if (MSBN_TEXT_FIELDS.includes(field)) {
+          if (countTextUnits(value) > MSBN_TEXT_LIMITS[field]) return state;
+        } else {
+          return state;
+        }
+        const current = state.excel.items[MSBN_ITEM_ID];
+        if (current[field] === value) return state;
+        return {
+          ...state,
+          excel: {
+            ...state.excel,
+            items: { ...state.excel.items, [MSBN_ITEM_ID]: { ...current, [field]: value } }
+          }
+        };
+      }
       if (action.itemId !== AR_ITEM_ID) return state;
       if (!AR_TEXT_FIELDS.includes(action.field)) return state;
       const current = state.excel.items[AR_ITEM_ID];

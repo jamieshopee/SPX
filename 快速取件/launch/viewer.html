@@ -103,6 +103,13 @@
           <label><input type="radio" name="verification-logo-mode" value="orange" />orange</label>
           <label><input type="radio" name="verification-logo-mode" value="white" />white</label>
         </span>
+        <!-- 15_MSBN 專用（Jamie 裁決）：同一 Viewer 切換兩種正式情況；切換只存在
+             page-memory，不寫 Workspace／JSON／localStorage／Export。 -->
+        <span id="msbn-mode-group" class="verification-group" hidden>
+          <span class="verification-group-name">15 小字模式：</span>
+          <label><input type="radio" name="msbn-small-mode" value="two" checked />兩行（對 15_MSBN1）</label>
+          <label><input type="radio" name="msbn-small-mode" value="one" />一行（對 15_MSBN2）</label>
+        </span>
         <span class="verification-group">
           <span class="verification-group-name">對位：</span>
           <label>
@@ -209,6 +216,29 @@
         "14": Object.freeze({
           line1: "抽蝦幣",
           line2: "8,888"
+        }),
+        // 15_MSBN 專屬 shape（六欄；預設 Mode A 兩行小字，值沿新版正式工單範例）。
+        "15": Object.freeze({
+          mainTitle: "秋季加碼抽",
+          days: "1",
+          smallTitle: "週週抽0,000名用戶",
+          subtitle: "最高抽8,888蝦幣",
+          smallLine1: "週週抽:8,888蝦幣x1名 | 888蝦幣x50名",
+          smallLine2: "888蝦幣x10名 | 8蝦幣x5,000名"
+        })
+      });
+
+      // 15_MSBN 兩種正式驗證情境（Jamie 裁決）：Mode A 兩行小字（對 15_MSBN1）、
+      // Mode B 一行小字（對 15_MSBN2，renderer 自動三行群組垂直置中）。
+      // 切換只改 Viewer page-memory 注入資料與 overlay 來源。
+      const MSBN_MODE_PRESETS = Object.freeze({
+        two: Object.freeze({
+          text: VERIFICATION_TEST_TEXT["15"],
+          overlayUrl: new URL("../assets/對位/15_MSBN1.png", import.meta.url).href
+        }),
+        one: Object.freeze({
+          text: Object.freeze({ ...VERIFICATION_TEST_TEXT["15"], smallLine2: "" }),
+          overlayUrl: new URL("../assets/對位/15_MSBN2.png", import.meta.url).href
         })
       });
 
@@ -230,7 +260,9 @@
         "11": new URL("../assets/對位/11_繳費機直式BN-博辰.png", import.meta.url).href,
         "12": new URL("../assets/對位/12_繳費機下方BN-立保.png", import.meta.url).href,
         "13": new URL("../assets/對位/13_繳費機下方BN-博辰.png", import.meta.url).href,
-        "14": new URL("../assets/對位/14_AR.png", import.meta.url).href
+        "14": new URL("../assets/對位/14_AR.png", import.meta.url).href,
+        // 15 預設 Mode A（兩行）對位圖；Mode 切換時由 MSBN_MODE_PRESETS 更新。
+        "15": new URL("../assets/對位/15_MSBN1.png", import.meta.url).href
       });
 
       if (!item) {
@@ -247,10 +279,10 @@
         const state = createInitialState();
         state.selectedItemId = item.id;
         const testText = VERIFICATION_TEST_TEXT[item.id];
-        // 14 的 test state 注入 excel.items["14"]（line1／line2），不塞 shared.text；
+        // 14／15 的 test state 注入 excel.items[id]（版位專屬欄位），不塞 shared.text；
         // 其餘版位維持既有 shared.text 注入。皆僅存 Viewer page memory。
         if (testText) {
-          if (item.id === "14") state.excel.items["14"] = { ...testText };
+          if (item.id === "14" || item.id === "15") state.excel.items[item.id] = { ...testText };
           else state.shared.text = { ...testText };
         }
 
@@ -358,6 +390,22 @@
               rerender();
             });
           });
+
+          // 15_MSBN Mode A／B 切換（只在 item=15 顯示；Jamie 裁決）：
+          // 只改 page-memory 的 excel.items["15"] 注入資料與 overlay 來源，
+          // 不寫 Workspace／JSON／localStorage／Export，不建立第二個 registry item。
+          if (item.id === "15") {
+            document.querySelector("#msbn-mode-group").hidden = false;
+            document.querySelectorAll('input[name="msbn-small-mode"]').forEach((input) => {
+              input.addEventListener("change", () => {
+                if (!input.checked) return;
+                const preset = MSBN_MODE_PRESETS[input.value];
+                state.excel.items["15"] = { ...preset.text };
+                overlay.src = preset.overlayUrl;
+                rerender();
+              });
+            });
+          }
 
           await rerender();
         }
