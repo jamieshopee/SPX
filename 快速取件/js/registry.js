@@ -43,11 +43,11 @@ export const ITEMS = Object.freeze([
   { id: "13", name: "13_繳費機下方BN-博辰", width: 984, height: 309, format: "jpg", controlsProfile: "shared-01-13", rendererKey: "13-payment-bottom-bochen", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) },
   // 14 encoder policy（Jamie 裁決）：JPG quality-only 1.0，無容量上限、無 quality floor、
   // 無 binary search、無 DPI。14 文字資料存於 excel.items["14"]（line1／line2）。
-  { id: "14", name: "14_AR", width: 100, height: 100, format: "jpg", controlsProfile: "deferred", rendererKey: "14-ar", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) },
+  { id: "14", name: "14_AR", width: 100, height: 100, format: "jpg", controlsProfile: "14-ar", rendererKey: "14-ar", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) },
   // 15 encoder policy（Jamie 裁決）：JPG quality-only 1.0，無容量上限、無 quality floor、
   // 無 binary search、無 DPI。15 文字資料存於 excel.items["15"]（mainTitle／days／
   // smallTitle／subtitle／smallLine1／smallLine2）。
-  { id: "15", name: "15_MSBN", width: 1200, height: 400, format: "jpg", controlsProfile: "deferred", rendererKey: "15-msbn", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) }
+  { id: "15", name: "15_MSBN", width: 1200, height: 400, format: "jpg", controlsProfile: "15-msbn", rendererKey: "15-msbn", encoderOptions: Object.freeze({ quality: 1.0 }), excelData: Object.freeze({}) }
 ]);
 
 const ITEM_BY_ID = new Map(ITEMS.map((item) => [item.id, Object.freeze(item)]));
@@ -58,10 +58,6 @@ export function getItem(itemId) {
 
 export function isItemId(itemId) {
   return ITEM_BY_ID.has(itemId);
-}
-
-export function isSharedControlsItem(itemId) {
-  return getItem(itemId)?.controlsProfile === "shared-01-13";
 }
 
 export function formatItemDisplayName(name) {

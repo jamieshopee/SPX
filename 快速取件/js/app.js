@@ -1,4 +1,4 @@
-import { ITEMS, formatItemDisplayName, getItem, isSharedControlsItem } from "./registry.js";
+import { ITEMS, formatItemDisplayName, getItem } from "./registry.js";
 import {
   createWorkspace,
   AR_ITEM_ID,
@@ -12,11 +12,11 @@ import {
 } from "./workspace.js";
 import { createEditor, EDITOR_FIELDS, countTextUnits } from "./editor.js";
 import { applyBanwords, loadBanwordRules } from "./banwords.js";
-import { parseExcelCandidate } from "./excel-import.js";
+import { ExcelImportError, parseExcelCandidate } from "./excel-import.js";
 import { bindKvControls } from "./kv.js";
 import { createColorControl } from "./color-control.js";
 import { resolveLogoVariant } from "./logo-mode.js";
-import { restoreWorkspaceFile } from "./workspace-json.js";
+import { restoreWorkspaceFile, WorkspaceJsonError } from "./workspace-json.js";
 import { createPreviewController } from "./preview.js";
 import { exportWorkspace, ExportReadinessError } from "./export.js";
 import "./renderers/index.js";
@@ -26,7 +26,15 @@ const itemList = document.querySelector("#item-list");
 const previewTitle = document.querySelector("#preview-title");
 const previewMeta = document.querySelector("#preview-meta");
 const sharedControls = document.querySelector("#shared-controls");
-const deferredControls = document.querySelector("#deferred-controls");
+const controlsTitle = document.querySelector("#controls-title");
+// UI profile（Jamie 裁決）：右側「版位 Editor」由 registry controlsProfile 驅動，
+// 不以 item.id 判斷 UI profile；全域操作（匯入／下載完整專案／重設）不屬任何
+// profile group、01～15 永遠可見。
+const CONTROLS_TITLES = Object.freeze({
+  "shared-01-13": "共用控制",
+  "14-ar": "14_AR 專屬控制",
+  "15-msbn": "15_MSBN 專屬控制"
+});
 const previewController = createPreviewController(document.querySelector("#preview-viewport"));
 
 function setStatus(element, message, isError = false) {
@@ -76,7 +84,6 @@ const colorControllers = Object.fromEntries(
 // 唯一上限：line1＋line2 合計 <= 5.5；超限 rollback＋inline error，不寫入 Workspace。
 // IME composition 期間不 commit（沿 editor.js 既有 pattern）；banwords 沿既有 applyBanwords。
 const arControlsElement = document.querySelector("#ar-controls");
-const deferredPlaceholder = document.querySelector("#deferred-placeholder");
 const arMessage = document.querySelector("#ar-message");
 const arCounter = document.querySelector("#ar-counter");
 let arRules = null;
@@ -321,8 +328,14 @@ excelInput.addEventListener("change", async () => {
     const candidate = await parseExcelCandidate(file, workspace.getState());
     workspace.dispatch({ type: "COMMIT_EXCEL_IMPORT", ...candidate });
     setStatus(importStatus, `已匯入：${file.name}`);
-  } catch (_error) {
-    // Failed imports preserve the last successful import status.
+  } catch (error) {
+    // 匯入失敗不得靜默（Jamie 裁決）：typed error 顯示既有可讀訊息；
+    // 其他 unexpected error 用固定 fallback，不顯示內部細節。
+    setStatus(
+      importStatus,
+      error instanceof ExcelImportError ? error.message : "匯入失敗：無法讀取工單 Excel。",
+      true
+    );
   } finally {
     excelInput.value = "";
   }
@@ -340,8 +353,14 @@ jsonInput.addEventListener("change", async () => {
       setStatus(importStatus, `已匯入：${file.name}`);
       setStatus(kvStatus, restoredState.shared.kv ? restoredState.shared.kv.fileName : "尚未上傳");
     }
-  } catch (_error) {
-    // Failed imports preserve the last successful import status.
+  } catch (error) {
+    // 匯入失敗不得靜默（Jamie 裁決）：typed error 顯示既有可讀訊息；
+    // 其他 unexpected error 用固定 fallback。使用者取消 confirm 不進入此處，維持原狀態。
+    setStatus(
+      importStatus,
+      error instanceof WorkspaceJsonError ? error.message : "匯入失敗：無法讀取暫存檔。",
+      true
+    );
   } finally {
     jsonInput.value = "";
   }
@@ -406,16 +425,12 @@ function renderState(state) {
 
   previewTitle.textContent = formatItemDisplayName(item.name);
   previewMeta.textContent = `${item.width}×${item.height} · ${item.format.toUpperCase()}`;
-  const shared = isSharedControlsItem(item.id);
-  sharedControls.hidden = !shared;
-  deferredControls.hidden = shared;
-  // 14 顯示專屬 AR 控件；15 顯示專屬 MSBN 控件；placeholder 僅保留給未完成版位
-  //（目前 01～15 已全數接線，不再顯示）。
-  const isAr = item.id === AR_ITEM_ID;
-  const isMsbn = item.id === MSBN_ITEM_ID;
-  arControlsElement.hidden = !isAr;
-  msbnControlsElement.hidden = !isMsbn;
-  deferredPlaceholder.hidden = isAr || isMsbn;
+  // 右側版位 Editor 由 registry controlsProfile 驅動（Jamie 裁決）：
+  // shared-01-13 → 共用控制；14-ar → AR 專屬；15-msbn → MSBN 專屬。
+  controlsTitle.textContent = CONTROLS_TITLES[item.controlsProfile];
+  sharedControls.hidden = item.controlsProfile !== "shared-01-13";
+  arControlsElement.hidden = item.controlsProfile !== "14-ar";
+  msbnControlsElement.hidden = item.controlsProfile !== "15-msbn";
   syncArControls(state);
   syncMsbnControls(state);
 

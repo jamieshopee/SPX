@@ -33,7 +33,8 @@
           <h2 id="controls-title">共用控制</h2>
         </header>
 
-        <div id="shared-controls" class="control-scroll">
+        <div class="control-scroll">
+          <!-- 全域操作（Jamie 裁決）：匯入／下載完整專案／重設工作區域，01～15 任何版位永遠可見。 -->
           <section class="control-card" data-control-order="1">
             <h3><span>01</span>匯入工單 Excel 或 暫存檔</h3>
             <input id="excel-input" class="visually-hidden" type="file" accept=".xlsx,.xls" />
@@ -45,6 +46,8 @@
             <p id="import-status" class="control-status" aria-live="polite">尚未匯入檔案</p>
           </section>
 
+          <!-- 01～13 shared visual controls（controlsProfile: shared-01-13 時顯示）。 -->
+          <div id="shared-controls">
           <section class="control-card" data-control-order="2">
             <h3><span>02</span>上傳／移除 KV</h3>
             <input id="kv-input" class="visually-hidden" type="file" accept="image/*" />
@@ -86,21 +89,10 @@
               <span id="color-small" class="editor-color-control"></span>
             </div>
           </section>
+          </div>
 
-          <section class="control-card" data-control-order="6">
-            <h3><span>06</span>下載完整專案</h3>
-            <button id="export-button" class="primary-button" type="button">下載完整專案</button>
-            <p id="export-status" class="control-status" aria-live="polite"></p>
-          </section>
-
-          <section class="control-card" data-control-order="7">
-            <h3><span>07</span>重設工作區域</h3>
-            <button id="reset-button" class="danger-button" type="button">重設工作區域</button>
-          </section>
-        </div>
-
-        <div id="deferred-controls" class="deferred-controls" hidden>
-          <!-- 14_AR 專屬文字控制（Jamie 裁決）：line1／line2、兩行合計 <= 5.5 共用計數。 -->
+          <!-- 14_AR 專屬文字控制（Jamie 裁決）：line1／line2、兩行合計 <= 5.5 共用計數。
+               controlsProfile: 14-ar 時顯示。 -->
           <div id="ar-controls" class="control-card" hidden>
             <h3><span>14</span>AR 文字</h3>
             <div class="editor-field">
@@ -117,7 +109,7 @@
             </div>
           </div>
           <!-- 15_MSBN 專屬控制（Jamie 裁決）：五個文字欄逐欄上限（7／10／8／18／18）＋
-               到貨後天數下拉（僅 空白／1～9，不開放自由文字）。 -->
+               到貨後天數下拉（僅 空白／1～9，不開放自由文字）。controlsProfile: 15-msbn 時顯示。 -->
           <div id="msbn-controls" class="control-card" hidden>
             <h3><span>15</span>MSBN 文字</h3>
             <div class="editor-field">
@@ -141,6 +133,7 @@
                 <option value="8">8</option>
                 <option value="9">9</option>
               </select>
+              <div class="field-meta"></div>
             </div>
             <div class="editor-field">
               <label for="msbn-small-title-input">小標題</label>
@@ -174,11 +167,17 @@
               <span id="msbn-message" class="field-message" aria-live="polite"></span>
             </div>
           </div>
-          <div id="deferred-placeholder">
-            <p class="section-kicker">DEFERRED</p>
-            <h3>此版位控制將於逐項製作時確認</h3>
-            <p>已保留空白的 Excel-managed data container；目前不推論欄位、控制或視覺。</p>
-          </div>
+
+          <section class="control-card" data-control-order="6">
+            <h3><span>06</span>下載完整專案</h3>
+            <button id="export-button" class="primary-button" type="button">下載完整專案</button>
+            <p id="export-status" class="control-status" aria-live="polite"></p>
+          </section>
+
+          <section class="control-card" data-control-order="7">
+            <h3><span>07</span>重設工作區域</h3>
+            <button id="reset-button" class="danger-button" type="button">重設工作區域</button>
+          </section>
         </div>
       </aside>
     </main>
