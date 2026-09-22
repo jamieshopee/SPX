@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080d0f">
+    <title>開獎秀 — 選擇樣式</title>
+    <link rel="stylesheet" href="./css/styles.css">
+    <script type="module" src="./js/interface-2.js"></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <nav class="page-nav" aria-label="頁面導覽">
+        <a class="back-link" href="./"><span aria-hidden="true">←</span>返回</a>
+      </nav>
+
+      <main class="page-main">
+        <header class="hero">
+          <p class="hero__kicker">開獎秀</p>
+          <h1>選擇樣式</h1>
+          <p id="current-item-line" class="hero__item" hidden>目前項目：<span id="current-item"></span></p>
+        </header>
+
+        <!-- 樣式卡由 js/registry.js 資料驅動產生，HTML 不得寫死。 -->
+        <nav id="style-grid" class="style-grid" aria-label="開獎秀樣式"></nav>
+
+        <p id="page-error" class="page-error" role="alert" hidden></p>
+        <p id="status" class="status" role="status" aria-live="polite" hidden></p>
+      </main>
+    </div>
+  </body>
+</html>
