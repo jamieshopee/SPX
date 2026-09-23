@@ -27,7 +27,7 @@ export const ITEMS = Object.freeze([
   Object.freeze({ id: "online-bn", name: "線上／電子BN", styles: Object.freeze(["smart-locker", "store"]) }),
   Object.freeze({ id: "om", name: "OM", styles: Object.freeze(["smart-locker", "store"]) }),
   Object.freeze({ id: "live", name: "直播", styles: Object.freeze(["smart-locker", "store"]) }),
-  Object.freeze({ id: "store-list", name: "門市清單", styles: Object.freeze([]) })
+  Object.freeze({ id: "store-list", name: "門市清單", styles: Object.freeze([]), directHref: "./04_門市清單/" })
 ]);
 
 function isNonEmptyString(value) {
@@ -95,6 +95,14 @@ export function validateRegistry() {
       if (!styleIds.has(styleId)) {
         throw new Error(`項目「${item.id}」引用不存在的樣式：${styleId}。`);
       }
+    }
+
+    const hasDirectHref = Object.prototype.hasOwnProperty.call(item, "directHref");
+    if (hasDirectHref && !isNonEmptyString(item.directHref)) {
+      throw new Error(`項目「${item.id}」的 directHref 無效。`);
+    }
+    if (hasDirectHref && item.styles.length > 0) {
+      throw new Error(`項目「${item.id}」不得同時設定 styles 與 directHref。`);
     }
   }
 }

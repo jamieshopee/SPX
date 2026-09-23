@@ -37,6 +37,14 @@ function createItemCard(item) {
     return link;
   }
 
+  if (item.directHref) {
+    const link = document.createElement("a");
+    link.className = "item-card";
+    link.href = item.directHref;
+    link.textContent = item.name;
+    return link;
+  }
+
   const button = document.createElement("button");
   button.type = "button";
   button.className = "item-card";
