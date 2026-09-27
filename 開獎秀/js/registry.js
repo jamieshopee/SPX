@@ -16,8 +16,8 @@
 // previewSrc 是正式縮圖尚未提供時的接縫：未來放入正式 asset 後只需改此欄位，
 // card geometry 與 CSS 不需更動。
 export const STYLES = Object.freeze({
-  "smart-locker": Object.freeze({ id: "smart-locker", name: "智取櫃", previewSrc: null }),
-  "store": Object.freeze({ id: "store", name: "門市", previewSrc: null })
+  "smart-locker": Object.freeze({ id: "smart-locker", name: "智取櫃", previewSrc: "./assets/智取櫃.png" }),
+  "store": Object.freeze({ id: "store", name: "門市", previewSrc: "./assets/門市.png" })
 });
 
 // styles.length > 0 即代表該項目需要進 Interface 2；不另設 needsStyleSelection，
