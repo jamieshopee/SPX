@@ -24,9 +24,12 @@ export const STYLES = Object.freeze({
 // 避免兩個欄位表達同一件事而互相矛盾。
 // 門市清單目前不經樣式選擇（docs/架構說明.md L105；Jamie 裁決）。
 export const ITEMS = Object.freeze([
-  Object.freeze({ id: "online-bn", name: "線上／電子BN", styles: Object.freeze(["smart-locker", "store"]) }),
-  Object.freeze({ id: "om", name: "OM", styles: Object.freeze(["smart-locker", "store"]) }),
-  Object.freeze({ id: "live", name: "直播", styles: Object.freeze(["smart-locker", "store"]) }),
+  // consoleHref 只代表「此 item 在完成樣式選擇後的合法 destination」，
+  // 屬 navigation-level 資訊，不承載任何 renderer、版位或輸出資料。
+  // online-bn、om、live 共用同一套控制台 destination；store-list 仍使用 directHref。
+  Object.freeze({ id: "online-bn", name: "線上／電子BN", styles: Object.freeze(["smart-locker", "store"]), consoleHref: "./console.html" }),
+  Object.freeze({ id: "om", name: "OM", styles: Object.freeze(["smart-locker", "store"]), consoleHref: "./console.html" }),
+  Object.freeze({ id: "live", name: "直播", styles: Object.freeze(["smart-locker", "store"]), consoleHref: "./console.html" }),
   Object.freeze({ id: "store-list", name: "門市清單", styles: Object.freeze([]), directHref: "./04_門市清單/" })
 ]);
 
@@ -103,6 +106,14 @@ export function validateRegistry() {
     }
     if (hasDirectHref && item.styles.length > 0) {
       throw new Error(`項目「${item.id}」不得同時設定 styles 與 directHref。`);
+    }
+
+    const hasConsoleHref = Object.prototype.hasOwnProperty.call(item, "consoleHref");
+    if (hasConsoleHref && !isNonEmptyString(item.consoleHref)) {
+      throw new Error(`項目「${item.id}」的 consoleHref 無效。`);
+    }
+    if (hasConsoleHref && hasDirectHref) {
+      throw new Error(`項目「${item.id}」不得同時設定 consoleHref 與 directHref。`);
     }
   }
 }

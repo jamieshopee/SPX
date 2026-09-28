@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080d0f">
+    <title>開獎秀 — 控制台</title>
+    <link rel="stylesheet" href="./css/console.css">
+    <script type="module" src="./js/console.js"></script>
+  </head>
+  <body>
+    <!-- fail-closed 視圖：context 非法時顯示，並一律保留返回出口。
+         此時不渲染三欄工作區、不 redirect、不 fallback、不改 URL。 -->
+    <div id="console-error-view" class="error-view" hidden>
+      <nav class="page-nav" aria-label="頁面導覽">
+        <a id="error-back-link" class="back-link" href="./"><span aria-hidden="true">←</span>返回</a>
+      </nav>
+      <p id="page-error" class="page-error" role="alert"></p>
+    </div>
+
+    <!-- 三欄工作區：只有 item／style context 全部合法時才顯示。 -->
+    <main id="console-shell" class="console-shell" hidden>
+      <aside class="console-column item-column" aria-labelledby="item-column-title">
+        <header class="column-header">
+          <a id="back-link" class="back-link" href="./"><span aria-hidden="true">←</span>返回選擇樣式</a>
+          <p class="column-kicker">開獎秀</p>
+          <!-- 項目名稱與樣式名稱一律由 js/registry.js 的 item／style 物件寫入，HTML 不得寫死。 -->
+          <h1 id="item-column-title" class="column-title"></h1>
+          <p class="column-context">目前樣式：<span id="current-style"></span></p>
+        </header>
+        <div class="column-body">
+          <!-- 未來正式版位的唯一掛入點。目前沒有任何正式版位，因此保持空容器。 -->
+          <nav id="item-list" class="item-list" aria-label="版位"></nav>
+          <p class="column-empty">目前尚未建立正式版位</p>
+        </div>
+      </aside>
+
+      <section class="console-column preview-column" aria-labelledby="preview-title">
+        <header class="column-header">
+          <p class="column-kicker">PREVIEW</p>
+          <h2 id="preview-title" class="column-title">預覽</h2>
+        </header>
+        <!-- 尚無正式版位與 renderer：真正的 empty state。
+             不放 canvas、不放 img、不放尺寸／格式 metadata。 -->
+        <div class="column-body preview-body">
+          <p class="column-empty">目前尚未建立正式版位</p>
+        </div>
+      </section>
+
+      <aside class="console-column control-column" aria-labelledby="control-title">
+        <header class="column-header">
+          <p class="column-kicker">CONTROLS</p>
+          <h2 id="control-title" class="column-title">操作</h2>
+        </header>
+        <!-- 尚無正式版位：真正的 empty state，不放任何控制項。 -->
+        <div class="column-body">
+          <p class="column-empty">目前沒有可操作的項目</p>
+        </div>
+      </aside>
+    </main>
+  </body>
+</html>

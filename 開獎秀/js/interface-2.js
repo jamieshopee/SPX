@@ -55,9 +55,28 @@ function createPreview(style) {
   return placeholder;
 }
 
-// 控制台尚不存在，兩個樣式目前都渲染成 <button>：
-// 點擊只顯示 status，不 navigation、不改 URL、不建立假控制台。
-function createStyleCard(style) {
+// item 具備合法 consoleHref（已建立控制台）時，樣式卡渲染成真正的 <a>，
+// 以 URL query 帶 item／style context，沿用同一組 style-card geometry 與 preview。
+// 尚未建立控制台的 item 維持原有 <button> 分支：點擊只顯示 status，
+// 不 navigation、不改 URL、不建立假控制台。
+function createStyleCard(item, style) {
+  if (typeof item.consoleHref === "string" && item.consoleHref.trim() !== "") {
+    const link = document.createElement("a");
+    link.className = "style-card";
+    link.href = `${item.consoleHref}?item=${encodeURIComponent(item.id)}&style=${encodeURIComponent(style.id)}`;
+    // .style-card 原本只服務 <button>，未宣告 text-decoration；
+    // 此處就地關閉 <a> 的預設底線，維持與既有樣式卡完全一致的外觀，
+    // 不修改 css/styles.css。
+    link.style.textDecoration = "none";
+
+    const linkLabel = document.createElement("span");
+    linkLabel.className = "style-card__label";
+    linkLabel.textContent = style.name;
+
+    link.append(createPreview(style), linkLabel);
+    return link;
+  }
+
   const button = document.createElement("button");
   button.type = "button";
   button.className = "style-card";
@@ -104,7 +123,7 @@ function render() {
   const cards = document.createDocumentFragment();
 
   for (const style of getItemStyles(item)) {
-    cards.append(createStyleCard(style));
+    cards.append(createStyleCard(item, style));
   }
 
   styleGrid.replaceChildren(cards);
