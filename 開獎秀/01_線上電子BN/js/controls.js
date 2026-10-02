@@ -1,4 +1,4 @@
-// SPX 開獎秀 — 線上／電子BN：01_DDcard BN 右欄正式 Controls
+// SPX 開獎秀 — 線上／電子BN：右欄正式 Controls
 // ---------------------------------------------------------------------------
 // 正式控制項只有九個（Jamie 裁決，不得增加）：
 //   主標／副標／小字 1／小字 2 四個文字欄
@@ -8,8 +8,11 @@
 // 小字 1 與小字 2 共用同一個小字顏色，不新增第二個小字顏色控制。
 // 沒有 KV：不建立任何 KV 控制、state 或 placeholder。
 //
+// 本檔不綁定任何單一版位：文字欄位、上限與顏色欄位一律由傳入的
+// layout descriptor 提供（layout.textOrder／layout.text／layout.colorFields）。
+//
 // weighted count（四欄共用，Jamie 正式規則）：中文 = 1 unit；英文／數字／符號 = 0.5 unit。
-// 上限：主標 8、副標 7、小字 1 18、小字 2 18。
+// 上限由各 layout 的 field.limit 提供（online-bn 目前全版位共通 8 / 7 / 18 / 18）。
 //
 // 超限行為為最小 fail-closed rollback：
 //   還原 input.value 到 lastValidValue、不更新 state、不 rerender、
@@ -21,7 +24,6 @@
 // 本檔不碰 Canvas、不碰 renderer、不保存 state 擁有權（state 由 online-bn.js 持有）。
 // ---------------------------------------------------------------------------
 
-import { COLOR_FIELDS, TEXT_FIELDS } from "./layout-01-ddcard-bn.js";
 import { LOGO_MODES } from "./logo-auto.js";
 
 const LOGO_MODE_LABELS = Object.freeze({
@@ -214,17 +216,17 @@ function createLogoModeField(state, onChange) {
   return fieldset;
 }
 
-export function mountControls(container, { state, onChange }) {
+export function mountControls(container, { layout, state, onChange }) {
   const root = document.createElement("div");
   root.className = "obn-controls";
 
   const textSection = createSection("文字");
-  TEXT_FIELDS.forEach((field) => {
-    textSection.append(createTextField(field, state, onChange));
+  layout.textOrder.forEach((id) => {
+    textSection.append(createTextField(layout.text[id], state, onChange));
   });
 
   const colorSection = createSection("顏色");
-  COLOR_FIELDS.forEach((field) => {
+  layout.colorFields.forEach((field) => {
     colorSection.append(createColorField(field, state, onChange));
   });
 

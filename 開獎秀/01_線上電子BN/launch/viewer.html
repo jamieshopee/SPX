@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>開獎秀 — 線上／電子BN 01_DDcard BN Manual Verification Viewer</title>
+    <title>開獎秀 — 線上／電子BN Manual Verification Viewer</title>
     <!--
       Manual Verification Viewer（Jamie 裁決 Q1）
       ---------------------------------------------------------------------
@@ -18,8 +18,13 @@
       overlay 只是 DOM 疊圖：position absolute、pointer-events none，
       不畫入正式 canvas、不改 canvas pixels、不進未來 Export。
 
-      本頁的 style 切換只屬 Manual Verification，不是第二套正式 style
-      context；正式 context 仍為 console.html?item=online-bn&style=<id>。
+      本頁為 online-bn 全版位共用的單一 Viewer，不為每個版位複製 HTML。
+      版位由 query 決定：?layout=01-ddcard-bn｜02-mall-hbn。
+      無 layout 參數時預設 01-ddcard-bn（維持既有 bookmark／launcher 相容）；
+      未知 layout 一律 fail-closed，不偷偷 fallback。
+
+      本頁的 style 與版位切換只屬 Manual Verification，不是第二套正式 context；
+      正式 context 仍為 console.html?item=online-bn&style=<id>。
       不使用 localStorage、sessionStorage 或 history.state。
 
       本頁另自動帶入四句固定 sample text，僅供人工驗證：
@@ -94,6 +99,11 @@
         color: var(--text-tertiary);
         font-size: 12px;
         line-height: 1.6;
+      }
+
+      .viewer-error {
+        color: var(--accent);
+        font-weight: 700;
       }
 
       .viewer-columns {
@@ -212,7 +222,7 @@
     </main>
 
     <script type="module">
-      import { mountOnlineBn } from "../js/online-bn.js";
+      import { DEFAULT_LAYOUT_ID, getLayout, mountOnlineBn } from "../js/online-bn.js";
 
       const status = document.querySelector("#viewer-status");
       const overlayToggle = document.querySelector("#overlay-toggle");
@@ -225,11 +235,18 @@
         controlBody: document.querySelector("#viewer-control-body")
       };
 
+      // layout context：?layout=<id>；缺省沿用 01，未知 id fail-closed。
+      const requestedLayoutId = new URLSearchParams(location.search).get("layout");
+      const initialLayoutId = requestedLayoutId === null || requestedLayoutId.trim() === ""
+        ? DEFAULT_LAYOUT_ID
+        : requestedLayoutId;
+      const initialLayout = getLayout(initialLayoutId);
+
       // 對位圖只作 DOM overlay，不是 renderer 或 Export 的一部分。
+      // src 由目前 layout descriptor 的 alignmentOverlaySrc 提供，不寫死任何版位。
       const overlay = document.createElement("img");
       overlay.className = "viewer-overlay";
-      overlay.alt = "01_DDcard BN 對位圖（人工驗證專用）";
-      overlay.src = new URL("../assets/對位/01_DDcard BN.png", import.meta.url).href;
+      overlay.alt = "對位圖（人工驗證專用）";
       overlay.hidden = !overlayToggle.checked;
       overlay.style.opacity = String(Number(overlayOpacity.value) / 100);
 
@@ -271,6 +288,16 @@
         return true;
       }
 
+      // 每次版位 activate（初次掛載與 Viewer 內切換版位）後：
+      // 更新對位 overlay 來源，並重新帶入共用 sample text。
+      // sample text 由 controls 的 input 事件自行觸發重繪，不另外呼叫 renderer。
+      let activeLayout = null;
+      function handleActivated(layout) {
+        activeLayout = layout;
+        overlay.src = layout.alignmentOverlaySrc.href;
+        return applySampleText();
+      }
+
       let session = null;
 
       async function activate(styleId) {
@@ -280,13 +307,16 @@
         }
         status.textContent = `載入中：${styleId}…`;
         try {
-          session = await mountOnlineBn({ styleId, mounts, onRendered: remountOverlay });
-          // 每次 mount（含 style 切換）後重新帶入 sample text，切換樣式不會清空文字。
-          const filled = applySampleText();
-          await session.requestRender();
-          status.textContent = filled
-            ? `目前樣式：${styleId}（正式 canvas 531 × 792，已帶入人工驗證 sample text）`
-            : `目前樣式：${styleId}（正式 canvas 531 × 792，sample text 未能帶入）`;
+          session = await mountOnlineBn({
+            layoutId: initialLayoutId,
+            styleId,
+            mounts,
+            onRendered: remountOverlay,
+            onActivated: handleActivated
+          });
+          const { width, height } = activeLayout.canvas;
+          status.textContent =
+            `目前版位：${activeLayout.name}｜樣式：${styleId}（正式 canvas ${width} × ${height}，已帶入人工驗證 sample text）`;
         } catch (error) {
           console.error("Viewer 掛載失敗。", error);
           status.textContent = `掛載失敗：${error.message}`;
@@ -299,7 +329,17 @@
         });
       });
 
-      await activate("smart-locker");
+      if (initialLayout === null) {
+        // 未知 layout：fail-closed，不渲染工作區、不猜測、不 fallback。
+        status.textContent = `無效的版位參數：${requestedLayoutId}。合法值為 01-ddcard-bn 或 02-mall-hbn。`;
+        status.classList.add("viewer-error");
+        mounts.previewBody.replaceChildren();
+        mounts.controlBody.replaceChildren();
+        document.querySelectorAll('input[name="viewer-style"], #overlay-toggle, #overlay-opacity')
+          .forEach((input) => { input.disabled = true; });
+      } else {
+        await activate("smart-locker");
+      }
     </script>
   </body>
 </html>

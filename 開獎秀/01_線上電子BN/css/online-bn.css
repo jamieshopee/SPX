@@ -16,7 +16,7 @@
    =========================================================================== */
 
 /* --------------------------------------------------------------------------
-   左欄：版位清單（目前只有 01_DDcard BN）
+   左欄：版位清單（目前為 01_DDcard BN、02_Mall HBN）
    -------------------------------------------------------------------------- */
 
 .obn-layout-button {
@@ -32,18 +32,30 @@
   font-weight: 500;
   line-height: 1.4;
   text-align: left;
-  cursor: default;
+  cursor: pointer;
+}
+
+.obn-layout-button + .obn-layout-button {
+  margin-top: 8px;
 }
 
 .obn-layout-button[aria-current="true"] {
   color: var(--accent, #ee4d2d);
   border-color: var(--accent, #ee4d2d);
   background: rgb(238 77 45 / 12%);
+  cursor: default;
 }
 
 .obn-layout-button:focus-visible {
   outline: 2px solid var(--accent, #ee4d2d);
   outline-offset: 3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .obn-layout-button:not([aria-current="true"]):hover {
+    border-color: rgb(238 77 45 / 45%);
+    background: rgb(255 255 255 / 10%);
+  }
 }
 
 /* --------------------------------------------------------------------------

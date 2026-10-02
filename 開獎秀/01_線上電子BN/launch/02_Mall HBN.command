@@ -1,22 +1,22 @@
 #!/bin/zsh
 
-# SPX 開獎秀 — 線上／電子BN 01_DDcard BN Manual Verification launcher
+# SPX 開獎秀 — 線上／電子BN 02_Mall HBN Manual Verification launcher
 # ---------------------------------------------------------------------------
 # Finder 雙擊後：啟動（或安全重用）開獎秀本機 HTTP Server（port 4176），
-# 並以 Google Chrome 開啟 01_DDcard BN Manual Verification Viewer。
+# 並以 Google Chrome 開啟 02_Mall HBN Manual Verification Viewer。
 #
 # document root 為 SPX Repository root：Viewer 需要讀取根層 fonts/ 與
 # 開獎秀 JS／CSS／assets，因此不可只開到 開獎秀/ 或 01_線上電子BN/。
 #
 # Port 原則（Jamie 裁決）：
 #   4174 = SPX root 平台 server、4175 = 快速取件 launcher，
-#   本 launcher 一律使用 4176，且以開獎秀專屬 marker 驗證，
-#   避免誤連到其他工具的 server。
-#
-# 不依賴 file://：ES module、FontFace 與 canvas 在 file:// 下都會失敗。
+#   online-bn 全版位共用 4176，不為每個版位新增 port。
+#   01 與 02 指向同一份 viewer.html 與同一個 marker，因此可安全重用同一個 server。
 #
 # Viewer 為 online-bn 全版位共用，版位以 ?layout= 指定；本 launcher 固定帶
-# layout=01-ddcard-bn。Viewer 在無 layout 參數時仍預設 01，保持向後相容。
+# layout=02-mall-hbn。
+#
+# 不依賴 file://：ES module、FontFace 與 canvas 在 file:// 下都會失敗。
 
 set -u
 
@@ -25,7 +25,7 @@ readonly SPX_ROOT="${SPX_LAUNCH_DIR:h:h:h}"
 readonly SPX_HOST="127.0.0.1"
 readonly SPX_PORT="4176"
 readonly SPX_BASE_URL="http://${SPX_HOST}:${SPX_PORT}"
-readonly SPX_VIEWER_PATH="/%E9%96%8B%E7%8D%8E%E7%A7%80/01_%E7%B7%9A%E4%B8%8A%E9%9B%BB%E5%AD%90BN/launch/viewer.html?layout=01-ddcard-bn"
+readonly SPX_VIEWER_PATH="/%E9%96%8B%E7%8D%8E%E7%A7%80/01_%E7%B7%9A%E4%B8%8A%E9%9B%BB%E5%AD%90BN/launch/viewer.html?layout=02-mall-hbn"
 readonly SPX_VIEWER_URL="${SPX_BASE_URL}${SPX_VIEWER_PATH}"
 readonly SPX_VIEWER_MARKER='data-spx-lottery-show-online-bn-viewer="true"'
 readonly SPX_PYTHON="/usr/bin/python3"
@@ -73,7 +73,7 @@ fi
 
 # 4176 有人監聽但不是開獎秀 Viewer → fail-closed，不默默開到錯誤 server。
 if "${SPX_LSOF}" -nP -iTCP:"${SPX_PORT}" -sTCP:LISTEN >/dev/null 2>&1; then
-  echo "Port ${SPX_PORT} 已被其他程式占用，無法啟動 01_DDcard BN Viewer。"
+  echo "Port ${SPX_PORT} 已被其他程式占用，無法啟動 02_Mall HBN Viewer。"
   echo "請先關閉占用 ${SPX_PORT} 的程式後再試。"
   pause_before_exit
   exit 1
@@ -125,7 +125,7 @@ done
 
 if [[ "${spx_server_ready}" != true ]]; then
   echo
-  echo "無法啟動 01_DDcard BN 本機 HTTP Server。請確認連接埠 ${SPX_PORT} 未被其他程式使用。"
+  echo "無法啟動 02_Mall HBN 本機 HTTP Server。請確認連接埠 ${SPX_PORT} 未被其他程式使用。"
   pause_before_exit
   exit 1
 fi
@@ -136,7 +136,7 @@ if ! open_viewer; then
 fi
 
 echo
-echo "01_DDcard BN Viewer 已啟動：${SPX_VIEWER_URL}"
+echo "02_Mall HBN Viewer 已啟動：${SPX_VIEWER_URL}"
 echo "關閉此視窗或按 Control-C 即可停止 Server。"
 echo
 
