@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="zh-Hant" data-spx-lottery-show-online-bn-viewer="true">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開獎秀 — 線上／電子BN 01_DDcard BN Manual Verification Viewer</title>
+    <!--
+      Manual Verification Viewer（Jamie 裁決 Q1）
+      ---------------------------------------------------------------------
+      本頁只做人工驗證，不是正式產品介面。
+      對位圖 overlay 只存在本頁，正式 console UI 不提供 overlay checkbox
+      與 opacity 控制。
+
+      本頁不複製第二套 renderer／controls：版位、Preview、controls 全部
+      透過 ../js/online-bn.js 的 mountOnlineBn() 使用與正式 console
+      完全相同的程式路徑。online-bn.css 由該模組自己動態載入。
+
+      overlay 只是 DOM 疊圖：position absolute、pointer-events none，
+      不畫入正式 canvas、不改 canvas pixels、不進未來 Export。
+
+      本頁的 style 切換只屬 Manual Verification，不是第二套正式 style
+      context；正式 context 仍為 console.html?item=online-bn&style=<id>。
+      不使用 localStorage、sessionStorage 或 history.state。
+
+      本頁另自動帶入四句固定 sample text，僅供人工驗證：
+      不是正式 Console default、不是 workspace default、不是 layout schema
+      default，也不是匯入規格。正式 Console 的初始文字仍為空字串。
+      sample text 透過既有 controls 的 input 事件寫入，完整走正式 weighted
+      count 與 rollback 流程，不 bypass 任何 validation。
+    -->
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, "Helvetica Neue", Arial, sans-serif;
+
+        --accent: #ee4d2d;
+        --text-primary: #f3f8f7;
+        --text-secondary: rgb(224 235 233 / 68%);
+        --text-tertiary: rgb(235 242 241 / 76%);
+        --column-surface: rgb(10 16 18 / 78%);
+        --column-border: rgb(255 255 255 / 12%);
+      }
+
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+
+      html, body { height: 100%; }
+      html { background: #080d0f; }
+
+      body {
+        min-width: 1180px;
+        margin: 0;
+        color: var(--text-primary);
+        background: linear-gradient(150deg, #0b1113 0%, #070b0d 58%, #0a1012 100%);
+      }
+
+      .viewer-shell {
+        display: grid;
+        width: 100%;
+        height: 100vh;
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      .viewer-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px 26px;
+        padding: 12px 18px;
+        border-bottom: 1px dashed var(--accent);
+        flex-wrap: wrap;
+        font-size: 13px;
+      }
+
+      .viewer-bar strong { color: var(--accent); }
+
+      .viewer-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .viewer-group-name { color: var(--text-secondary); }
+
+      .viewer-bar label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+      }
+
+      .viewer-note {
+        flex-basis: 100%;
+        margin: 0;
+        color: var(--text-tertiary);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .viewer-columns {
+        display: grid;
+        min-height: 0;
+        grid-template-columns: 250px minmax(0, 1fr) 360px;
+        overflow: hidden;
+      }
+
+      .viewer-column {
+        display: flex;
+        min-height: 0;
+        flex-direction: column;
+      }
+
+      .viewer-column.is-side {
+        background: var(--column-surface);
+      }
+
+      .viewer-column.is-left { border-right: 1px solid var(--column-border); }
+      .viewer-column.is-right { border-left: 1px solid var(--column-border); }
+
+      .viewer-column-header {
+        flex: 0 0 auto;
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid var(--column-border);
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+      }
+
+      .viewer-column-body {
+        min-height: 0;
+        padding: 16px 18px;
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .viewer-preview-body {
+        display: grid;
+        min-height: 0;
+        padding: 32px;
+        flex: 1;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .viewer-empty {
+        margin: 0;
+        color: var(--text-tertiary);
+        font-size: 14px;
+        text-align: center;
+      }
+
+      /* 對位 overlay：與 Preview canvas 等比完全重疊，且永不攔截事件。 */
+      .viewer-canvas-wrap {
+        position: relative;
+        display: inline-block;
+        line-height: 0;
+      }
+
+      .viewer-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="viewer-shell">
+      <div class="viewer-bar">
+        <strong>人工驗證模式</strong>
+
+        <span class="viewer-group">
+          <span class="viewer-group-name">樣式：</span>
+          <label><input type="radio" name="viewer-style" value="smart-locker" checked>智取櫃</label>
+          <label><input type="radio" name="viewer-style" value="store">門市</label>
+        </span>
+
+        <span class="viewer-group">
+          <span class="viewer-group-name">對位：</span>
+          <label><input id="overlay-toggle" type="checkbox">顯示對位圖 overlay</label>
+          <label>透明度<input id="overlay-opacity" type="range" min="10" max="90" value="50"></label>
+        </span>
+
+        <p id="viewer-status" class="viewer-note"></p>
+        <p class="viewer-note">
+          對位 overlay 與樣式切換僅供本頁人工驗證使用：不進正式 renderer、不進正式 console UI、
+          不改 canvas pixels、不寫入任何持久化儲存。正式入口仍為
+          console.html?item=online-bn&amp;style=smart-locker｜store。
+        </p>
+      </div>
+
+      <div class="viewer-columns">
+        <aside class="viewer-column is-side is-left">
+          <header class="viewer-column-header">版位</header>
+          <div class="viewer-column-body">
+            <nav id="viewer-layout-list" aria-label="版位"></nav>
+            <p id="viewer-layout-empty" class="viewer-empty">目前尚未建立正式版位</p>
+          </div>
+        </aside>
+
+        <section class="viewer-column">
+          <header class="viewer-column-header">PREVIEW</header>
+          <div id="viewer-preview-body" class="viewer-preview-body"></div>
+        </section>
+
+        <aside class="viewer-column is-side is-right">
+          <header class="viewer-column-header">CONTROLS</header>
+          <div id="viewer-control-body" class="viewer-column-body"></div>
+        </aside>
+      </div>
+    </main>
+
+    <script type="module">
+      import { mountOnlineBn } from "../js/online-bn.js";
+
+      const status = document.querySelector("#viewer-status");
+      const overlayToggle = document.querySelector("#overlay-toggle");
+      const overlayOpacity = document.querySelector("#overlay-opacity");
+
+      const mounts = {
+        layoutList: document.querySelector("#viewer-layout-list"),
+        layoutListEmpty: document.querySelector("#viewer-layout-empty"),
+        previewBody: document.querySelector("#viewer-preview-body"),
+        controlBody: document.querySelector("#viewer-control-body")
+      };
+
+      // 對位圖只作 DOM overlay，不是 renderer 或 Export 的一部分。
+      const overlay = document.createElement("img");
+      overlay.className = "viewer-overlay";
+      overlay.alt = "01_DDcard BN 對位圖（人工驗證專用）";
+      overlay.src = new URL("../assets/對位/01_DDcard BN.png", import.meta.url).href;
+      overlay.hidden = !overlayToggle.checked;
+      overlay.style.opacity = String(Number(overlayOpacity.value) / 100);
+
+      overlayToggle.addEventListener("change", () => {
+        overlay.hidden = !overlayToggle.checked;
+      });
+      overlayOpacity.addEventListener("input", () => {
+        overlay.style.opacity = String(Number(overlayOpacity.value) / 100);
+      });
+
+      // 每次 render 後 Preview 都會換成新的 canvas，
+      // 因此 overlay 必須重新包進同一個 positioning container 才能精確重疊。
+      function remountOverlay(canvas) {
+        const wrapper = document.createElement("span");
+        wrapper.className = "viewer-canvas-wrap";
+        canvas.replaceWith(wrapper);
+        wrapper.append(canvas, overlay);
+      }
+
+      // Manual Verification 專用固定 sample text（Jamie 指定）。
+      // 只屬本頁；不是正式 Console default、不是 workspace default、
+      // 不是 layout schema default，也不是任何匯入規格。
+      const SAMPLE_TEXT = Object.freeze({
+        title: "12/12直播開獎",
+        subtitle: "取件最高抽百萬",
+        small1: "10/10-12/30下單，在到貨一天內取件限定",
+        small2: "百萬獎金均分，詳情依活動規則為準"
+      });
+
+      // 以既有 controls 的 input 事件寫入，完整走正式 weighted count 與 rollback 流程。
+      // 不 bypass validation、不建立 test mode、不直接改寫 renderer state。
+      function applySampleText() {
+        for (const [id, text] of Object.entries(SAMPLE_TEXT)) {
+          const input = mounts.controlBody.querySelector(`#obn-text-${id}`);
+          if (!input) return false;
+          input.value = text;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        return true;
+      }
+
+      let session = null;
+
+      async function activate(styleId) {
+        if (session) {
+          session.dispose();
+          session = null;
+        }
+        status.textContent = `載入中：${styleId}…`;
+        try {
+          session = await mountOnlineBn({ styleId, mounts, onRendered: remountOverlay });
+          // 每次 mount（含 style 切換）後重新帶入 sample text，切換樣式不會清空文字。
+          const filled = applySampleText();
+          await session.requestRender();
+          status.textContent = filled
+            ? `目前樣式：${styleId}（正式 canvas 531 × 792，已帶入人工驗證 sample text）`
+            : `目前樣式：${styleId}（正式 canvas 531 × 792，sample text 未能帶入）`;
+        } catch (error) {
+          console.error("Viewer 掛載失敗。", error);
+          status.textContent = `掛載失敗：${error.message}`;
+        }
+      }
+
+      document.querySelectorAll('input[name="viewer-style"]').forEach((input) => {
+        input.addEventListener("change", () => {
+          if (input.checked) activate(input.value);
+        });
+      });
+
+      await activate("smart-locker");
+    </script>
+  </body>
+</html>

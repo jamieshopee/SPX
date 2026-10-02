@@ -29,9 +29,10 @@
           <p class="column-context">目前樣式：<span id="current-style"></span></p>
         </header>
         <div class="column-body">
-          <!-- 未來正式版位的唯一掛入點。目前沒有任何正式版位，因此保持空容器。 -->
+          <!-- 正式版位的唯一掛入點。online-bn 由 js/console.js 動態掛入；
+               om／live 目前沒有正式版位，維持空容器與 empty state。 -->
           <nav id="item-list" class="item-list" aria-label="版位"></nav>
-          <p class="column-empty">目前尚未建立正式版位</p>
+          <p id="item-list-empty" class="column-empty">目前尚未建立正式版位</p>
         </div>
       </aside>
 
@@ -40,9 +41,10 @@
           <p class="column-kicker">PREVIEW</p>
           <h2 id="preview-title" class="column-title">預覽</h2>
         </header>
-        <!-- 尚無正式版位與 renderer：真正的 empty state。
+        <!-- online-bn 的正式 Preview 由 js/console.js 動態掛入此容器。
+             om／live 沒有正式版位與 renderer，維持真正的 empty state：
              不放 canvas、不放 img、不放尺寸／格式 metadata。 -->
-        <div class="column-body preview-body">
+        <div id="preview-body" class="column-body preview-body">
           <p class="column-empty">目前尚未建立正式版位</p>
         </div>
       </section>
@@ -52,8 +54,9 @@
           <p class="column-kicker">CONTROLS</p>
           <h2 id="control-title" class="column-title">操作</h2>
         </header>
-        <!-- 尚無正式版位：真正的 empty state，不放任何控制項。 -->
-        <div class="column-body">
+        <!-- online-bn 的正式 controls 由 js/console.js 動態掛入此容器。
+             om／live 尚無正式版位：真正的 empty state，不放任何控制項。 -->
+        <div id="control-body" class="column-body">
           <p class="column-empty">目前沒有可操作的項目</p>
         </div>
       </aside>

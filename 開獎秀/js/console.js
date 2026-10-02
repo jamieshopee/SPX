@@ -11,7 +11,13 @@
 //   本檔不含 workspace、state manager、reducer、dispatch、event bus、
 //   renderer、renderer registry、canvas、ResizeObserver、preview scale、
 //   import、export、Excel、JSON、banwords、encoder、asset／底圖 mapping、
-//   版位 schema 或版位陣列。目前沒有正式版位，三欄一律維持真正 empty state。
+//   版位 schema 或版位陣列。
+//
+//   唯一例外為 online-bn 的 additive 掛載點：context 全部合法且
+//   item.id === "online-bn" 時，動態 import 線上／電子BN 自己的版位模組，
+//   由該模組負責版位、renderer、Preview、controls 與自己的 CSS。
+//   om／live 走不到該 import，因此不載入 online-bn 的 JS 與 CSS，
+//   三欄一律維持真正 empty state。
 // ---------------------------------------------------------------------------
 
 import { getItem, getStyle, validateRegistry } from "./registry.js";
@@ -23,6 +29,11 @@ const NO_CONSOLE_MESSAGE = "此項目的控制台尚未開放。";
 const MISSING_STYLE_MESSAGE = "缺少樣式參數。";
 const UNKNOWN_STYLE_MESSAGE = "找不到指定的樣式。";
 const UNSUPPORTED_STYLE_MESSAGE = "此項目不支援指定的樣式。";
+const ONLINE_BN_MOUNT_ERROR_MESSAGE = "線上／電子BN 版位載入失敗。";
+
+// 只有這個 item 會載入自己的版位模組；其餘 item 維持 shell empty state。
+const ONLINE_BN_ITEM_ID = "online-bn";
+const ONLINE_BN_MODULE_URL = "../01_線上電子BN/js/online-bn.js";
 
 const consoleShell = document.querySelector("#console-shell");
 const errorView = document.querySelector("#console-error-view");
@@ -48,7 +59,22 @@ function failClosed(message, item) {
   errorView.hidden = false;
 }
 
-function render() {
+// online-bn 專屬 additive 掛載：只有 online-bn 會走到這裡。
+// 掛載失敗一律 fail-closed，不留下半掛載的三欄工作區。
+async function mountOnlineBnLayouts(style) {
+  const module = await import(ONLINE_BN_MODULE_URL);
+  await module.mountOnlineBn({
+    styleId: style.id,
+    mounts: {
+      layoutList: document.querySelector("#item-list"),
+      layoutListEmpty: document.querySelector("#item-list-empty"),
+      previewBody: document.querySelector("#preview-body"),
+      controlBody: document.querySelector("#control-body")
+    }
+  });
+}
+
+async function render() {
   try {
     validateRegistry();
   } catch (error) {
@@ -104,6 +130,17 @@ function render() {
 
   errorView.hidden = true;
   consoleShell.hidden = false;
+
+  if (item.id !== ONLINE_BN_ITEM_ID) return;
+
+  try {
+    await mountOnlineBnLayouts(style);
+  } catch (error) {
+    console.error("線上／電子BN 版位模組掛載失敗。", error);
+    failClosed(ONLINE_BN_MOUNT_ERROR_MESSAGE, item);
+  }
 }
 
-render();
+render().catch((error) => {
+  console.error("控制台初始化失敗。", error);
+});

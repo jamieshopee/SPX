@@ -1,0 +1,221 @@
+/* ===========================================================================
+   SPX 開獎秀 — 線上／電子BN：01_DDcard BN 專屬樣式
+   ---------------------------------------------------------------------------
+   CSS isolation（Jamie 裁決）：
+     本檔禁止由 console.html 靜態 <link> 載入。
+     只在 online-bn mount 時由 js/online-bn.js 動態插入一次。
+     OM／直播不載入本檔。
+
+   Scope 規則：
+     所有選擇器一律位於 .obn-* 專屬 class 之下。
+     不得覆寫 body、.console-shell、.console-column、.column-body、
+     .preview-body 或任何既有共用 shell geometry。
+
+   顏色 token 以 var(--x, fallback) 書寫：在 console.html 內沿用 console.css
+   的 token；在 Manual Verification Viewer 內則退回 fallback 值。
+   =========================================================================== */
+
+/* --------------------------------------------------------------------------
+   左欄：版位清單（目前只有 01_DDcard BN）
+   -------------------------------------------------------------------------- */
+
+.obn-layout-button {
+  display: block;
+  width: 100%;
+  padding: 11px 13px;
+  color: var(--text-primary, #f3f8f7);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 6%);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  cursor: default;
+}
+
+.obn-layout-button[aria-current="true"] {
+  color: var(--accent, #ee4d2d);
+  border-color: var(--accent, #ee4d2d);
+  background: rgb(238 77 45 / 12%);
+}
+
+.obn-layout-button:focus-visible {
+  outline: 2px solid var(--accent, #ee4d2d);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   中欄：Preview
+   canvas 的 pixel size 永遠是 531 × 792；這裡只設定 display size 的呈現外觀，
+   實際 width／height 由 js/preview.js 以 inline style 寫入。
+   -------------------------------------------------------------------------- */
+
+.obn-preview-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 2px;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 45%);
+}
+
+.obn-preview-error {
+  max-width: 420px;
+  padding: 18px 20px;
+  border: 1px solid rgb(238 77 45 / 42%);
+  border-radius: 12px;
+  background: rgb(238 77 45 / 8%);
+  text-align: center;
+}
+
+.obn-preview-error-title {
+  margin: 0 0 8px;
+  color: var(--accent, #ee4d2d);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.obn-preview-error-detail {
+  margin: 0;
+  color: var(--text-tertiary, rgb(235 242 241 / 76%));
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+/* --------------------------------------------------------------------------
+   右欄：正式 controls
+   -------------------------------------------------------------------------- */
+
+.obn-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.obn-control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.obn-control-heading {
+  margin: 0;
+  color: var(--accent, #ee4d2d);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.obn-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.obn-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.obn-field-label {
+  color: var(--text-secondary, rgb(224 235 233 / 68%));
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.obn-field-counter {
+  color: var(--text-tertiary, rgb(235 242 241 / 76%));
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+
+.obn-text-input {
+  width: 100%;
+  padding: 9px 11px;
+  color: var(--text-primary, #f3f8f7);
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 9px;
+  background: rgb(255 255 255 / 5%);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.obn-text-input:focus-visible {
+  outline: 2px solid var(--accent, #ee4d2d);
+  outline-offset: 2px;
+}
+
+.obn-color-field {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  grid-template-columns: 1fr auto auto;
+}
+
+.obn-color-input {
+  width: 34px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+.obn-color-input:focus-visible {
+  outline: 2px solid var(--accent, #ee4d2d);
+  outline-offset: 2px;
+}
+
+.obn-color-readout {
+  min-width: 72px;
+  color: var(--text-tertiary, rgb(235 242 241 / 76%));
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.obn-logo-mode {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.obn-radio-group {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.obn-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary, #f3f8f7);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.obn-radio input:focus-visible {
+  outline: 2px solid var(--accent, #ee4d2d);
+  outline-offset: 2px;
+}
