@@ -6,15 +6,15 @@
 //
 // 職責：
 //   1. 動態載入 online-bn 專屬 stylesheet（context-isolated，載入失敗 fail-closed）
-//   2. 左欄渲染正式版位清單並支援切換（目前 01、02 兩個）
+//   2. 左欄渲染正式版位清單並支援切換（目前 01、02、03 三個）
 //   3. 中欄掛上 Preview controller（使用共用 layout engine）
 //   4. 右欄掛上正式 controls（欄位由該 layout descriptor 提供）
 //   5. 持有使用者可變 state（page memory；不使用 localStorage／sessionStorage／
 //      history.state），任一控制變更即以同一 renderer 重繪
 //
 // 嚴格邊界：
-//   - 版位清單是單純的 2 元素陣列，不是 registry／plugin system，
-//     也不為 03～17 預先抽象。
+//   - 版位清單是單純的陣列，不是 registry／plugin system，
+//     也不為 04～17 預先抽象。
 //   - 切換版位＝以該 layout 的 defaults 重新初始化 state（Jamie 核准行為），
 //     不建立 state cache、不使用任何持久化機制。
 //   - 正式 Console 的 URL context 仍只有 item／style；切換版位不改 URL。
@@ -23,11 +23,12 @@
 
 import { LAYOUT_01_DDCARD_BN } from "./layout-01-ddcard-bn.js";
 import { LAYOUT_02_MALL_HBN } from "./layout-02-mall-hbn.js";
+import { LAYOUT_03_LPBN } from "./layout-03-lpbn.js";
 import { createInitialState, getStyleData } from "./layout-engine.js";
 import { createPreviewController } from "./preview.js";
 import { mountControls } from "./controls.js";
 
-const LAYOUTS = Object.freeze([LAYOUT_01_DDCARD_BN, LAYOUT_02_MALL_HBN]);
+const LAYOUTS = Object.freeze([LAYOUT_01_DDCARD_BN, LAYOUT_02_MALL_HBN, LAYOUT_03_LPBN]);
 
 export const DEFAULT_LAYOUT_ID = LAYOUT_01_DDCARD_BN.id;
 
