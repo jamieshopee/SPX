@@ -3,6 +3,8 @@
 // 本檔只承接 01 與 02 真正共用的能力，不做 speculative abstraction：
 //   - Regular／Medium／Bold FontFace 別名與來源，依 layout 實際字重「按需註冊」
 //   - document.fonts.load() ＋ check() 的 fail-closed readiness gate
+//   - 背景繪製：未宣告 layout.background 時為 full-canvas fill（既有行為）；
+//     宣告 rounded-card 時畫布保持透明、只填圓角卡片
 //   - 素材載入快取 ＋ intrinsic size 驗證
 //   - contain 幾何計算
 //   - ink-box 量測與繪製（水平 center／left 由 layout 決定，垂直恆為 ink-box center）
@@ -217,6 +219,81 @@ function drawSupersampledLayer(context, layout, state) {
   context.restore();
 }
 
+// --- 背景繪製：backward-compatible 兩種模式 ------------------------------------
+// layout.background 未宣告（01／02／03）→ legacy full-canvas fill，行為與既有逐行相同。
+// layout.background.mode === "rounded-card" → 畫布保持透明，只填 descriptor 指定的圓角卡片。
+// 判斷依據只有 descriptor；engine 不依 layout.id 分支、不含任何版位 id。
+
+const BACKGROUND_MODE_ROUNDED_CARD = "rounded-card";
+
+// 最小 validation：只在 layout.background 存在時執行，任一不合法即 fail-closed throw。
+export function validateBackground(layout) {
+  const background = layout.background;
+  if (background === undefined) return;
+
+  if (background.mode !== BACKGROUND_MODE_ROUNDED_CARD) {
+    throw new Error(`${layout.name} 不支援的背景模式：${background.mode}。`);
+  }
+
+  const box = background.box;
+  if (!box) throw new Error(`${layout.name} 背景缺少 box。`);
+
+  const { x, y, width, height } = box;
+  const radius = background.radius;
+  if (![x, y, width, height, radius].every((value) => Number.isFinite(value))) {
+    throw new Error(`${layout.name} 背景 geometry 必須為有限數值。`);
+  }
+  if (width <= 0 || height <= 0) {
+    throw new Error(`${layout.name} 背景 box 的 width／height 必須大於 0。`);
+  }
+  if (radius < 0 || radius > Math.min(width, height) / 2) {
+    throw new Error(
+      `${layout.name} 背景 radius 必須介於 0 與 ${Math.min(width, height) / 2} 之間。`
+    );
+  }
+  if (
+    x < 0 ||
+    y < 0 ||
+    x + width > layout.canvas.width ||
+    y + height > layout.canvas.height
+  ) {
+    throw new Error(`${layout.name} 背景 box 超出正式畫布範圍。`);
+  }
+}
+
+// 圓角矩形以 moveTo ＋ 四個 arcTo 手工建 path（不依賴 ctx.roundRect）。
+// 只 fill，不 stroke、不 shadow、不 clip 整體 renderer。
+function fillRoundedCard(ctx, box, radius, color) {
+  const { x, y, width, height } = box;
+  const right = x + width;
+  const bottom = y + height;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(right, y, right, bottom, radius);
+  ctx.arcTo(right, bottom, x, bottom, radius);
+  ctx.arcTo(x, bottom, x, y, radius);
+  ctx.arcTo(x, y, right, y, radius);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+}
+
+export function drawBackground(ctx, layout, color) {
+  // legacy 分支：與擴充前完全相同的兩行，不加 save／restore／clearRect／clip／transform。
+  if (layout.background === undefined) {
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, layout.canvas.width, layout.canvas.height);
+    return;
+  }
+
+  validateBackground(layout);
+  // rounded-card：不做 full-canvas 繪製，卡片外維持 canvas 原始透明。
+  fillRoundedCard(ctx, layout.background.box, layout.background.radius, color);
+}
+
 // --- style 資料 ＋ 初始 state ---------------------------------------------------
 
 export function getStyleData(layout, styleId) {
@@ -257,9 +334,9 @@ export async function renderLayout({ ctx, layout, styleId, state }) {
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = "source-over";
 
-  // 1. 背景色填滿整張正式畫布
-  ctx.fillStyle = state.colors.background;
-  ctx.fillRect(0, 0, layout.canvas.width, layout.canvas.height);
+  // 1. 背景：未宣告 layout.background 時為 full-canvas fill（01／02／03）；
+  //    宣告 rounded-card 時畫布保持透明，只填圓角卡片。
+  drawBackground(ctx, layout, state.colors.background);
 
   // 2. style 正式底圖：1:1，不 stretch、不 crop
   ctx.drawImage(
