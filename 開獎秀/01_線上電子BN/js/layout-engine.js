@@ -6,6 +6,8 @@
 //   - 背景繪製：未宣告 layout.background 時為 full-canvas fill（既有行為）；
 //     宣告 rounded-card 時畫布保持透明、只填圓角卡片
 //   - 素材載入快取 ＋ intrinsic size 驗證
+//   - Logo 繪製：必選的 layout.logo，以及 optional 的 layout.secondaryLogo
+//     （未宣告時完全不載入、不繪製；宣告時與主 Logo 共用同一個 resolved variant）
 //   - contain 幾何計算
 //   - ink-box 量測與繪製（水平 center／left 由 layout 決定，垂直恆為 ink-box center）
 //   - local 2× supersampling layer（成員由 layout 的 supersampledFields 決定）
@@ -313,7 +315,8 @@ export function createInitialState(layout, styleId) {
 }
 
 // --- 正式 renderer -------------------------------------------------------------
-// 語意 draw order：background → style base → Logo → main → subtitle → small1 → small2
+// 語意 draw order：background → style base → Logo（＋optional 第二 Logo）
+//                  → main → subtitle → small1 → small2
 // 實際 sequence：supersampledFields 以單次 drawImage 合批貼回，directFields 之後直繪。
 // 各 layout 的文字 box 兩兩不重疊，故兩者算繪結果等價。
 
@@ -326,9 +329,18 @@ export async function renderLayout({ ctx, layout, styleId, state }) {
   const placement = styleData.backgroundPlacement;
   const variant = resolveLogoVariant(state.logoMode, state.colors.background);
 
-  const [backgroundImage, logoImage] = await Promise.all([
+  // layout.secondaryLogo 未宣告（01～05）→ 第三項為 null，不呼叫 loadImage、
+  // 不產生任何額外載入；宣告時一律以「同一個 variant」取用，不做第二次 resolve。
+  const [backgroundImage, logoImage, secondaryLogoImage] = await Promise.all([
     loadImage(styleData.backgroundSrc, placement, `${layout.name} 正式底圖`),
-    loadImage(layout.logo.src[variant], layout.logo.intrinsic, `${layout.name} 正式 Logo`)
+    loadImage(layout.logo.src[variant], layout.logo.intrinsic, `${layout.name} 正式 Logo`),
+    layout.secondaryLogo === undefined
+      ? null
+      : loadImage(
+          layout.secondaryLogo.src[variant],
+          layout.secondaryLogo.intrinsic,
+          `${layout.name} 第二 Logo`
+        )
   ]);
 
   ctx.globalAlpha = 1;
@@ -360,10 +372,33 @@ export async function renderLayout({ ctx, layout, styleId, state }) {
   ctx.drawImage(logoImage, logoRect.x, logoRect.y, logoRect.width, logoRect.height);
   ctx.restore();
 
-  // 4. supersampled 文字層（local 2×）
+  // 4. 第二 Logo（optional）：descriptor 未宣告時完全不繪製（01～05 行為不變）。
+  //    與主 Logo 共用上面那一個 variant；contain，水平依 layout.horizontalAlign、
+  //    垂直恆置中。不 crop、不 stretch、座標不取整。
+  if (layout.secondaryLogo !== undefined) {
+    const secondaryLogoRect = computeContainRect(
+      layout.secondaryLogo.box,
+      secondaryLogoImage.naturalWidth,
+      secondaryLogoImage.naturalHeight,
+      layout.horizontalAlign
+    );
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(
+      secondaryLogoImage,
+      secondaryLogoRect.x,
+      secondaryLogoRect.y,
+      secondaryLogoRect.width,
+      secondaryLogoRect.height
+    );
+    ctx.restore();
+  }
+
+  // 5. supersampled 文字層（local 2×）
   drawSupersampledLayer(ctx, layout, state);
 
-  // 5. direct 文字（不進 supersampling layer）
+  // 6. direct 文字（不進 supersampling layer）
   layout.directFields.forEach((id) => {
     const field = layout.text[id];
     drawLayoutText(

@@ -331,7 +331,7 @@
 
       if (initialLayout === null) {
         // 未知 layout：fail-closed，不渲染工作區、不猜測、不 fallback。
-        status.textContent = `無效的版位參數：${requestedLayoutId}。合法值為 01-ddcard-bn、02-mall-hbn、03-lpbn、04-pop-up 或 05-ig。`;
+        status.textContent = `無效的版位參數：${requestedLayoutId}。合法值為 01-ddcard-bn、02-mall-hbn、03-lpbn、04-pop-up、05-ig 或 06-fb-post。`;
         status.classList.add("viewer-error");
         mounts.previewBody.replaceChildren();
         mounts.controlBody.replaceChildren();
