@@ -27,7 +27,7 @@ Status: Living（持續更新，非 Locked）
 
 ## 2. 線上／電子BN 共通規格
 
-本節只記錄目前已由 01、02、03、04、05、06 實作正式證明，且適合 online-bn 版位共用的內容。**尚未實作的 07～17 行為不得寫入本節，也不得視為已完成。**
+本節只記錄目前已由 01、02、03、04、05、06、07 實作正式證明，且適合 online-bn 版位共用的內容。**尚未實作的 08～17 行為不得寫入本節，也不得視為已完成。**
 
 ### 2.1 Style
 
@@ -117,7 +117,7 @@ Logo 的 contain fit 為全版位共通（`scale = min(boxW / srcW, boxH / srcH)
 | 小字 1 | 18 |
 | 小字 2 | 18 |
 
-此為 online-bn **全版位共通**的正式上限，不是單一版位值。計算規則依第 2.4 節。目前 01、02、03、04、05、06 皆採用此組上限。
+此為 online-bn **全版位共通**的正式上限，不是單一版位值。計算規則依第 2.4 節。目前 01、02、03、04、05、06、07 皆採用此組上限。
 
 ### 2.6 預設色（online-bn 全版位共通）
 
@@ -159,10 +159,11 @@ Canvas pt = Photoshop pt × 72 / 96
 | 04_POP UP | 40 / 55 / 25pt | **30 / 41.25 / 18.75pt** |
 | 05_IG | 70 / 88 / 40pt | **52.5 / 66 / 30pt** |
 | 06_FB Post | 52 / 65 / 28pt | **39 / 48.75 / 21pt** |
+| 07_OM與FEED | 70 / 88 / 35pt | **52.5 / 66 / 26.25pt** |
 
-換算結果為非整數時（如 03 的 `49.5pt`、`17.625pt`，04 的 `41.25pt`、`18.75pt`，05 的 `52.5pt`，06 的 `48.75pt`）一律**原值保留**，不得取整、不得改用 px。
+換算結果為非整數時（如 03 的 `49.5pt`、`17.625pt`，04 的 `41.25pt`、`18.75pt`，05 的 `52.5pt`，06 的 `48.75pt`，07 的 `52.5pt`、`26.25pt`）一律**原值保留**，不得取整、不得改用 px。
 
-此換算為 online-bn renderer 已採用的換算原則；**不代表 07～17 的字級已經決定**。各版位的 Photoshop source pt 與字重仍須由該版位實際調查後決定（01、03、04、05、06 的小字為 Medium、02 為 Regular，見第 2.11 節）。
+此換算為 online-bn renderer 已採用的換算原則；**不代表 08～17 的字級已經決定**。各版位的 Photoshop source pt 與字重仍須由該版位實際調查後決定（01、03、04、05、06、07 的小字為 Medium、02 為 Regular，見第 2.11 節）。
 
 ### 2.9 水平對齊（layout-specific）
 
@@ -176,6 +177,7 @@ Canvas pt = Photoshop pt × 72 / 96
 | 04_POP UP | 五個 box 共用水平中心 290 | `center` | contain 後水平置中 | ink-box 水平置中 |
 | 05_IG | 五個 box 共用水平中心 450 | `center` | contain 後水平置中 | ink-box 水平置中 |
 | 06_FB Post | 五個 box 共用左緣 x=51 | `left` | contain 後左緣貼 box.x | ink 左緣對齊 box.x |
+| 07_OM與FEED | 五個 box 共用水平中心 500 | `center` | contain 後水平置中 | ink-box 水平置中 |
 
 `left` 的實作語意為 **`x = box.x − actualBoundingBoxLeft`**，使文字的 ink 左緣精確落在 box 左緣；**不是單純設定 `textAlign = "left"` 後以 `box.x` 繪製**。Logo 的 `left` 則為 `destX = box.x`。
 
@@ -195,8 +197,9 @@ Canvas pt = Photoshop pt × 72 / 96
 | 04_POP UP | 主標（Medium）＋小字 1（Medium）＋小字 2（Medium） | 副標（Bold） | 1160 × 1440 |
 | 05_IG | 主標（Medium）＋小字 1（Medium）＋小字 2（Medium） | 副標（Bold） | 1800 × 3200 |
 | 06_FB Post | 主標（Medium）＋小字 1（Medium）＋小字 2（Medium） | 副標（Bold） | 2400 × 1260 |
+| 07_OM與FEED | 主標（Medium）＋小字 1（Medium）＋小字 2（Medium） | 副標（Bold） | 2000 × 2000 |
 
-六者使用同一段共用程式；字重差異不影響 2× 機制。
+七者使用同一段共用程式；字重差異不影響 2× 機制。
 
 ### 2.11 字型架構
 
@@ -220,6 +223,7 @@ family 別名以 FontFace API 建立，不與 `console.css` 的 `"Shopee Noto Sa
 | 04_POP UP | Medium、Bold（**不載 Regular**） |
 | 05_IG | Medium、Bold（**不載 Regular**） |
 | 06_FB Post | Medium、Bold（**不載 Regular**） |
+| 07_OM與FEED | Medium、Bold（**不載 Regular**） |
 
 字型未就緒（`load()` 失敗或 `check()` 不過）一律 **render fail-closed**，不 fallback 系統字型、不產生半成品。
 
@@ -250,6 +254,7 @@ engine **不持有任何版位數值**；canvas、geometry、字級、字重、�
 | 04_POP UP | `開獎秀/01_線上電子BN/js/layout-04-pop-up.js` |
 | 05_IG | `開獎秀/01_線上電子BN/js/layout-05-ig.js` |
 | 06_FB Post | `開獎秀/01_線上電子BN/js/layout-06-fb-post.js` |
+| 07_OM與FEED | `開獎秀/01_線上電子BN/js/layout-07-om-feed.js` |
 
 descriptor 欄位：`id`、`name`、`canvas`、`horizontalAlign`、`logo`、`textOrder`、`text`、`supersampledFields`、`directFields`、`colorFields`、`styles`、`alignmentOverlaySrc`，以及 **optional** 的 `background` 與 `secondaryLogo`。
 
@@ -257,10 +262,10 @@ descriptor 欄位：`id`、`name`、`canvas`、`horizontalAlign`、`logo`、`tex
 
 | `layout.background` | 行為 | 目前採用的版位 |
 |---|---|---|
-| 未宣告 | legacy：`fillRect(0, 0, canvas.width, canvas.height)` 填滿整張畫布 | 01、02、03、05、06 |
+| 未宣告 | legacy：`fillRect(0, 0, canvas.width, canvas.height)` 填滿整張畫布 | 01、02、03、05、06、07 |
 | `mode: "rounded-card"` | 畫布保持透明，只以背景色填 descriptor 指定的圓角卡片 | 04 |
 
-此為 **backward-compatible 擴充**：`layout.background` 不存在時走與擴充前逐行相同的 legacy 分支，01／02／03 的 descriptor 皆未新增此欄位，背景行為與輸出完全未變（04 Regression Verification = PASS，見第 7.14 節）。05 與 06 亦未宣告此欄位，同樣走 legacy 分支（第 8.3、9.3 節）。
+此為 **backward-compatible 擴充**：`layout.background` 不存在時走與擴充前逐行相同的 legacy 分支，01／02／03 的 descriptor 皆未新增此欄位，背景行為與輸出完全未變（04 Regression Verification = PASS，見第 7.14 節）。05、06 與 07 亦未宣告此欄位，同樣走 legacy 分支（第 8.3、9.3、10.3 節）。
 
 背景模式一律 **descriptor-driven**：engine **不得**依 `layout.id` hard-code 任何版位。`layout.background` 存在時執行最小 validation —— `mode` 必須為已知模式、必須有 `box`、`x`／`y`／`width`／`height`／`radius` 皆為有限數、`width` 與 `height` > 0、`0 <= radius <= min(width, height) / 2`、卡片幾何不得超出畫布範圍；任一不合法即 **fail-closed throw**，不降級、不自動修正。
 
@@ -268,7 +273,7 @@ descriptor 欄位：`id`、`name`、`canvas`、`horizontalAlign`、`logo`、`tex
 
 | `layout.secondaryLogo` | 行為 | 目前採用的版位 |
 |---|---|---|
-| 未宣告 | 不載入、不繪製任何第二 Logo（與擴充前逐行相同） | 01、02、03、04、05 |
+| 未宣告 | 不載入、不繪製任何第二 Logo（與擴充前逐行相同） | 01、02、03、04、05、07 |
 | 已宣告 | 主 Logo 之後、文字層之前，以**同一個 resolved variant** 多繪製一個 contain Logo | 06 |
 
 contract 只有三個欄位：`box`、`intrinsic`、`src.orange`／`src.white`。**沒有** `mode`、`threshold`、state、controls、顏色、獨立 variant，也**不是** `logos` array 或泛用 multi-layer 框架 —— 目前只有一個 optional 第二 Logo，不為尚未裁決的情形預先抽象。
@@ -277,7 +282,7 @@ fit 一律沿用既有 `computeContainRect()` 與該 layout 的 `horizontalAlign
 
 此為 **backward-compatible 擴充**：主 Logo 既有區塊未重構，`layout.secondaryLogo` 未宣告時素材載入與繪製皆被跳過。06 的 Technical Self-Test 以 recording mock ctx 比對 engine 擴充前後 01～05 的 ctx 呼叫序列（5 版位 × 2 styles × 3 Logo 模式 = **30 組、合計 1194 筆**），結果**逐筆完全相同**（第 9.16 節）。
 
-**目前有 01、02、03、04、05、06 六個 descriptor。這不是 17 版位的 registry 或 plugin system，也未為 07～17 預先抽象。** 03 的加入未修改 `layout-engine.js`（0 modification）；04 僅為了上述背景能力對 engine 做最小擴充，未加入任何 04 專屬數值；05 的加入同樣未修改 `layout-engine.js`（0 modification）；06 僅為了上述第二 Logo 能力對 engine 做最小擴充，未加入任何 06 專屬數值。
+**目前有 01、02、03、04、05、06、07 七個 descriptor。這不是 17 版位的 registry 或 plugin system，也未為 08～17 預先抽象。** 03 的加入未修改 `layout-engine.js`（0 modification）；04 僅為了上述背景能力對 engine 做最小擴充，未加入任何 04 專屬數值；05 的加入同樣未修改 `layout-engine.js`（0 modification）；06 僅為了上述第二 Logo 能力對 engine 做最小擴充，未加入任何 06 專屬數值；07 的加入未修改 `layout-engine.js`（0 modification），完全以現有 descriptor contract 表達，**No new engine capability required**。
 
 Logo Auto 的純邏輯維持獨立於 `開獎秀/01_線上電子BN/js/logo-auto.js`，engine 引用之，未修改。
 
@@ -289,7 +294,7 @@ Preview 使用共用 engine 的正式 renderer，**不建立 Preview-only render
 
 ### 2.14 正式 Console 的版位選擇
 
-正式 Console 左欄列出目前的正式版位，目前為 **01_DDcard BN**、**02_Mall HBN**、**03_LPBN**、**04_POP UP**、**05_IG**、**06_FB Post**（順序固定，新版位附加於末端），目前選中者標記 `aria-current="true"`。
+正式 Console 左欄列出目前的正式版位，目前為 **01_DDcard BN**、**02_Mall HBN**、**03_LPBN**、**04_POP UP**、**05_IG**、**06_FB Post**、**07_OM與FEED**（順序固定，新版位附加於末端），目前選中者標記 `aria-current="true"`。
 
 切換版位的行為：dispose 目前 session → 以新 layout 的 `createInitialState(layout, styleId)` 建立 state → 重新掛載 Preview 與 Controls。因此**切換版位後文字回空白、顏色回該 style 預設色**。
 
@@ -312,6 +317,7 @@ viewer.html?layout=03-lpbn
 viewer.html?layout=04-pop-up
 viewer.html?layout=05-ig
 viewer.html?layout=06-fb-post
+viewer.html?layout=07-om-feed
 ```
 
 - 無 `layout` 參數 → 預設 `01-ddcard-bn`（維持既有 bookmark／launcher 相容）。
@@ -329,6 +335,7 @@ Viewer 依 layout descriptor 取得：layout name、canvas 尺寸、mount 用的
 | 04_POP UP | `launch/04_POP UP.command` | 100755 | `viewer.html?layout=04-pop-up` |
 | 05_IG | `launch/05_IG.command` | 100755 | `viewer.html?layout=05-ig` |
 | 06_FB Post | `launch/06_FB Post.command` | 100755 | `viewer.html?layout=06-fb-post` |
+| 07_OM與FEED | `launch/07_OM與FEED.command` | 100755 | `viewer.html?layout=07-om-feed` |
 
 所有 launcher **共用 port 4176** 與同一個 marker（`data-spx-lottery-show-online-bn-viewer="true"`），因此可互相安全重用同一個本機 server；**不為每個版位新增 port**。各 launcher 皆沿用既有安全機制：SPX Repository root 作為 document root、`.js`／`.css` 回 `Cache-Control: no-store`、marker 驗證後才重用、有限次數 readiness 輪詢、port 被非本工具程式占用即 fail-closed、`trap` 清理且只終止自己啟動的 server。
 
@@ -355,7 +362,7 @@ sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正�
 
 ### 2.17 目前共通層未涵蓋的項目
 
-以下尚未裁決，不得自行補完：Excel 工單匯入、JSON workspace、Export／下載、encoder 與輸出格式、07～17 的任何規格。
+以下尚未裁決，不得自行補完：Excel 工單匯入、JSON workspace、Export／下載、encoder 與輸出格式、08～17 的任何規格。
 
 ## 3. 版位總表
 
@@ -367,7 +374,7 @@ sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正�
 | 04 | 04_POP UP | **Implemented / Jamie Manual Verification PASS / Code Committed** |
 | 05 | 05_IG | **Implemented / Jamie Manual Verification PASS / Code Committed** |
 | 06 | 06_FB Post | **Implemented / Jamie Manual Verification PASS / Code Committed** |
-| 07 | 07_OM與FEED | Pending（未製作） |
+| 07 | 07_OM與FEED | **Implemented / Jamie Manual Verification PASS / Code Committed** |
 | 08 | 08_SKBN_APP左右 | Pending（未製作） |
 | 09 | 09_SKBN_APP中 | Pending（未製作） |
 | 10 | 10_SKBN_PC | Pending（未製作） |
@@ -379,9 +386,9 @@ sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正�
 | 16 | 16_繳費機下方BN-立保 | Pending（未製作） |
 | 17 | 17_繳費機下方BN-博辰 | Pending（未製作） |
 
-07～17 的名稱讀自 `開獎秀/01_線上電子BN/assets/` 下對位／智取櫃／門市三個目錄的素材檔名（三者命名一致）。這些名稱僅供定位，**尚未經正式裁決**；各版位的尺寸、geometry、字級、顏色與任何行為一律尚未調查、尚未設計。本表不構成對 07～17 的任何規格承諾。
+08～17 的名稱讀自 `開獎秀/01_線上電子BN/assets/` 下對位／智取櫃／門市三個目錄的素材檔名（三者命名一致）。這些名稱僅供定位，**尚未經正式裁決**；各版位的尺寸、geometry、字級、顏色與任何行為一律尚未調查、尚未設計。本表不構成對 08～17 的任何規格承諾。
 
-07～17 的素材目前存在於 Repository 工作目錄但**尚未納入版本控制**，不屬於已完成範圍。
+08～17 的素材目前存在於 Repository 工作目錄但**尚未納入版本控制**，不屬於已完成範圍。
 
 ## 4. 01_DDcard BN
 
@@ -1451,14 +1458,197 @@ M  開獎秀/01_線上電子BN/launch/viewer.html
 
 五張 06 相關素材於 Code Commit 前後 SHA-256 不變：對位 `e253396810c6ef9886846f10f87b877ded3b89d7ba7e24b9e1b9f09af87f69e1`、智取櫃 `51c67e17e0ba43205ff0bca773e17c4f173fbc78c4d0268c2147ba9be9d2eec4`、門市 `60f448c36369058a8728a97e9f63cc49a40662001f8194f7752523fd8a060021`、直式蝦皮購物_橘 `576d215a3aef3eda3a43cfe3b9e6b2f939b77d4c7e55c051f9d38cd48efd18a3`、直式蝦皮購物_白 `fe0e2f12475d8d33f8726b41ffa4ab21ac524a4a1ce7d2664023ac1d956ea4f9`。
 
-## 10. 目前仍未決項目
+## 10. 07_OM與FEED
+
+### 10.1 Status 與 Code Commit
+
+| 項目 | 值 |
+|---|---|
+| Status | Implemented |
+| Technical Self-Test | **PASS** |
+| 01 Regression Verification | **PASS** |
+| 02 Regression Verification | **PASS** |
+| 03 Regression Verification | **PASS** |
+| 04 Regression Verification | **PASS** |
+| 05 Regression Verification | **PASS** |
+| 06 Regression Verification | **PASS** |
+| Jamie Manual Verification | **PASS** |
+| Code Commit（full） | `dfc2ab390fe89699116791a13a6a65552af7086f` |
+| Code Commit（short） | `dfc2ab3` |
+| Commit message | `feat(lottery-show): add online BN OM and FEED layout` |
+| Parent | `6c80d3b9ea9b1fc31ba91608388ccb644519b988` |
+| Docs Commit | Pending |
+
+layout id：`07-om-feed`。
+
+### 10.2 Canvas
+
+正式畫布 **1000 × 1000**（online-bn 第一個正方形版位）。renderer 不得修改 canvas 尺寸；繪製後以斷言確認尺寸未變。
+
+### 10.3 背景
+
+**07 不宣告 descriptor 的 `background` 欄位**，因此走第 2.12 節的 legacy 分支：`fillRect(0, 0, 1000, 1000)` 填滿整張畫布，填色來源為 `state.colors.background`（即第 2.6 節的背景色控制項）。
+
+07 **不使用** 04 的 `rounded-card` 模式；畫布無透明區、無圓角卡片。兩張底圖都只覆蓋畫布下半（smart 之上尚有 499px、store 之上尚有 501px），未覆蓋處與底圖自身的透明處一律由背景色呈現。
+
+### 10.4 正式素材
+
+| 角色 | 路徑（相對 Repository root） | 尺寸 | SHA-256 |
+|---|---|---|---|
+| 對位圖 | `開獎秀/01_線上電子BN/assets/對位/07_OM與FEED.png` | 1000 × 1000 | `f2018b438c8e3c2fb26328f2f43fdfe398803635cb355d516de9676601a24717` |
+| smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/07_OM與FEED.png` | **1000 × 501** | `4d25e17bcf3648a784975fbe08ddc9e4212bf1ba0d759393ead748d03320924a` |
+| store 底圖 | `開獎秀/01_線上電子BN/assets/門市/07_OM與FEED.png` | **1000 × 499** | `65a1756ad372766e91232d1f6406432950523b652637fa203b146de4364d8ca9` |
+| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+
+Logo 沿用 online-bn 全版位共用素材（第 2.3 節），未新增 07 專屬 Logo。**兩張底圖高度不同（501 / 499）。**
+
+對位圖只供 Manual Verification Viewer 作 DOM overlay，不是 renderer 或輸出的一部分。
+
+素材載入失敗、或素材 intrinsic size 與上表不符，一律 render fail-closed。
+
+### 10.5 底圖 placement
+
+| style | 底圖 | x | y | width | height |
+|---|---|---|---|---|---|
+| `smart-locker` | `assets/智取櫃/07_OM與FEED.png` | 0 | **499** | 1000 | 501 |
+| `store` | `assets/門市/07_OM與FEED.png` | 0 | **501** | 1000 | 499 |
+
+兩者皆以原尺寸 1:1 繪製，**不 stretch、不 crop**，滿版寬（x = 0、width = 1000）、**底緣貼齊畫布底緣**（499 + 501 = 1000；501 + 499 = 1000）。
+
+**兩個 style 的 y 不同：smart-locker 為 499、store 為 501**（因底圖高度相差 2px），不得寫成同一值。
+
+### 10.6 Draw order
+
+**視覺／語意層級**（設計上的疊放順序）：
+
+1. 背景色（填滿整張 1000 × 1000）
+2. style 正式底圖
+3. Logo
+4. 主標
+5. 副標
+6. 小字 1
+7. 小字 2
+
+**實際 Canvas draw sequence**（renderer 的執行順序）：
+
+1. `fillRect(0, 0, 1000, 1000)` — 背景色
+2. `drawImage(base, 0, y, 1000, h)` — style 正式底圖
+3. Logo（contain ＋ 水平置中、垂直置中）
+4. **2× 層**：主標 ＋ 小字 1 ＋ 小字 2 於 2000 × 2000 離屏 canvas 繪製後，以單次 `drawImage` 合批貼回
+5. 副標（Bold，直接繪於正式 canvas）
+
+四個文字 box 的垂直範圍為 221–286、304–388、403–437、446–480，**兩兩不重疊**，因此合批與語意順序的算繪結果等價。
+
+人物、置物櫃、店面、彩帶、$1,000,000 彩券等視覺元素**已 baked into style 底圖**，renderer 不個別繪製。
+
+### 10.7 Logo
+
+| 項目 | 值 |
+|---|---|
+| box | x = 249、y = 119、width = 502、height = 81 |
+| fit | contain（`scale = min(boxW / srcW, boxH / srcH)`） |
+| 對齊 | **水平置中**、垂直置中 |
+| 規則 | 不 crop、不 stretch、destination 座標不取整 |
+
+以素材 1678 × 272 代入為**高度受限**：`scale = min(502/1678, 81/272) = 81/272`，dest ≈ **499.6985 × 81**，`destX ≈ 250.1507`、`destY = 119`（垂直餘裕為 0）。
+
+**box 的 `502 × 81` 是對位框，不是 renderer destination**；正式 destination 為 `499.6985 × 81`，水平留白共約 2.3015px。descriptor 只宣告 `box`、`intrinsic`、`src`，destination 由共用的 `computeContainRect()` 推導，未硬編。
+
+Logo 橘／白兩個 variant 的 geometry 一致。模式與 Auto 判定依第 2.3 節。在 07 的預設色下：`#2660ad` → 白 Logo、`#ffda46` → 橘 Logo。
+
+### 10.8 預設色
+
+依第 2.6 節的 online-bn 全版位共通預設色：smart-locker `#2660ad`／`#fffac8`／`#fff000`／`#fffac8`；store `#ffda46`／`#472704`／`#eb1717`／`#472704`。
+
+### 10.9 Typography
+
+| 元素 | Photoshop source | Canvas renderer | 2× 層 |
+|---|---|---|---|
+| 主標 | `ShopeeNotoSans(content)-Medium` 70pt | `52.5pt "LotteryShowNotoSans Medium"` | 是 |
+| 副標 | `ShopeeNotoSans(content)-Bold` 88pt | `66pt "LotteryShowNotoSans Bold"` | 否 |
+| 小字 1 | `ShopeeNotoSans(content)-Medium` 35pt | `26.25pt "LotteryShowNotoSans Medium"` | 是 |
+| 小字 2 | `ShopeeNotoSans(content)-Medium` 35pt | `26.25pt "LotteryShowNotoSans Medium"` | 是 |
+
+換算依第 2.8 節的 `Canvas pt = Photoshop pt × 72 / 96`（70 → 52.5、88 → 66、35 → 26.25）。`52.5pt` 與 `26.25pt` 為非整數 pt，**原值保留**，未取整、未改用 px。Photoshop source pt **不得直接作為 Canvas pt**。
+
+**07 的小字字重為 Medium**（與 01、03、04、05、06 相同，與 02 的 Regular 不同），因此 07 只註冊 Medium 與 Bold，**不載入 Regular**（第 2.11 節）。字型未就緒即 render fail-closed，不 fallback 系統字型。
+
+2× 層成員由 descriptor 決定、不由字重決定（第 2.10 節）。**不得 auto-wrap、不得 auto-shrink。**
+
+### 10.10 文字 geometry 與水平對齊
+
+| 元素 | x | y | width | height | 水平 | 垂直 |
+|---|---|---|---|---|---|---|
+| 主標 | 170 | 221 | 660 | 65 | ink-box center | ink-box center |
+| 副標 | 170 | 304 | 660 | 84 | ink-box center | ink-box center |
+| 小字 1 | 170 | 403 | 660 | 34 | ink-box center | ink-box center |
+| 小字 2 | 170 | 446 | 660 | 34 | ink-box center | ink-box center |
+
+**07 的五個 box（Logo ＋ 四個文字）共用同一水平中心 500（＝畫布中心）**，因此 07 的 `horizontalAlign` 為 `center`（與 01、04、05 相同，第 2.9 節）。
+
+小字 1 與小字 2 是**兩個獨立文字欄位**，不是同一欄自動換行；四欄皆為單行，不 multiline、不 wrap、不 auto-shrink。
+
+### 10.11 文字上限
+
+依第 2.5 節的 online-bn 全版位共通上限：主標 8、副標 7、小字 1 18、小字 2 18。weighted count 依第 2.4 節（漢字 1、英文／數字／符號 0.5，以 `\p{Script=Han}` 判定）。IME-safe 與超限 rollback 依第 2.7 節。正式 Console 的 initial text 為四個空字串；Viewer 自動帶入第 2.16 節的共通 sample text。
+
+### 10.12 Renderer-owned 元素
+
+07 **沒有** `secondaryLogo`、CTA、badge、額外文字或任何額外 renderer-owned graphic。descriptor 的 top-level 欄位精確為 `id`、`name`、`canvas`、`horizontalAlign`、`logo`、`textOrder`、`text`、`supersampledFields`、`directFields`、`colorFields`、`styles`、`alignmentOverlaySrc` 十二項，不含 `background` 與 `secondaryLogo`。
+
+06 雖已建立 optional `secondaryLogo` 能力（第 2.12 節），**07 不使用**；人物、置物櫃、店面、彩帶、彩券與其他裝飾一律 baked into style 底圖。
+
+### 10.13 Manual Verification Viewer
+
+| 項目 | 值 |
+|---|---|
+| Viewer | `開獎秀/01_線上電子BN/launch/viewer.html?layout=07-om-feed` |
+| Launcher | `開獎秀/01_線上電子BN/launch/07_OM與FEED.command`（100755、port 4176） |
+| 對位 overlay | `assets/對位/07_OM與FEED.png` |
+
+07 與 01～06 共用同一個 Viewer 頁面，以 `?layout=` 區分（第 2.15 節）；未知 layout 仍 fail-closed，合法值列舉已加入 `07-om-feed`；overlay 由 descriptor 的 `alignmentOverlaySrc` 取得，未新增 07 專屬分支。
+
+### 10.14 Implementation files
+
+Code Commit `dfc2ab3` 實際涵蓋的檔案，共 7 paths（2 M ＋ 5 A）：
+
+```text
+A  開獎秀/01_線上電子BN/assets/對位/07_OM與FEED.png
+A  開獎秀/01_線上電子BN/assets/智取櫃/07_OM與FEED.png
+A  開獎秀/01_線上電子BN/assets/門市/07_OM與FEED.png
+A  開獎秀/01_線上電子BN/js/layout-07-om-feed.js
+A  開獎秀/01_線上電子BN/launch/07_OM與FEED.command
+M  開獎秀/01_線上電子BN/js/online-bn.js
+M  開獎秀/01_線上電子BN/launch/viewer.html
+```
+
+兩個 M 的性質：`online-bn.js` 新增 `LAYOUT_07_OM_FEED` 的 import 並將其附加於 `LAYOUTS` 末端（`DEFAULT_LAYOUT_ID` 維持 `01-ddcard-bn`），另同步兩行版位數現況註解；`viewer.html` 僅更新 fail-closed 訊息中的合法值列舉字串。
+
+**07 完全使用現有 descriptor contract，NO engine change。** `layout-engine.js`、`preview.js`、`controls.js`、`logo-auto.js`、`css/online-bn.css` 皆為 **0 modification**；`layout-01-ddcard-bn.js`～`layout-06-fb-post.js`、`01_DDcard BN.command`～`06_FB Post.command`、`開獎秀/console.html`、`開獎秀/js/console.js`、`開獎秀/css/console.css`、`開獎秀/js/registry.js`、`快速取件/`、`開獎秀/04_門市清單/` 亦皆未修改。07 未新增 `backgroundIntrinsic` 欄位：`backgroundPlacement` 的 width／height 仍兼任底圖 intrinsic 的 fail-closed 期望值。
+
+**不在本次 Code Commit 範圍**：08～17 的素材與兩張未使用的橫式舊 Logo 仍為 untracked，不屬於已完成範圍。
+
+### 10.15 Verification 記錄
+
+| 項目 | 結果 |
+|---|---|
+| Technical Self-Test | **PASS**（canvas 1000 × 1000、三張素材 intrinsic 與 SHA-256、兩組 base placement `0,499,1000×501` 與 `0,501,1000×499` 且 y 不同、底緣皆為 1000、1:1／不 crop／不 stretch、無 top-level `background` 故走 legacy `fillRect(0,0,1000,1000)`、無 `secondaryLogo`、Logo box 與 contain `499.6985 × 81 @ (250.1507, 119)` 且未硬編 destination、四組文字 geometry 與五個 box 共用中心 500、三組 font string 與 ×72/96 換算、`52.5pt` 與 `26.25pt` 原值保留、僅註冊 Medium＋Bold、2× offscreen 2000 × 2000 與成員、limits、預設色、Logo Auto 與 threshold、版位清單與切換、Viewer layout context 與未知值 fail-closed、七個 launcher port 與 marker、`git diff --check`） |
+| 01～06 Regression Verification | **PASS**（六份 descriptor 與六個 launcher blob 0 modification；背景分支 01／02／03／05／06 legacy、04 rounded-card 均未變；06 的 `secondaryLogo` 行為未受影響） |
+| Engine boundary | **NO engine change** —— `layout-engine.js`、`preview.js`、`controls.js`、`logo-auto.js`、`css/online-bn.css` 皆 0 modification，07 完全以現有 descriptor contract 表達 |
+| Browser visual verification | 由 **Jamie 實機 Manual Verification PASS** 認定（非自動化 browser test） |
+| Jamie Manual Verification | **PASS**（Canvas 1000 × 1000、smart-locker 與 store 背景色、兩組底圖貼底位置、Logo、主標／副標／小字 1／小字 2 字級與置中、整體對位 overlay、Logo modes Auto／White／Orange 且 Auto 下 smart → white、store → orange、01～07 版位切換、01～06 視覺無 regression） |
+
+三張 07 素材於 Code Commit 前後 SHA-256 不變（值見第 10.4 節），`git diff --check HEAD^ HEAD` PASS。
+
+## 11. 目前仍未決項目
 
 以下尚未裁決，下一階段不得自行假設：
 
-- 07～17 的全部規格：尺寸、素材、geometry、字級、字重、顏色、文字欄位、Photoshop source pt。
+- 08～17 的全部規格：尺寸、素材、geometry、字級、字重、顏色、文字欄位、Photoshop source pt。
 - online-bn 的 Excel 工單 schema 與匯入流程。
 - online-bn 的 JSON／workspace 資料結構。
 - online-bn 的 Export、encoder、輸出格式與檔名規則。
 - 跨版位是否需要保留各自 state（目前切換版位即重設，見第 2.14 節）。
-- 07～17 的 launcher 檔案（Viewer 已為共用，port 沿用 4176）。
-- 07～17 素材納入版本控制的時機與範圍。
+- 08～17 的 launcher 檔案（Viewer 已為共用，port 沿用 4176）。
+- 08～17 素材納入版本控制的時機與範圍。
