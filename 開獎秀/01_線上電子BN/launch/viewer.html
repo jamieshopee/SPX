@@ -278,8 +278,12 @@
 
       // 以既有 controls 的 input 事件寫入，完整走正式 weighted count 與 rollback 流程。
       // 不 bypass validation、不建立 test mode、不直接改寫 renderer state。
-      function applySampleText() {
-        for (const [id, text] of Object.entries(SAMPLE_TEXT)) {
+      // 套用範圍為 descriptor-driven：依目前 layout.textOrder 決定要帶入哪些欄位，
+      // 不同版位的文字欄位組成不同（01～07 為四欄，08 只有副標），此處不得硬編任何版位。
+      function applySampleText(layout) {
+        for (const id of layout.textOrder) {
+          const text = SAMPLE_TEXT[id];
+          if (text === undefined) continue;
           const input = mounts.controlBody.querySelector(`#obn-text-${id}`);
           if (!input) return false;
           input.value = text;
@@ -295,7 +299,7 @@
       function handleActivated(layout) {
         activeLayout = layout;
         overlay.src = layout.alignmentOverlaySrc.href;
-        return applySampleText();
+        return applySampleText(layout);
       }
 
       let session = null;
@@ -331,7 +335,7 @@
 
       if (initialLayout === null) {
         // 未知 layout：fail-closed，不渲染工作區、不猜測、不 fallback。
-        status.textContent = `無效的版位參數：${requestedLayoutId}。合法值為 01-ddcard-bn、02-mall-hbn、03-lpbn、04-pop-up、05-ig、06-fb-post 或 07-om-feed。`;
+        status.textContent = `無效的版位參數：${requestedLayoutId}。合法值為 01-ddcard-bn、02-mall-hbn、03-lpbn、04-pop-up、05-ig、06-fb-post、07-om-feed 或 08-skbn-app-lr。`;
         status.classList.add("viewer-error");
         mounts.previewBody.replaceChildren();
         mounts.controlBody.replaceChildren();
