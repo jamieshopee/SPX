@@ -6,7 +6,7 @@
 //
 // 職責：
 //   1. 動態載入 online-bn 專屬 stylesheet（context-isolated，載入失敗 fail-closed）
-//   2. 左欄渲染正式版位清單並支援切換（目前 01、02、03、04、05、06、07、08、09 九個）
+//   2. 左欄渲染正式版位清單並支援切換（目前 01、02、03、04、05、06、07、08、09、10 十個）
 //   3. 中欄掛上 Preview controller（使用共用 layout engine）
 //   4. 右欄掛上正式 controls（欄位由該 layout descriptor 提供）
 //   5. 持有使用者可變 state（page memory；不使用 localStorage／sessionStorage／
@@ -14,7 +14,7 @@
 //
 // 嚴格邊界：
 //   - 版位清單是單純的陣列，不是 registry／plugin system，
-//     也不為 10～17 預先抽象。
+//     也不為 11～17 預先抽象。
 //   - 切換版位＝以該 layout 的 defaults 重新初始化 state（Jamie 核准行為），
 //     不建立 state cache、不使用任何持久化機制。
 //   - 正式 Console 的 URL context 仍只有 item／style；切換版位不改 URL。
@@ -30,6 +30,7 @@ import { LAYOUT_06_FB_POST } from "./layout-06-fb-post.js";
 import { LAYOUT_07_OM_FEED } from "./layout-07-om-feed.js";
 import { LAYOUT_08_SKBN_APP_LR } from "./layout-08-skbn-app-lr.js";
 import { LAYOUT_09_SKBN_APP_MID } from "./layout-09-skbn-app-mid.js";
+import { LAYOUT_10_SKBN_PC } from "./layout-10-skbn-pc.js";
 import { createInitialState, getStyleData } from "./layout-engine.js";
 import { createPreviewController } from "./preview.js";
 import { mountControls } from "./controls.js";
@@ -43,7 +44,8 @@ const LAYOUTS = Object.freeze([
   LAYOUT_06_FB_POST,
   LAYOUT_07_OM_FEED,
   LAYOUT_08_SKBN_APP_LR,
-  LAYOUT_09_SKBN_APP_MID
+  LAYOUT_09_SKBN_APP_MID,
+  LAYOUT_10_SKBN_PC
 ]);
 
 export const DEFAULT_LAYOUT_ID = LAYOUT_01_DDCARD_BN.id;
