@@ -27,7 +27,7 @@ Status: Living（持續更新，非 Locked）
 
 ## 2. 線上／電子BN 共通規格
 
-本節只記錄目前已由 01、02、03、04、05、06、07、08、09 實作正式證明，且適合 online-bn 版位共用的內容。**尚未實作的 10～17 行為不得寫入本節，也不得視為已完成。**
+本節只記錄目前已由 01～12 實作正式證明，且適合 online-bn 版位共用的內容。**尚未實作的 13～17 行為不得寫入本節，也不得視為已完成。**
 
 ### 2.1 Style
 
@@ -162,10 +162,13 @@ Canvas pt = Photoshop pt × 72 / 96
 | 07_OM與FEED | 70 / 88 / 35pt | **52.5 / 66 / 26.25pt** |
 | 08_SKBN_APP左右 | —／39／—pt（只有副標） | **—／29.25／—pt** |
 | 09_SKBN_APP中 | —／46／—pt（只有副標） | **—／34.5／—pt** |
+| 10_SKBN_PC | —／28.5／—pt（只有副標） | **—／21.375／—pt** |
+| 11_遊戲大廳 MSBN | 40 / 60 / 23pt | **30 / 45 / 17.25pt** |
+| 12_TVBN_一般門市 | 83 / 97 / 38pt | **62.25 / 72.75 / 28.5pt** |
 
 換算結果為非整數時（如 03 的 `49.5pt`、`17.625pt`，04 的 `41.25pt`、`18.75pt`，05 的 `52.5pt`，06 的 `48.75pt`，07 的 `52.5pt`、`26.25pt`）一律**原值保留**，不得取整、不得改用 px。
 
-此換算為 online-bn renderer 已採用的換算原則；**不代表 10～17 的字級已經決定**。各版位的 Photoshop source pt 與字重仍須由該版位實際調查後決定（01、03、04、05、06、07 的小字為 Medium、02 為 Regular，見第 2.11 節；08 與 09 沒有主標與小字，只有副標 Bold）。
+此換算為 online-bn renderer 已採用的換算原則；**不代表 13～17 的字級已經決定**。各版位的 Photoshop source pt 與字重仍須由該版位實際調查後決定（01、03～07、11、12 的小字為 Medium、02 為 Regular，見第 2.11 節；08～10 沒有主標與小字，只有副標 Bold）。
 
 ### 2.9 水平對齊（layout-specific）
 
@@ -184,6 +187,7 @@ Canvas pt = Photoshop pt × 72 / 96
 | 09_SKBN_APP中 | **兩個** box 共用水平中心 242 | `center` | contain 後水平置中 | ink-box 水平置中 |
 | 10_SKBN_PC | **兩個** box 共用左緣 x=17（水平中心 90／119 不同） | `left` | contain 後左緣貼 box.x | ink 左緣對齊 box.x |
 | 11_遊戲大廳 MSBN | 五個 box 共用左緣 x=135（水平中心 337／343 不同） | `left` | contain 後左緣貼 box.x | ink 左緣對齊 box.x |
+| 12_TVBN_一般門市 | 主 Logo 與四個文字 box 共用左緣 x=59 | `left` | contain 後左緣貼 box.x | ink 左緣對齊 box.x |
 
 `left` 的實作語意為 **`inkLeft = -actualBoundingBoxLeft`、`x = box.x - inkLeft`**，使文字的**實際 ink 左緣精確對齊 `box.x`**；**不是單純設定 `textAlign = "left"` 後以 `box.x` 繪製**。Logo 的 `left` 則為 `destX = box.x`。
 
@@ -206,6 +210,9 @@ Canvas pt = Photoshop pt × 72 / 96
 | 07_OM與FEED | 主標（Medium）＋小字 1（Medium）＋小字 2（Medium） | 副標（Bold） | 2000 × 2000 |
 | 08_SKBN_APP左右 | **（空）** | 副標（Bold） | **不建立** |
 | 09_SKBN_APP中 | **（空）** | 副標（Bold） | **不建立** |
+| 10_SKBN_PC | **（空）** | 副標（Bold） | **不建立** |
+| 11_遊戲大廳 MSBN | 主標（Medium）＋小字 1（Medium）＋小字 2（Medium） | 副標（Bold） | 2400 × 760 |
+| 12_TVBN_一般門市 | 主標（Medium）＋小字 1（Medium）＋小字 2（Medium） | 副標（Bold） | 3198 × 2160 |
 
 前七者使用同一段共用程式；字重差異不影響 2× 機制。08 與 09 沒有 Medium 欄位，`supersampledFields` 為空陣列，engine 的 2× 層直接 early-return，**不建立 offscreen canvas**。
 
@@ -234,6 +241,9 @@ family 別名以 FontFace API 建立，不與 `console.css` 的 `"Shopee Noto Sa
 | 07_OM與FEED | Medium、Bold（**不載 Regular**） |
 | 08_SKBN_APP左右 | **只有 Bold**（不載 Medium、不載 Regular） |
 | 09_SKBN_APP中 | **只有 Bold**（不載 Medium、不載 Regular） |
+| 10_SKBN_PC | **只有 Bold**（不載 Medium、不載 Regular） |
+| 11_遊戲大廳 MSBN | Medium、Bold（**不載 Regular**） |
+| 12_TVBN_一般門市 | Medium、Bold（**不載 Regular**） |
 
 字型未就緒（`load()` 失敗或 `check()` 不過）一律 **render fail-closed**，不 fallback 系統字型、不產生半成品。
 
@@ -249,6 +259,7 @@ family 別名以 FontFace API 建立，不與 `console.css` 的 `"Shopee Noto Sa
 - contain 幾何計算
 - ink-box 文字量測與繪製（水平 `center`／`left`、垂直 ink-box center）
 - local 2× supersampling layer（第 2.10 節）
+- optional QR 的 descriptor opt-in、geometry validation、local encoder 與 generated-image readiness（12 導入，見下）
 - 正式 render pipeline（Preview 與未來 Export 的唯一繪製來源）
 - `createInitialState(layout, styleId)`
 
@@ -267,15 +278,18 @@ engine **不持有任何版位數值**；canvas、geometry、字級、字重、�
 | 07_OM與FEED | `開獎秀/01_線上電子BN/js/layout-07-om-feed.js` |
 | 08_SKBN_APP左右 | `開獎秀/01_線上電子BN/js/layout-08-skbn-app-lr.js` |
 | 09_SKBN_APP中 | `開獎秀/01_線上電子BN/js/layout-09-skbn-app-mid.js` |
+| 10_SKBN_PC | `開獎秀/01_線上電子BN/js/layout-10-skbn-pc.js` |
+| 11_遊戲大廳 MSBN | `開獎秀/01_線上電子BN/js/layout-11-msbn.js` |
+| 12_TVBN_一般門市 | `開獎秀/01_線上電子BN/js/layout-12-tvbn-store.js` |
 
-descriptor 欄位：`id`、`name`、`canvas`、`horizontalAlign`、`logo`、`textOrder`、`text`、`supersampledFields`、`directFields`、`colorFields`、`styles`、`alignmentOverlaySrc`，以及 **optional** 的 `background` 與 `secondaryLogo`。
+descriptor 欄位：`id`、`name`、`canvas`、`horizontalAlign`、`logo`、`textOrder`、`text`、`supersampledFields`、`directFields`、`colorFields`、`styles`、`alignmentOverlaySrc`，以及 **optional** 的 `background`、`secondaryLogo` 與 `qr`。
 
 **背景模式（optional descriptor，04 導入）**
 
 | `layout.background` | 行為 | 目前採用的版位 |
 |---|---|---|
-| 未宣告 | legacy：`fillRect(0, 0, canvas.width, canvas.height)` 填滿整張畫布 | 01、02、03、05、06、07 |
-| `mode: "rounded-card"` | 畫布保持透明，只以背景色填 descriptor 指定的圓角卡片 | 04 |
+| 未宣告 | legacy：`fillRect(0, 0, canvas.width, canvas.height)` 填滿整張畫布 | 01、02、03、05、06、07、08、09、12 |
+| `mode: "rounded-card"` | 畫布保持透明，只以背景色填 descriptor 指定的圓角卡片 | 04、10、11 |
 
 此為 **backward-compatible 擴充**：`layout.background` 不存在時走與擴充前逐行相同的 legacy 分支，01／02／03 的 descriptor 皆未新增此欄位，背景行為與輸出完全未變（04 Regression Verification = PASS，見第 7.14 節）。05、06 與 07 亦未宣告此欄位，同樣走 legacy 分支（第 8.3、9.3、10.3 節）。
 
@@ -285,7 +299,7 @@ descriptor 欄位：`id`、`name`、`canvas`、`horizontalAlign`、`logo`、`tex
 
 | `layout.secondaryLogo` | 行為 | 目前採用的版位 |
 |---|---|---|
-| 未宣告 | 不載入、不繪製任何第二 Logo（與擴充前逐行相同） | 01、02、03、04、05、07 |
+| 未宣告 | 不載入、不繪製任何第二 Logo（與擴充前逐行相同） | 01～05、07～12 |
 | 已宣告 | 主 Logo 之後、文字層之前，以**同一個 resolved variant** 多繪製一個 contain Logo | 06 |
 
 contract 只有三個欄位：`box`、`intrinsic`、`src.orange`／`src.white`。**沒有** `mode`、`threshold`、state、controls、顏色、獨立 variant，也**不是** `logos` array 或泛用 multi-layer 框架 —— 目前只有一個 optional 第二 Logo，不為尚未裁決的情形預先抽象。
@@ -294,7 +308,13 @@ fit 一律沿用既有 `computeContainRect()` 與該 layout 的 `horizontalAlign
 
 此為 **backward-compatible 擴充**：主 Logo 既有區塊未重構，`layout.secondaryLogo` 未宣告時素材載入與繪製皆被跳過。06 的 Technical Self-Test 以 recording mock ctx 比對 engine 擴充前後 01～05 的 ctx 呼叫序列（5 版位 × 2 styles × 3 Logo 模式 = **30 組、合計 1194 筆**），結果**逐筆完全相同**（第 9.16 節）。
 
-**目前有 01、02、03、04、05、06、07、08、09 九個 descriptor。這不是 17 版位的 registry 或 plugin system，也未為 10～17 預先抽象。** 03 的加入未修改 `layout-engine.js`（0 modification）；04 僅為了上述背景能力對 engine 做最小擴充，未加入任何 04 專屬數值；05 的加入同樣未修改 `layout-engine.js`（0 modification）；06 僅為了上述第二 Logo 能力對 engine 做最小擴充，未加入任何 06 專屬數值；07 的加入未修改 `layout-engine.js`（0 modification）；08 的加入同樣未修改 `layout-engine.js`（0 modification），且證實既有 contract 可表達「單一文字欄位、空 `supersampledFields`、兩個 `colorFields`」的版位；09 的加入同樣未修改 `layout-engine.js`（0 modification），沿用 08 已證實的同一條 contract，**No new engine capability required**。
+**目前有 01～12 十二個 descriptor。這不是 17 版位的 registry 或 plugin system，也未為 13～17 預先抽象。** 03 的加入未修改 `layout-engine.js`（0 modification）；04 僅為了上述背景能力對 engine 做最小擴充，未加入任何 04 專屬數值；05 的加入同樣未修改 `layout-engine.js`（0 modification）；06 僅為了上述第二 Logo 能力對 engine 做最小擴充，未加入任何 06 專屬數值；07 的加入未修改 `layout-engine.js`（0 modification）；08 的加入同樣未修改 `layout-engine.js`（0 modification），且證實既有 contract 可表達「單一文字欄位、空 `supersampledFields`、兩個 `colorFields`」的版位；09 的加入同樣未修改 `layout-engine.js`（0 modification），沿用 08 已證實的同一條 contract，**No new engine capability required**。10、11 亦沿用既有能力；12 導入下述 optional QR，版位數值仍只由 descriptor 提供。
+
+**QR（optional descriptor，12 導入）**
+
+只有宣告 `qr` 的 descriptor 才啟用；contract 為 `box` 與 `defaultUrl`，目前只有 12 使用。`createInitialState()` 只對 opt-in layout 新增 `qrUrl`，由 `qr.defaultUrl` 初始化。01～11 的 state shape 不增加 `qrUrl`，沒有 QR vendor load、encode 或 draw side effect。
+
+共用 pipeline 順序為 background → style base → main Logo → optional secondaryLogo → optional QR → local 2× text layer → direct text。QR geometry 必須為畫布內、有限數、非零正方形；URL 空值／非法值跳過 QR，其餘 BN 正常 render；geometry、vendor、encoder 或 generated-image readiness failure 則整次 render reject，沿用 Preview fail-closed。URL utility、local vendor、readiness 與 control 的最小正式 contract 見第 15.14 節；不代表已實作工單、workspace 或 Export。
 
 Logo Auto 的純邏輯維持獨立於 `開獎秀/01_線上電子BN/js/logo-auto.js`，engine 引用之，未修改。
 
@@ -306,7 +326,7 @@ Preview 使用共用 engine 的正式 renderer，**不建立 Preview-only render
 
 ### 2.14 正式 Console 的版位選擇
 
-正式 Console 左欄列出目前的正式版位，目前為 **01_DDcard BN**、**02_Mall HBN**、**03_LPBN**、**04_POP UP**、**05_IG**、**06_FB Post**、**07_OM與FEED**、**08_SKBN_APP左右**、**09_SKBN_APP中**（順序固定，新版位附加於末端），目前選中者標記 `aria-current="true"`。
+正式 Console 左欄列出目前的正式版位 **01～12**（名稱見第 3 節；順序固定，新版位附加於末端），目前選中者標記 `aria-current="true"`。預設仍為 `01-ddcard-bn`。
 
 切換版位的行為：dispose 目前 session → 以新 layout 的 `createInitialState(layout, styleId)` 建立 state → 重新掛載 Preview 與 Controls。因此**切換版位後文字回空白、顏色回該 style 預設色**。
 
@@ -332,6 +352,9 @@ viewer.html?layout=06-fb-post
 viewer.html?layout=07-om-feed
 viewer.html?layout=08-skbn-app-lr
 viewer.html?layout=09-skbn-app-mid
+viewer.html?layout=10-skbn-pc
+viewer.html?layout=11-msbn
+viewer.html?layout=12-tvbn-store
 ```
 
 - 無 `layout` 參數 → 預設 `01-ddcard-bn`（維持既有 bookmark／launcher 相容）。
@@ -352,6 +375,9 @@ Viewer 依 layout descriptor 取得：layout name、canvas 尺寸、mount 用的
 | 07_OM與FEED | `launch/07_OM與FEED.command` | 100755 | `viewer.html?layout=07-om-feed` |
 | 08_SKBN_APP左右 | `launch/08_SKBN_APP左右.command` | 100755 | `viewer.html?layout=08-skbn-app-lr` |
 | 09_SKBN_APP中 | `launch/09_SKBN_APP中.command` | 100755 | `viewer.html?layout=09-skbn-app-mid` |
+| 10_SKBN_PC | `launch/10_SKBN_PC.command` | 100755 | `viewer.html?layout=10-skbn-pc` |
+| 11_遊戲大廳 MSBN | `launch/11_遊戲大廳 MSBN.command` | 100755 | `viewer.html?layout=11-msbn` |
+| 12_TVBN_一般門市 | `launch/12_TVBN_一般門市.command` | 100755 | `viewer.html?layout=12-tvbn-store` |
 
 所有 launcher **共用 port 4176** 與同一個 marker（`data-spx-lottery-show-online-bn-viewer="true"`），因此可互相安全重用同一個本機 server；**不為每個版位新增 port**。各 launcher 皆沿用既有安全機制：SPX Repository root 作為 document root、`.js`／`.css` 回 `Cache-Control: no-store`、marker 驗證後才重用、有限次數 readiness 輪詢、port 被非本工具程式占用即 fail-closed、`trap` 清理且只終止自己啟動的 server。
 
@@ -374,13 +400,13 @@ Viewer 與 launcher 是 **Manual Verification helper**，不是正式產品介�
 
 sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正式 weighted count 與 rollback 流程，**不 bypass 任何 validation**。
 
-**套用範圍為 descriptor-driven（08 導入的 generic compatibility fix）**：`applySampleText(layout)` 依目前 `layout.textOrder` 迭代，只對該版位實際存在且上表有定義的欄位套用。01～07 與 11 的 `textOrder` 為四欄，Viewer 行為與 sample 內容**完全不變**；08、09 與 10 的 `textOrder` 只有 `subtitle`，因此只套副標。此為 Viewer 的相容性修正，**不是 renderer capability**，上表四句內容亦未更動。
+**套用範圍為 descriptor-driven（08 導入的 generic compatibility fix）**：`applySampleText(layout)` 依目前 `layout.textOrder` 迭代，只對該版位實際存在且上表有定義的欄位套用。01～07、11、12 的 `textOrder` 為四欄，Viewer 行為與 sample 內容**完全不變**；08、09 與 10 的 `textOrder` 只有 `subtitle`，因此只套副標。此為 Viewer 的相容性修正，**不是 renderer capability**，上表四句內容亦未更動。
 
-**Viewer sample ≠ production default。** 正式 Console 的 `createInitialState().text` 一律為空字串（01～07 與 11 為四個欄位，08、09 與 10 只有 `subtitle`）。
+**Viewer sample ≠ production default。** 正式 Console 的 `createInitialState().text` 一律為空字串（01～07、11、12 為四個欄位，08、09 與 10 只有 `subtitle`）。
 
 ### 2.17 目前共通層未涵蓋的項目
 
-以下尚未裁決，不得自行補完：Excel 工單匯入、JSON workspace、Export／下載、encoder 與輸出格式、12～17 的任何規格。
+以下尚未裁決，不得自行補完：Excel 工單匯入、JSON workspace、Export／下載及其 encoder 與輸出格式、13～17 的任何規格。12 的 local QR encoder 不等同 Export capability。
 
 ## 3. 版位總表
 
@@ -397,16 +423,16 @@ sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正�
 | 09 | 09_SKBN_APP中 | **Implemented / Jamie Manual Verification PASS / Code Committed** |
 | 10 | 10_SKBN_PC | **Implemented / Jamie Manual Verification PASS / Code Committed** |
 | 11 | 11_遊戲大廳 MSBN | **Implemented / Jamie Manual Verification PASS / Code Committed** |
-| 12 | 12_TVBN_一般門市 | Pending（未製作） |
+| 12 | 12_TVBN_一般門市 | **Implemented / Jamie Manual Verification PASS / Code Committed** |
 | 13 | 13_TVBN_智取店 | Pending（未製作） |
 | 14 | 14_繳費機直式BN-立保 | Pending（未製作） |
 | 15 | 15_繳費機直式BN-博辰 | Pending（未製作） |
 | 16 | 16_繳費機下方BN-立保 | Pending（未製作） |
 | 17 | 17_繳費機下方BN-博辰 | Pending（未製作） |
 
-12～17 的名稱讀自 `開獎秀/01_線上電子BN/assets/` 下對位／智取櫃／門市三個目錄的素材檔名（三者命名一致）。這些名稱僅供定位，**尚未經正式裁決**；各版位的尺寸、geometry、字級、顏色與任何行為一律尚未調查、尚未設計。本表不構成對 12～17 的任何規格承諾。
+13～17 的名稱讀自 `開獎秀/01_線上電子BN/assets/` 下對位／智取櫃／門市三個目錄的素材檔名。這些名稱僅供定位，**尚未經正式裁決**；各版位的尺寸、geometry、字級、顏色與任何行為一律尚未調查、尚未設計。本表不構成對 13～17 的任何規格承諾。
 
-12～17 的素材目前存在於 Repository 工作目錄但**尚未納入版本控制**，不屬於已完成範圍。
+13～17 的素材目前存在於 Repository 工作目錄但**尚未納入版本控制**，不屬於已完成範圍。01～12 已 Implemented／Manual Verification PASS；下一個待製作版位為 **13**。
 
 ## 4. 01_DDcard BN
 
@@ -2490,16 +2516,241 @@ M  開獎秀/01_線上電子BN/launch/viewer.html
 
 `git diff --check HEAD^ HEAD` PASS。
 
-## 15. 目前仍未決項目
+## 15. 12_TVBN_一般門市
+
+### 15.1 Status 與 Code Commit
+
+| 項目 | 值 |
+|---|---|
+| Status | Implemented |
+| Phase A Repository Investigation | **PASS** |
+| Phase B Requirement / Proposal | **COMPLETE / PASS** |
+| Phase C Coding | **COMPLETE** |
+| Technical Self-Test | **PASS** |
+| 01～11 Regression Verification | **PASS** |
+| QR Machine Decode | **PASS** |
+| Jamie Manual Camera Scan | **PASS** |
+| Jamie Manual Verification | **PASS** |
+| Code Commit（full） | `5b665e8bbfc38315673a478493ca7410d3289b7a` |
+| Code Commit（short） | `5b665e8` |
+| Commit message | `feat(lottery-show): add online BN TVBN store layout` |
+| Commit body | 空 |
+| Parent | `d2d85da257c837f4d9db07bab459032fe288053a` |
+| Docs Commit | Pending |
+
+layout id：`12-tvbn-store`。兩個 style 為 `smart-locker` 與 `store`，共用 descriptor `開獎秀/01_線上電子BN/js/layout-12-tvbn-store.js` 與共用 renderer。12 是 online-bn **第一個使用正式 QR capability 的版位**；所有正式數值以本節 Code Commit 中的 implementation 為準。
+
+### 15.2 Canvas
+
+正式畫布 **1599 × 1080**。renderer 不改變正式 canvas 尺寸；Preview 僅以 CSS display size 等比縮放。
+
+### 15.3 背景
+
+12 不宣告 `background`，沿用 legacy **full-canvas background fill**：`fillRect(0, 0, 1599, 1080)`，填色來源為 `state.colors.background`。**不是 `rounded-card` layout**；底圖未覆蓋處及透明處由背景色呈現。
+
+### 15.4 正式素材
+
+| 角色 | 路徑（相對 Repository root） | 尺寸 | SHA-256 |
+|---|---|---|---|
+| 對位圖 | `開獎秀/01_線上電子BN/assets/對位/12_TVBN_一般門市.png` | 1599 × 1080 | `e50c63cc3f4f451280cb0bdaa8e14860067a0528c70b11518d9199d045192f4e` |
+| smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/12_TVBN_一般門市.png` | 1599 × 1080 | `f7601e3ca1b7f08a663a5dac699214f5372d31af9540af2db9e05604681d4cdb` |
+| store 底圖 | `開獎秀/01_線上電子BN/assets/門市/12_TVBN_一般門市.png` | 1539 × 1080 | `81da90c1630ee338fd9db4cddd9007160674e3c44aeca46b02b3303de51c918d` |
+| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+
+三張 12 PNG 於 Code Commit 前後 SHA-256 不變；對位圖僅供 Viewer DOM overlay，不進正式 renderer。底圖與 Logo 沿用 static asset readiness／intrinsic validation，載入失敗或尺寸不符即 render fail-closed。
+
+### 15.5 底圖 placement
+
+| style | intrinsic | x | y | width | height |
+|---|---|---|---|---|---|
+| `smart-locker` | 1599 × 1080 | 0 | 0 | 1599 | 1080 |
+| `store` | 1539 × 1080 | 60 | 0 | 1539 | 1080 |
+
+兩者皆為原尺寸 **1:1、no stretch、no crop**。store 向右平移 60，右緣 `60 + 1539 = 1599`，不把底圖拉成全畫布寬。
+
+### 15.6 Draw order
+
+**實際 Canvas draw sequence**：
+
+1. background（full-canvas fill）
+2. style base（第 15.5 節的 1:1 placement）
+3. main Logo（contain、水平 left、垂直 center）
+4. optional secondaryLogo（12 未宣告，跳過）
+5. optional QR（URL 有效才繪製）
+6. local 2× title／small1／small2（offscreen 3198 × 2160，合批貼回）
+7. direct subtitle
+
+01～11 未宣告 `qr`，沒有 QR draw operation；既有第二 Logo、rounded-card 與 subtitle-only 分支不受影響。
+
+### 15.7 Main Logo
+
+| 項目 | 值 |
+|---|---|
+| box | `(59,242,702,113)` |
+| intrinsic | 1678 × 272 |
+| fit | contain（`scale = min(boxW / srcW, boxH / srcH)`） |
+| 對齊 | horizontal left、vertical center |
+| 模式 | Auto／Orange／White |
+| Auto threshold | **0.498708** |
+| 預設 Auto 結果 | smart-locker → white；store → orange |
+
+使用既有 `蝦皮大樂透_橘.png`／`蝦皮大樂透_白.png`。由共用 `computeContainRect()` 計算 destination，約為 **`(59,242,697.110294,113)`**；此為推導結果，**不是 hardcoded destination**。不 crop、不 stretch、不取整。12 **無 `secondaryLogo`**。
+
+### 15.8 預設色
+
+| style | background | title | subtitle | small |
+|---|---|---|---|---|
+| `smart-locker` | `#2660ad` | `#fffac8` | `#fff000` | `#fffac8` |
+| `store` | `#ffda46` | `#472704` | `#eb1717` | `#472704` |
+
+沿用共通四項顏色控制。small1／small2 共用 `small` color，無第二組小字顏色。
+
+### 15.9 Typography — FINAL
+
+| 元素 | Photoshop source | Canvas renderer | Render path |
+|---|---|---|---|
+| title | `ShopeeNotoSans(content)-Medium` **83pt** | `62.25pt "LotteryShowNotoSans Medium"` | local 2× |
+| subtitle | `ShopeeNotoSans(content)-Bold` **97pt** | `72.75pt "LotteryShowNotoSans Bold"` | direct |
+| small1 | `ShopeeNotoSans(content)-Medium` **38pt** | `28.5pt "LotteryShowNotoSans Medium"` | local 2× |
+| small2 | `ShopeeNotoSans(content)-Medium` **38pt** | `28.5pt "LotteryShowNotoSans Medium"` | local 2× |
+
+正式換算：`Canvas pt = Photoshop pt × 72 / 96`；83 → 62.25、97 → 72.75、**38 → 28.5**。非整數 pt 原值保留，不取整、不改用 px。
+
+- `supersampledFields`：`["title","small1","small2"]`
+- `directFields`：`["subtitle"]`
+- `SUPERSAMPLE_SCALE`：**2**；offscreen：**3198 × 2160**
+- 只註冊 Medium／Bold，不載入 Regular；字型未就緒即 fail-closed。
+
+**Manual Verification 修改歷史：** Jamie 將 small1／small2 的 Photoshop **40pt → 38pt**、Canvas **30pt → 28.5pt**；後續 metadata correction 同步 `photoshopPt: 38`，`canvasPt: 28.5` 不變。舊值僅為修改歷史，不是正式規格。geometry、font family、local 2×、上限、顏色、Logo 與 QR 皆未因該次字級調整改動。
+
+### 15.10 文字 geometry 與水平對齊
+
+`textOrder`：`["title","subtitle","small1","small2"]`。
+
+| 元素 | x | y | width | height | 水平 | 垂直 |
+|---|---|---|---|---|---|---|
+| title | 59 | 396 | 691 | 79 | left ink | ink-box center |
+| subtitle | 59 | 499 | 690 | 92 | left ink | ink-box center |
+| small1 | 59 | 615 | 690 | 39 | left ink | ink-box center |
+| small2 | 59 | 660 | 690 | 39 | left ink | ink-box center |
+
+主 Logo 與四個文字 box 共用左緣 59；`horizontalAlign: "left"`，沿用 engine 的實際 ink 左緣對齊，不只設定 `textAlign`。四欄皆為 **single line、no wrap、no auto-shrink**，垂直以 ink-box center 定位。
+
+### 15.11 文字上限與輸入行為
+
+title／subtitle／small1／small2 的 limits 為 **8／7／18／18**。weighted count：Han = 1、non-Han = 0.5（Unicode `Script=Han`）；沿用 IME-safe、超限 rollback。正式 Console initial text 四欄空白；Viewer 使用既有 generic four-field `SAMPLE_TEXT`，不是 production default。
+
+### 15.12 Renderer-owned 與 baked-in 元素
+
+renderer-owned：full-canvas background、style base、main Logo、QR pattern、title、subtitle、small1、small2。
+
+**QR 白卡 `(60,746,220,310)`、掃碼標語與底部蝦皮購物全部 baked into base asset**，不是 renderer graphic，也不是 `secondaryLogo`。人物、場景、彩券及其他底圖美術不另行繪製。Renderer 在白卡內只繪製 QR pattern（含 encoder 輸出的 quiet zone），display box 為 **`(60,785,220,220)`**。
+
+### 15.13 Manual Verification Viewer 與 launcher
+
+| 項目 | 值 |
+|---|---|
+| Viewer | `開獎秀/01_線上電子BN/launch/viewer.html?layout=12-tvbn-store` |
+| Launcher | `開獎秀/01_線上電子BN/launch/12_TVBN_一般門市.command` |
+| Git mode | **100755** |
+| 對位 overlay | `assets/對位/12_TVBN_一般門市.png` |
+
+Viewer 共用既有頁面與 descriptor-driven `applySampleText(layout)`，12 自然帶入四句 sample；未知 layout fail-closed，無 12-specific sample branch。
+
+獨立 launcher 沿用 **127.0.0.1、port 4176、SPX repo root** 作 document root，以 Python `ThreadingHTTPServer` 提供服務；JS／CSS 回 `Cache-Control: no-store`。驗證既有 Viewer marker `data-spx-lottery-show-online-bn-viewer="true"` 後才重用 server，以 **Google Chrome** 開啟 `viewer.html?layout=12-tvbn-store`。port 被其他服務占用、readiness 或啟動失敗時 fail-closed；trap **只清理由自身啟動的 server**，不終止重用的 server。
+
+### 15.14 QR capability／URL／state／control
+
+**Descriptor opt-in 與 state**
+
+12 宣告 `qr.box: (60,785,220,220)` 與 `qr.defaultUrl: "https://shopee.tw/m/spxlottery"`。只有 descriptor 宣告 `qr` 才啟用；`createInitialState()` 由 `descriptor.qr.defaultUrl` 初始化 `qrUrl`。01～11 不新增 `qrUrl`，不載入 QR vendor、不 encode、不 draw QR。
+
+**URL utility**
+
+`js/qr-url-utils.js` 提供 `normalize`、`validate`、`isEmpty`：先 trim，拒絕 embedded whitespace；未含 `://` 時補 `https://`，交由 `new URL()` 解析，只接受解析後的 `http:`／`https:`，有效值使用 `url.href`。空值與非法值的 `normalize` 都回傳 `null`，`isEmpty` 區分 UI feedback；`validate` 回傳有效與否。此 utility 無 DOM、Canvas、state 或 network side effect。
+
+未實作 work-order parser、workspace、jobs、history 或 shortening API。未來工單「縮址」可覆蓋同一個 `qrUrl`，**不代表目前已實作工單串接**。
+
+**Local vendor 與 rendering**
+
+`js/qr-code.js` 按需載入 SPX 本機 vendored **soldair/node-qrcode browser bundle**（`vendor/qrcode.js`，MIT license 見 `vendor/LICENSE.qrcode.txt`），不使用 CDN。SPX AD 僅為已驗證 QR 來源參考，正式 vendor 已納入 SPX，**SPX runtime 不依賴 SPX AD repository**；SPX AD 沒有被本次 implementation 修改。
+
+Encoder 使用 `QRCode.toDataURL()`，error correction **M**、foreground **black**、background **white**；不覆寫 library default **margin 4／scale 4**。generated image 等待 load 與可用的 `decode()` readiness，intrinsic 必須 > 0 且 square，**不要求 intrinsic 220 × 220**，亦不進 static asset cache。
+
+Canvas2D 將完整 QR source 繪於 descriptor box；以局部 `save()`／`restore()` 包住 `imageSmoothingEnabled = false`，不影響其他 drawing。geometry 必須為畫布內、有限數、非零正方形。
+
+**Failure boundary**
+
+| 情況 | 正式行為 |
+|---|---|
+| 空 URL | 不 load vendor、不 encode、不 draw QR；其餘 BN 正常 render |
+| 非法 URL | 不 load vendor、不 encode、不 draw QR；其餘 BN 正常 render |
+| vendor／encoder／generated-image readiness failure | 整次 render reject，沿用 Preview fail-closed |
+| invalid QR geometry | 整次 render reject，沿用 Preview fail-closed |
+
+**Controls**
+
+`controls.js` 僅對宣告 `qr` 的 layout 顯示「縮址」（目前只有 12），input 為 `type=text`、`inputmode=url`，initial 為 `https://shopee.tw/m/spxlottery`。
+
+- 有效輸入：normalized URL → `qrUrl` → redraw。
+- 空值：`qrUrl=""`，不畫 QR。
+- 非法輸入：raw input 留供修正，顯示 feedback／`aria-invalid`，`qrUrl=""`，清除舊 QR。
+- 合法 blur：回寫 normalized URL。
+
+`online-bn.css` 只增加 QR invalid／feedback 樣式。沒有 shortening API、縮址按鈕、history、download、QR style controls 或 advanced QR settings。
+
+### 15.15 Implementation files
+
+Code Commit `5b665e8` 實際涵蓋 **14 paths（5 M ＋ 9 A）**：
+
+```text
+A  開獎秀/01_線上電子BN/assets/對位/12_TVBN_一般門市.png
+A  開獎秀/01_線上電子BN/assets/智取櫃/12_TVBN_一般門市.png
+A  開獎秀/01_線上電子BN/assets/門市/12_TVBN_一般門市.png
+M  開獎秀/01_線上電子BN/css/online-bn.css
+M  開獎秀/01_線上電子BN/js/controls.js
+A  開獎秀/01_線上電子BN/js/layout-12-tvbn-store.js
+M  開獎秀/01_線上電子BN/js/layout-engine.js
+M  開獎秀/01_線上電子BN/js/online-bn.js
+A  開獎秀/01_線上電子BN/js/qr-code.js
+A  開獎秀/01_線上電子BN/js/qr-url-utils.js
+A  開獎秀/01_線上電子BN/launch/12_TVBN_一般門市.command
+M  開獎秀/01_線上電子BN/launch/viewer.html
+A  開獎秀/01_線上電子BN/vendor/LICENSE.qrcode.txt
+A  開獎秀/01_線上電子BN/vendor/qrcode.js
+```
+
+`layout-engine.js` 為 descriptor opt-in QR 做最小整合；controls／CSS 提供 opt-in 縮址欄位。`online-bn.js` 附加 12 descriptor，順序 01→12、預設仍為 `01-ddcard-bn`；`viewer.html` 同步合法 layout 列舉。未擴張 registry、storage、URL persistence 或 sample architecture；01～11 descriptor、既有 launcher、`preview.js` 與 `logo-auto.js` 未修改。13～17 素材及兩張未使用橫式 Logo 仍為 untracked，不在本次 Code Commit 範圍。
+
+### 15.16 Verification 記錄
+
+以下為 Code Commit 前已完成的 Technical／Manual Verification 與提交檢查紀錄，不代表 Documentation Update 重新執行 render tests。
+
+| 項目 | 結果 |
+|---|---|
+| Technical Self-Test | **PASS**（canvas 1599 × 1080、兩組 base placement、Logo contain、四個文字 box、最終 typography／metadata、local 2× 與 direct 分工、文字上限、顏色、QR geometry／URL／state／controls／readiness／failure boundary、Viewer 與 launcher） |
+| 01～11 Regression Verification | **PASS**（11 layouts × 2 styles × 3 Logo modes = **66 組**，**2,852 recording operations** 與 12 導入前的 HEAD baseline 完全一致；01～11 無 QR state／vendor／encode／draw side effect） |
+| 12 render | **PASS**（2 styles × 3 Logo modes = **6 組**） |
+| QR Machine Decode | **PASS**（正式 **220 × 220** QR 成功解碼為 `https://shopee.tw/m/spxlottery`） |
+| Manual Verification Fix | **PASS**（small1／small2 最終 `photoshopPt: 38`、`canvasPt: 28.5`；geometry 與 QR 不變，metadata correction 後 descriptor contract／syntax PASS） |
+| Jamie Manual Camera Scan | **PASS**（Jamie 確認） |
+| Jamie Manual Verification | **PASS**（Jamie 確認，最終字級以第 15.9 節為準） |
+| Code Commit scope／integrity | **PASS**（精確 14 paths、launcher 100755、三張 committed PNG SHA 正確、vendor／license 與已驗證來源 byte-identical） |
+| SPX AD Integrity | **PASS**（唯讀來源，Files Modified 0、Stage 0、Commit NO、Push NO） |
+
+**Vendored-license note：** `vendor/LICENSE.qrcode.txt` 保持與已驗證第三方 MIT license 來源 byte-identical，包含原始 EOF blank line。Code Commit 的完整 `git diff --cached --check` 與提交後 `git diff --check HEAD^ HEAD` 均僅回報該 license 的 `new blank line at EOF`，已核准為 **Accepted Vendored-License Whitespace Exception**；排除該 exact path 後，其餘 13 paths whitespace errors = **0**。未修改 license、未變更 Git config，**不是 repository 全域忽略 whitespace**。
+
+## 16. 目前仍未決項目
 
 以下尚未裁決，下一階段不得自行假設：
 
-- 12～17 的全部規格：尺寸、素材、geometry、字級、字重、顏色、文字欄位、Photoshop source pt。
+- 13～17 的全部規格：尺寸、素材、geometry、字級、字重、顏色、文字欄位、Photoshop source pt。
 - online-bn 的 Excel 工單 schema 與匯入流程。
 - online-bn 的 JSON／workspace 資料結構。
-- online-bn 的 Export、encoder、輸出格式與檔名規則。
+- online-bn 的 Export、Export encoder、輸出格式與檔名規則（不含第 15.14 節已完成的 local QR encoder）。
 - 跨版位是否需要保留各自 state（目前切換版位即重設，見第 2.14 節）。
-- 12～17 的 launcher 檔案（Viewer 已為共用，port 沿用 4176）。
-- 12～17 素材納入版本控制的時機與範圍。
+- 13～17 的 launcher 檔案（Viewer 已為共用，port 沿用 4176）。
+- 13～17 素材納入版本控制的時機與範圍。
 
-下一個待製作版位：**12**（12_TVBN_一般門市）—— 尚未開始任何調查、設計或實作。
+下一個待製作版位：**13**（13_TVBN_智取店）—— 尚未開始任何調查、設計或實作。
