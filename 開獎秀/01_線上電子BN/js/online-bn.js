@@ -6,7 +6,7 @@
 //
 // 職責：
 //   1. 動態載入 online-bn 專屬 stylesheet（context-isolated，載入失敗 fail-closed）
-//   2. 左欄渲染正式版位清單並支援切換（目前 01～13 十三個）
+//   2. 左欄渲染正式版位清單並支援切換（目前 01～14 十四個）
 //   3. 中欄掛上 Preview controller（使用共用 layout engine）
 //   4. 右欄掛上正式 controls（欄位由該 layout descriptor 提供）
 //   5. 持有使用者可變 state（page memory；不使用 localStorage／sessionStorage／
@@ -34,6 +34,7 @@ import { LAYOUT_10_SKBN_PC } from "./layout-10-skbn-pc.js";
 import { LAYOUT_11_MSBN } from "./layout-11-msbn.js";
 import { LAYOUT_12_TVBN_STORE } from "./layout-12-tvbn-store.js";
 import { LAYOUT_13_TVBN_SMART_STORE } from "./layout-13-tvbn-smart-store.js";
+import { LAYOUT_14_PAYMENT_VERTICAL } from "./layout-14-payment-vertical.js";
 import { createInitialState, getStyleData } from "./layout-engine.js";
 import { createPreviewController } from "./preview.js";
 import { mountControls } from "./controls.js";
@@ -51,7 +52,8 @@ const LAYOUTS = Object.freeze([
   LAYOUT_10_SKBN_PC,
   LAYOUT_11_MSBN,
   LAYOUT_12_TVBN_STORE,
-  LAYOUT_13_TVBN_SMART_STORE
+  LAYOUT_13_TVBN_SMART_STORE,
+  LAYOUT_14_PAYMENT_VERTICAL
 ]);
 
 export const DEFAULT_LAYOUT_ID = LAYOUT_01_DDCARD_BN.id;
@@ -151,7 +153,7 @@ export async function mountOnlineBn({
     if (typeof onActivated === "function") await onActivated(layout);
   }
 
-  // 左欄：目前十三個正式版位，點擊非目前版位即切換。
+  // 左欄：目前十四個正式版位，點擊非目前版位即切換。
   LAYOUTS.forEach((layout) => {
     const button = document.createElement("button");
     button.type = "button";
