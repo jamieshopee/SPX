@@ -1,9 +1,10 @@
 // SPX 開獎秀 — 線上／電子BN：右欄正式 Controls
 // ---------------------------------------------------------------------------
-// 正式控制項只有九個（Jamie 裁決，不得增加）：
+// 既有正式控制項：
 //   主標／副標／小字 1／小字 2 四個文字欄
 //   背景色／主標色／副標色／小字色 四個顏色
 //   Logo Mode：Auto／Orange／White
+//   descriptor 宣告 qr 時，另有一個「縮址」欄位；01～11 controls 保持不變。
 //
 // 小字 1 與小字 2 共用同一個小字顏色，不新增第二個小字顏色控制。
 // 沒有 KV：不建立任何 KV 控制、state 或 placeholder。
@@ -25,6 +26,7 @@
 // ---------------------------------------------------------------------------
 
 import { LOGO_MODES } from "./logo-auto.js";
+import { normalize as normalizeQrUrl, isEmpty as isQrUrlEmpty } from "./qr-url-utils.js";
 
 const LOGO_MODE_LABELS = Object.freeze({
   auto: "Auto",
@@ -216,6 +218,52 @@ function createLogoModeField(state, onChange) {
   return fieldset;
 }
 
+function createQrUrlField(state, onChange) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "obn-field";
+  const label = document.createElement("label");
+  label.className = "obn-field-label";
+  label.htmlFor = "obn-qr-url";
+  label.textContent = "縮址";
+
+  const input = document.createElement("input");
+  input.className = "obn-text-input obn-qr-input";
+  input.id = "obn-qr-url";
+  input.type = "text";
+  input.inputMode = "url";
+  input.autocomplete = "off";
+  input.spellcheck = false;
+  input.value = state.qrUrl;
+  input.setAttribute("aria-describedby", "obn-qr-feedback");
+
+  const feedback = document.createElement("p");
+  feedback.id = "obn-qr-feedback";
+  feedback.className = "obn-qr-feedback";
+  feedback.setAttribute("aria-live", "polite");
+
+  function paintValidation() {
+    const normalized = normalizeQrUrl(input.value);
+    const invalid = normalized === null && !isQrUrlEmpty(input.value);
+    input.setAttribute("aria-invalid", String(invalid));
+    feedback.textContent = invalid ? "請輸入有效的 http／https 網址；目前不顯示 QR。" : "";
+    feedback.hidden = !invalid;
+    return normalized;
+  }
+
+  input.addEventListener("input", () => {
+    // 非法字串只留在 input 供修正；清空同一 state value，移除上一個 QR。
+    state.qrUrl = paintValidation() ?? "";
+    onChange();
+  });
+  input.addEventListener("blur", () => {
+    const normalized = paintValidation();
+    if (normalized !== null) input.value = normalized;
+  });
+  paintValidation();
+  wrapper.append(label, input, feedback);
+  return wrapper;
+}
+
 export function mountControls(container, { layout, state, onChange }) {
   const root = document.createElement("div");
   root.className = "obn-controls";
@@ -234,6 +282,11 @@ export function mountControls(container, { layout, state, onChange }) {
   logoSection.append(createLogoModeField(state, onChange));
 
   root.append(textSection, colorSection, logoSection);
+  if (layout.qr !== undefined) {
+    const qrSection = createSection("QR Code");
+    qrSection.append(createQrUrlField(state, onChange));
+    root.append(qrSection);
+  }
   container.replaceChildren(root);
   return root;
 }

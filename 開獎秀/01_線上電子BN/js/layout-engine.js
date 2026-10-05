@@ -11,6 +11,7 @@
 //   - contain 幾何計算
 //   - ink-box 量測與繪製（水平 center／left 由 layout 決定，垂直恆為 ink-box center）
 //   - local 2× supersampling layer（成員由 layout 的 supersampledFields 決定）
+//   - optional QR：descriptor opt-in、local encoder 與 generated-image readiness
 //   - 正式 renderer pipeline（Preview 與未來 Export 的唯一繪製來源）
 //   - createInitialState(layout, styleId)
 //
@@ -22,6 +23,7 @@
 // ---------------------------------------------------------------------------
 
 import { resolveLogoVariant } from "./logo-auto.js";
+import { normalize as normalizeQrUrl } from "./qr-url-utils.js";
 
 // local 2× supersampling 倍率（Jamie 裁決）。offscreen = layout canvas × 此倍率，
 // 不得硬編任何單一版位的 offscreen 尺寸。
@@ -307,22 +309,43 @@ export function getStyleData(layout, styleId) {
 export function createInitialState(layout, styleId) {
   const styleData = getStyleData(layout, styleId);
   if (styleData === null) throw new Error(`${layout.name} 不支援的樣式：${styleId}。`);
-  return {
+  const state = {
     text: Object.fromEntries(layout.textOrder.map((id) => [id, ""])),
     colors: { ...styleData.defaultColors },
     logoMode: "auto"
   };
+  if (layout.qr !== undefined) state.qrUrl = layout.qr.defaultUrl;
+  return state;
+}
+
+// QR opt-in：geometry 僅來自 descriptor；舊版位不執行此 validation。
+export function validateQr(layout) {
+  const box = layout.qr?.box;
+  if (!box) throw new Error(`${layout.name} QR 缺少 box。`);
+  const { x, y, width, height } = box;
+  if (![x, y, width, height].every(Number.isFinite) ||
+      width <= 0 || height <= 0 || width !== height || x < 0 || y < 0 ||
+      x + width > layout.canvas.width || y + height > layout.canvas.height) {
+    throw new Error(`${layout.name} QR box 必須為畫布內的非零正方形。`);
+  }
 }
 
 // --- 正式 renderer -------------------------------------------------------------
 // 語意 draw order：background → style base → Logo（＋optional 第二 Logo）
-//                  → main → subtitle → small1 → small2
+//                  → optional QR → main → subtitle → small1 → small2
 // 實際 sequence：supersampledFields 以單次 drawImage 合批貼回，directFields 之後直繪。
 // 各 layout 的文字 box 兩兩不重疊，故兩者算繪結果等價。
 
 export async function renderLayout({ ctx, layout, styleId, state }) {
   const styleData = getStyleData(layout, styleId);
   if (styleData === null) throw new Error(`${layout.name} 不支援的樣式：${styleId}。`);
+
+  // 在任何 await 前固定本次 URL；空值／非法值不載入 vendor、不 encode。
+  let qrUrl = null;
+  if (layout.qr !== undefined) {
+    validateQr(layout);
+    qrUrl = normalizeQrUrl(state.qrUrl);
+  }
 
   await ensureFontsReady(layout);
 
@@ -342,6 +365,13 @@ export async function renderLayout({ ctx, layout, styleId, state }) {
           `${layout.name} 第二 Logo`
         )
   ]);
+
+  // Generated image 有獨立 readiness，不改 static loadImage 或其 cache。
+  let qrImage = null;
+  if (qrUrl !== null) {
+    const { createQrImage } = await import("./qr-code.js");
+    qrImage = await createQrImage(qrUrl);
+  }
 
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = "source-over";
@@ -395,10 +425,22 @@ export async function renderLayout({ ctx, layout, styleId, state }) {
     ctx.restore();
   }
 
-  // 5. supersampled 文字層（local 2×）
+  // 5. optional QR：完整 source 含 quiet zone；smoothing 僅作用於本次 draw。
+  if (qrImage !== null) {
+    const { x, y, width, height } = layout.qr.box;
+    ctx.save();
+    try {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(qrImage, x, y, width, height);
+    } finally {
+      ctx.restore();
+    }
+  }
+
+  // 6. supersampled 文字層（local 2×）
   drawSupersampledLayer(ctx, layout, state);
 
-  // 6. direct 文字（不進 supersampling layer）
+  // 7. direct 文字（不進 supersampling layer）
   layout.directFields.forEach((id) => {
     const field = layout.text[id];
     drawLayoutText(

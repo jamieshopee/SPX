@@ -231,3 +231,15 @@
   outline: 2px solid var(--accent, #ee4d2d);
   outline-offset: 2px;
 }
+
+/* QR opt-in control；不影響既有文字／顏色／Logo controls。 */
+.obn-qr-input[aria-invalid="true"] {
+  border-color: var(--accent, #ee4d2d);
+}
+
+.obn-qr-feedback {
+  margin: 0;
+  color: var(--accent, #ee4d2d);
+  font-size: 12px;
+  line-height: 1.5;
+}
