@@ -182,8 +182,9 @@ Canvas pt = Photoshop pt × 72 / 96
 | 07_OM與FEED | 五個 box 共用水平中心 500 | `center` | contain 後水平置中 | ink-box 水平置中 |
 | 08_SKBN_APP左右 | **兩個** box 共用水平中心 179 | `center` | contain 後水平置中 | ink-box 水平置中 |
 | 09_SKBN_APP中 | **兩個** box 共用水平中心 242 | `center` | contain 後水平置中 | ink-box 水平置中 |
+| 10_SKBN_PC | **兩個** box 共用左緣 x=17（水平中心 90／119 不同） | `left` | contain 後左緣貼 box.x | ink 左緣對齊 box.x |
 
-`left` 的實作語意為 **`x = box.x − actualBoundingBoxLeft`**，使文字的 ink 左緣精確落在 box 左緣；**不是單純設定 `textAlign = "left"` 後以 `box.x` 繪製**。Logo 的 `left` 則為 `destX = box.x`。
+`left` 的實作語意為 **`inkLeft = -actualBoundingBoxLeft`、`x = box.x - inkLeft`**，使文字的**實際 ink 左緣精確對齊 `box.x`**；**不是單純設定 `textAlign = "left"` 後以 `box.x` 繪製**。Logo 的 `left` 則為 `destX = box.x`。
 
 文字定位一律以 `actualBoundingBoxLeft/Right/Ascent/Descent` 量測，座標不取整。
 
@@ -372,13 +373,13 @@ Viewer 與 launcher 是 **Manual Verification helper**，不是正式產品介�
 
 sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正式 weighted count 與 rollback 流程，**不 bypass 任何 validation**。
 
-**套用範圍為 descriptor-driven（08 導入的 generic compatibility fix）**：`applySampleText(layout)` 依目前 `layout.textOrder` 迭代，只對該版位實際存在且上表有定義的欄位套用。01～07 的 `textOrder` 為四欄，Viewer 行為與 sample 內容**完全不變**；08 與 09 的 `textOrder` 只有 `subtitle`，因此只套副標。此為 Viewer 的相容性修正，**不是 renderer capability**，上表四句內容亦未更動。
+**套用範圍為 descriptor-driven（08 導入的 generic compatibility fix）**：`applySampleText(layout)` 依目前 `layout.textOrder` 迭代，只對該版位實際存在且上表有定義的欄位套用。01～07 的 `textOrder` 為四欄，Viewer 行為與 sample 內容**完全不變**；08、09 與 10 的 `textOrder` 只有 `subtitle`，因此只套副標。此為 Viewer 的相容性修正，**不是 renderer capability**，上表四句內容亦未更動。
 
-**Viewer sample ≠ production default。** 正式 Console 的 `createInitialState().text` 一律為空字串（01～07 為四個欄位，08 只有 `subtitle`）。
+**Viewer sample ≠ production default。** 正式 Console 的 `createInitialState().text` 一律為空字串（01～07 為四個欄位，08、09 與 10 只有 `subtitle`）。
 
 ### 2.17 目前共通層未涵蓋的項目
 
-以下尚未裁決，不得自行補完：Excel 工單匯入、JSON workspace、Export／下載、encoder 與輸出格式、10～17 的任何規格。
+以下尚未裁決，不得自行補完：Excel 工單匯入、JSON workspace、Export／下載、encoder 與輸出格式、11～17 的任何規格。
 
 ## 3. 版位總表
 
@@ -393,7 +394,7 @@ sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正�
 | 07 | 07_OM與FEED | **Implemented / Jamie Manual Verification PASS / Code Committed** |
 | 08 | 08_SKBN_APP左右 | **Implemented / Jamie Manual Verification PASS / Code Committed** |
 | 09 | 09_SKBN_APP中 | **Implemented / Jamie Manual Verification PASS / Code Committed** |
-| 10 | 10_SKBN_PC | Pending（未製作） |
+| 10 | 10_SKBN_PC | **Implemented / Jamie Manual Verification PASS / Code Committed** |
 | 11 | 11_遊戲大廳 MSBN | Pending（未製作） |
 | 12 | 12_TVBN_一般門市 | Pending（未製作） |
 | 13 | 13_TVBN_智取店 | Pending（未製作） |
@@ -402,9 +403,9 @@ sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正�
 | 16 | 16_繳費機下方BN-立保 | Pending（未製作） |
 | 17 | 17_繳費機下方BN-博辰 | Pending（未製作） |
 
-10～17 的名稱讀自 `開獎秀/01_線上電子BN/assets/` 下對位／智取櫃／門市三個目錄的素材檔名（三者命名一致）。這些名稱僅供定位，**尚未經正式裁決**；各版位的尺寸、geometry、字級、顏色與任何行為一律尚未調查、尚未設計。本表不構成對 10～17 的任何規格承諾。
+11～17 的名稱讀自 `開獎秀/01_線上電子BN/assets/` 下對位／智取櫃／門市三個目錄的素材檔名（三者命名一致）。這些名稱僅供定位，**尚未經正式裁決**；各版位的尺寸、geometry、字級、顏色與任何行為一律尚未調查、尚未設計。本表不構成對 11～17 的任何規格承諾。
 
-10～17 的素材目前存在於 Repository 工作目錄但**尚未納入版本控制**，不屬於已完成範圍。
+11～17 的素材目前存在於 Repository 工作目錄但**尚未納入版本控制**，不屬於已完成範圍。
 
 ## 4. 01_DDcard BN
 
@@ -2050,14 +2051,229 @@ M  開獎秀/01_線上電子BN/launch/viewer.html
 
 `git diff --check HEAD^ HEAD` PASS。
 
-## 13. 目前仍未決項目
+## 13. 10_SKBN_PC
+
+### 13.1 Status 與 Code Commit
+
+| 項目 | 值 |
+|---|---|
+| Status | Implemented |
+| Technical Self-Test | **PASS** |
+| 01 Regression Verification | **PASS** |
+| 02 Regression Verification | **PASS** |
+| 03 Regression Verification | **PASS** |
+| 04 Regression Verification | **PASS** |
+| 05 Regression Verification | **PASS** |
+| 06 Regression Verification | **PASS** |
+| 07 Regression Verification | **PASS** |
+| 08 Regression Verification | **PASS** |
+| 09 Regression Verification | **PASS** |
+| Jamie Manual Verification | **PASS** |
+| Code Commit（full） | `5ab1ec70348cd57cf9edd039dd397f3aa4e5f360` |
+| Code Commit（short） | `5ab1ec7` |
+| Commit message | `feat(lottery-show): add online BN SKBN PC layout` |
+| Parent | `8a4bfa7ffefa6bd8a5f3cf59b5f995d9faca73fd` |
+| Docs Commit | Pending |
+
+layout id：`10-skbn-pc`。
+
+10 與 08、09 同為「非五元素」版位：renderer-owned 的只有主 Logo 與副標兩個元素，沒有主標、小字 1、小字 2。
+
+10 是繼 04 之後**第二個使用 `rounded-card` 背景模式**的版位；該模式為 04 已導入的既有能力，**10 未新增任何 engine capability**。
+
+### 13.2 Canvas
+
+正式畫布 **400 × 110**。renderer 不得修改 canvas 尺寸；繪製後以斷言確認尺寸未變。
+
+### 13.3 背景（圓角卡片）
+
+**10 不使用 full-canvas 背景填色。** 畫布本身保持透明，背景色只填一張圓角卡片：
+
+| 項目 | 值 |
+|---|---|
+| 模式 | `rounded-card`（第 2.12 節的 optional `layout.background`，04 precedent） |
+| x | 8 |
+| y | 7 |
+| width | 384 |
+| height | 96 |
+| radius | **10** |
+| 卡片外 | **transparent**（不填色、不繪製任何內容） |
+
+填色來源為 `state.colors.background`，即第 2.6 節的背景色控制項；10 未新增第二個背景色欄位。radius `10` 為 **Canvas geometry 值，不是 typography pt**，因此**不套用** `× 72 / 96` 換算。
+
+此模式沿用 04 既有實作（`validateBackground()` ＋ `fillRoundedCard()`），**04 的 `radius: 40` 與其既有行為完全未受影響**。01、02、03、05、06、07、08、09 的 descriptor 未宣告 `background`，仍為 legacy full-canvas fill（第 2.12 節）。
+
+### 13.4 正式素材
+
+| 角色 | 路徑（相對 Repository root） | 尺寸 | SHA-256 |
+|---|---|---|---|
+| 對位圖 | `開獎秀/01_線上電子BN/assets/對位/10_SKBN_PC.png` | 400 × 110 RGBA | `3a6aef158eb11bb02e2d42d963f8db3252e5a397a30c58f0e605419f5e930156` |
+| smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/10_SKBN_PC.png` | 172 × 96 | `9a6b990f7297ef1cd12b9f2baf5515de4f58ba6c2fc93e3d1f50c3ca8b46381f` |
+| store 底圖 | `開獎秀/01_線上電子BN/assets/門市/10_SKBN_PC.png` | 163 × 96 | `437b9d4d160139eb5d9d06dafbe3a9489210f52144b6a570065b1685d87b1532` |
+| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+
+**三張 10 素材於 Code Commit 前後 SHA-256 完全不變**；Logo 沿用 online-bn 全版位共用素材（第 2.3 節）。
+
+10 是 online-bn 第一個**兩張 style 底圖 intrinsic 彼此不同、且皆小於畫布**的版位（172 × 96 與 163 × 96）。
+
+對位圖只供 Manual Verification Viewer 作 DOM overlay，不是 renderer 或輸出的一部分；其圓角卡片範圍為 safe-area／背景參考，已由 descriptor 的 `background` 欄位表達，**不另建 renderer element**。
+
+素材載入失敗、或素材 intrinsic size 與上表不符，一律 render fail-closed。
+
+### 13.5 底圖 placement
+
+| style | 底圖 | x | y | width | height | 右緣 | 下緣 |
+|---|---|---|---|---|---|---|---|
+| `smart-locker` | `assets/智取櫃/10_SKBN_PC.png` | 220 | 7 | 172 | 96 | 392 | 103 |
+| `store` | `assets/門市/10_SKBN_PC.png` | 229 | 7 | 163 | 96 | 392 | 103 |
+
+兩者皆為原尺寸 **1:1**，**不 stretch、不 crop**。兩張底圖皆上緣貼卡片頂 `y = 7`、右緣貼卡片右 `392`；因門市底圖比智取櫃窄 9px，**兩 style 的 x 必然不同（220 vs 229）**，不得為了共用而強迫統一。
+
+### 13.6 Draw order
+
+**視覺／語意層級**（設計上的疊放順序）：
+
+1. 圓角卡片背景色（`8,7,384×96`、radius 10；卡片外透明）
+2. style 正式底圖（右側插圖）
+3. Logo
+4. 副標
+
+**實際 Canvas draw sequence**（renderer 的執行順序）：
+
+1. `fillRoundedCard(8, 7, 384, 96, radius 10)` — 背景色，**無 full-canvas `fillRect`**
+2. `drawImage(base, 220, 7, 172, 96)`／`drawImage(base, 229, 7, 163, 96)` — style 正式底圖
+3. Logo（contain ＋ 水平靠左、垂直置中）
+4. 副標（Bold，直接繪於正式 canvas）
+
+**10 沒有 2× 層**：`supersampledFields` 為空陣列，engine 的 supersampling layer 直接 early-return，不建立 offscreen canvas（第 13.9 節）。
+
+### 13.7 Logo
+
+| 項目 | 值 |
+|---|---|
+| box | x = 17、y = 24、width = 146、height = 24 |
+| intrinsic | 1678 × 272 |
+| fit | contain（`scale = min(boxW / srcW, boxH / srcH)`） |
+| 對齊 | **水平靠左**（`destX = box.x`）、垂直置中 |
+| 規則 | 不 crop、不 stretch、destination 座標不取整 |
+
+以素材 1678 × 272 代入為**寬度受限**：`scale = min(146/1678, 24/272) = 146/1678`，dest ≈ **146.0000 × 23.6663**，`destX = 17.0000`、`destY ≈ 24.1669`。
+
+**box 的 `146 × 24` 是對位框，不是 renderer destination**；descriptor 只宣告 `box`、`intrinsic`、`src`，destination 由共用的 `computeContainRect()` 推導，**未硬編**。
+
+Logo 橘／白兩個 variant 的 geometry 一致，**兩 style 亦共用同一組 Logo geometry**（不建立 per-style Logo geometry）。模式與 Auto 判定依第 2.3 節；在 10 的預設色下：`#2660ad` → 白 Logo、`#ffda46` → 橘 Logo。**不宣告 `secondaryLogo`。**
+
+### 13.8 文字 geometry
+
+10 的 renderer text **精確只有副標一欄**，`textOrder` 為 `["subtitle"]`；**不存在**主標、小字 1、小字 2。
+
+| 元素 | x | y | width | height | 水平 | 垂直 |
+|---|---|---|---|---|---|---|
+| 副標 | 17 | 56 | 204 | 29 | ink 左緣對齊 box.x | ink-box center |
+
+Logo box 與副標 box **共用左緣 x = 17**，而兩者的水平中心分別為 90 與 119、皆不等於畫布中心 200，因此 10 的 `horizontalAlign` 為 `left`（第 2.9 節）。依既有 engine 的 left ink-box positioning，實際 ink 左緣精確落在 `box.x`；engine 內部為 `inkLeft = -actualBoundingBoxLeft`、`x = box.x - inkLeft`。單行，不 multiline、不 wrap、不 auto-shrink。
+
+### 13.9 Typography 與文字算繪
+
+| 元素 | Photoshop source | Canvas renderer | 2× 層 |
+|---|---|---|---|
+| 副標 | `ShopeeNotoSans(content)-Bold` **28.5pt** | `21.375pt "LotteryShowNotoSans Bold"` | 否 |
+
+換算依第 2.8 節的 `Canvas pt = Photoshop pt × 72 / 96`（28.5 → 21.375）。`21.375pt` 為非整數 pt，**原值保留**，未取整為 21、21.4、21.5 或 22、未改用 px。Photoshop source pt **不得直接作為 Canvas pt**。
+
+本值為 Jamie Manual Verification 後鎖定的**最終正式值**。Manual Verification 階段由 Photoshop 30pt 調整為 28.5pt（Canvas 由 22.5pt 調整為 21.375pt）；30 / 22.5 僅屬 Manual Verification 前的中間實作，**不是最終規格**。該次調整只改動 `layout-10-skbn-pc.js` 的 `photoshopPt` 與 `canvasPt` 兩個值（及同檔內對應註解），box、Logo、背景、placement、顏色、上限等皆未變動。
+
+- `supersampledFields`：**`[]`**（空陣列）
+- `directFields`：**`["subtitle"]`**
+- 10 **不建立 2× text layer、不建立 offscreen text canvas**
+- `layoutFontFamilies`：**`["bold"]`** —— 只載入 Bold，**不載 Medium、不載 Regular**
+
+字型未就緒即 render fail-closed，不 fallback 系統字型。**不得 auto-wrap、不得 auto-shrink。**
+
+### 13.10 文字上限與輸入行為
+
+副標上限依第 2.5 節的 online-bn 全版位共通值：**7**。weighted count 依第 2.4 節（漢字 1、英文／數字／符號 0.5，以 `\p{Script=Han}` 判定）。IME-safe 與超限 rollback 依第 2.7 節。正式 Console 的 initial subtitle 為**空字串**。
+
+### 13.11 顏色
+
+10 的 `colorFields` **精確只有兩項**：`background`、`subtitle`。
+
+| style | 背景色 | 副標 |
+|---|---|---|
+| `smart-locker` | `#2660ad` | `#fff000` |
+| `store` | `#ffda46` | `#eb1717` |
+
+數值沿用第 2.6 節的 online-bn 全版位共通預設色。**10 沒有主標與小字 renderer text，因此不提供主標顏色與小字顏色控制**；`defaultColors` 亦只記錄上述兩鍵。右側顏色控制精確只有「背景色」與「副標顏色」兩項。
+
+Logo mode 沿用共通 `Auto`／`Orange`／`White`，threshold **0.498708**；Auto 下 smart-locker（`#2660ad`）→ **white**、store（`#ffda46`）→ **orange**。**無 10-specific Logo mode。**
+
+### 13.12 Renderer-owned 與 baked-in 元素
+
+**renderer-owned 精確只有**：主 Logo、副標（再加上 descriptor-driven 的 `rounded-card` 背景與 style base）。
+
+**baked into style base**（renderer 不另繪製）：右側人物、智取櫃／門市店面、彩券、**紅色播放 icon**、右側其他裝飾。
+
+10 **沒有** `secondaryLogo`、CTA、badge、主標、小字 1、小字 2，或任何其他 renderer-owned graphic。descriptor 的 top-level 欄位精確為 `id`、`name`、`canvas`、`background`、`horizontalAlign`、`logo`、`textOrder`、`text`、`supersampledFields`、`directFields`、`colorFields`、`styles`、`alignmentOverlaySrc` 十三項。
+
+### 13.13 Manual Verification Viewer
+
+| 項目 | 值 |
+|---|---|
+| Viewer | `開獎秀/01_線上電子BN/launch/viewer.html?layout=10-skbn-pc` |
+| Launcher | `開獎秀/01_線上電子BN/launch/10_SKBN_PC.command`（100755、port 4176） |
+| 對位 overlay | `assets/對位/10_SKBN_PC.png` |
+
+10 與 01～09 共用同一個 Viewer 頁面，以 `?layout=` 區分（第 2.15 節）；未知 layout 仍 fail-closed，合法值列舉已加入 `10-skbn-pc`；overlay 由 descriptor 的 `alignmentOverlaySrc` 取得，未新增 10 專屬分支。
+
+Viewer sample 沿用 08 導入的 descriptor-driven `applySampleText(layout)`（第 2.16、11.14 節）：10 的 `textOrder` 只有 `subtitle`，因此**只帶入副標 sample**；本次**未修改** sample architecture、**未修改** `SAMPLE_TEXT` 四句內容、**無 10-specific branch**。01～07 仍四欄 sample、08 與 09 仍 subtitle-only。
+
+### 13.14 Implementation files
+
+Code Commit `5ab1ec7` 實際涵蓋的檔案，共 7 paths（2 M ＋ 5 A）：
+
+```text
+A  開獎秀/01_線上電子BN/assets/對位/10_SKBN_PC.png
+A  開獎秀/01_線上電子BN/assets/智取櫃/10_SKBN_PC.png
+A  開獎秀/01_線上電子BN/assets/門市/10_SKBN_PC.png
+A  開獎秀/01_線上電子BN/js/layout-10-skbn-pc.js
+M  開獎秀/01_線上電子BN/js/online-bn.js
+A  開獎秀/01_線上電子BN/launch/10_SKBN_PC.command
+M  開獎秀/01_線上電子BN/launch/viewer.html
+```
+
+兩個 M 的性質：`online-bn.js` 新增 `LAYOUT_10_SKBN_PC` 的 import 並將其附加於 `LAYOUTS` 末端（順序 01→10，`DEFAULT_LAYOUT_ID` 維持 `01-ddcard-bn`），另同步兩行版位數現況註解；`viewer.html` 僅更新 fail-closed 訊息的合法值列舉字串（加入 `10-skbn-pc`）。**未擴張 registry／storage／URL persistence／selection architecture。**
+
+**Engine Change = NO。** `layout-engine.js`、`preview.js`、`controls.js`、`logo-auto.js`、`css/online-bn.css` 皆為 **0 modification**；`layout-01-ddcard-bn.js`～`layout-09-skbn-app-mid.js`、`01_DDcard BN.command`～`09_SKBN_APP中.command`、`開獎秀/console.html`、`開獎秀/js/console.js`、`開獎秀/css/console.css`、`開獎秀/js/registry.js`、`快速取件/`、`開獎秀/04_門市清單/` 亦皆未修改。10 的 `rounded-card` 直接沿用 04 既有能力，**未新增任何 engine capability**。
+
+**不在本次 Code Commit 範圍**：11～17 的素材與兩張未使用的橫式舊 Logo 仍為 untracked，不屬於已完成範圍。
+
+### 13.15 Verification 記錄
+
+| 項目 | 結果 |
+|---|---|
+| Technical Self-Test | **PASS**（canvas 400 × 110、三張素材 intrinsic 與 SHA-256、`background` 為 `rounded-card` 且 box `8,7,384×96`／radius 10 並通過 `validateBackground()`、卡片外維持透明且無 full-canvas `fillRect`、兩組 base placement `220,7,172×96` 與 `229,7,163×96` 皆 1:1 且 x 不同、右緣同為 392、Logo box `17,24,146×24` 與 contain `146.0000 × 23.6663 @ (17.0000, 24.1669)` 且未硬編 destination、副標 box `17,56,204×29`、兩個 box 共用左緣 17 故 `horizontalAlign` 為 `left`、`photoshopPt 28.5` → `canvasPt 21.375` 且 `canvasPt === photoshopPt × 72/96`、font string `21.375pt "LotteryShowNotoSans Bold"`、`textOrder` 只有 subtitle、`supersampledFields` 為空且六組渲染組合皆未建立 offscreen、`directFields` 只有 subtitle、`colorFields` 與 `defaultColors` 皆只有 background 與 subtitle、`layoutFontFamilies` 為 `["bold"]`、`createInitialState().text` 為 `{ subtitle: "" }`、無 `secondaryLogo`／CTA／badge、Logo Auto 與 threshold、版位清單與切換、Viewer layout context 與未知值 fail-closed、十個 launcher port 與 marker、launcher `bash -n` 與 index mode 100755；**protected scope 0 modification、三張 PNG SHA 不變、無第 8 path、`git diff --check` PASS**） |
+| 01～09 Regression Verification | **PASS**（九份 descriptor 與九個 launcher blob 0 modification；以 recording mock ctx 錄製 01～09 × 2 style × 3 Logo mode 共 54 組合、1,860 次繪製呼叫，與前一輪錄製逐行 byte-identical） |
+| 04 rounded-card regression | **PASS**（04 的 `moveTo(93,27)` ＋ 四段 `arcTo(…, 40)` 與 radius 40 完全未變；10 使用同一能力未改變 04 行為） |
+| 06 secondaryLogo regression | **PASS**（第二 Logo 與主 Logo variant 同步行為未受影響） |
+| 08／09 subtitle-only regression | **PASS** |
+| Viewer sample regression | **PASS**（01～07 仍四欄 sample、08 與 09 仍 subtitle-only、10 只帶副標；`SAMPLE_TEXT` 與 generic architecture 未更動） |
+| Engine boundary | **NO engine change** —— `layout-engine.js`、`preview.js`、`controls.js`、`logo-auto.js`、`css/online-bn.css` 皆 0 modification |
+| Browser visual verification | 由 **Jamie 實機 Manual Verification PASS** 認定（非自動化 browser test） |
+| Jamie Manual Verification | **PASS**（smart-locker 與 store 畫面、400 × 110 畫布、卡片外透明、圓角卡片 `8,7,384×96` radius 10、兩組 style base 位置、Logo、副標、播放 icon、alignment overlay 對位、Logo 與副標左緣同線；Logo modes Auto／White／Orange，Auto 下 smart → white、store → orange；背景色與副標色控制；Viewer 中 10 自動帶入副標 sample；正式 Console 的 10 initial subtitle 空白；01～10 版位切換正常；01～09 無 regression；04 rounded-card、08／09 subtitle-only、舊 Viewer sample regression 皆正常。**最終 typography 鎖定為 Photoshop 28.5pt／Canvas 21.375pt**） |
+
+`git diff --check HEAD^ HEAD` PASS。
+
+## 14. 目前仍未決項目
 
 以下尚未裁決，下一階段不得自行假設：
 
-- 10～17 的全部規格：尺寸、素材、geometry、字級、字重、顏色、文字欄位、Photoshop source pt。
+- 11～17 的全部規格：尺寸、素材、geometry、字級、字重、顏色、文字欄位、Photoshop source pt。
 - online-bn 的 Excel 工單 schema 與匯入流程。
 - online-bn 的 JSON／workspace 資料結構。
 - online-bn 的 Export、encoder、輸出格式與檔名規則。
 - 跨版位是否需要保留各自 state（目前切換版位即重設，見第 2.14 節）。
-- 10～17 的 launcher 檔案（Viewer 已為共用，port 沿用 4176）。
-- 10～17 素材納入版本控制的時機與範圍。
+- 11～17 的 launcher 檔案（Viewer 已為共用，port 沿用 4176）。
+- 11～17 素材納入版本控制的時機與範圍。
+
+下一個待製作版位：**11**（11_遊戲大廳 MSBN）—— 尚未開始任何調查、設計或實作。
