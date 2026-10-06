@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant" data-spx-lottery-show-om-01-viewer="true">
+<html lang="zh-Hant" data-spx-lottery-show-om-01-viewer="true" data-spx-lottery-show-om-02-viewer="true">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
       aside { padding: 20px; border-right: 1px solid rgb(255 255 255 / 12%); background: rgb(10 16 18 / 78%); overflow-y: auto; }
       .preview { display: grid; min-width: 0; place-items: center; padding: 32px; overflow: auto; }
       .canvas-wrap { position: relative; display: inline-block; line-height: 0; box-shadow: 0 12px 40px rgb(0 0 0 / 40%); }
-      canvas, .overlay { display: block; width: min(78vw, 900px); height: auto; aspect-ratio: 1; }
+      canvas, .overlay { display: block; width: min(78vw, 900px); height: auto; }
       .overlay { position: absolute; inset: 0; height: 100%; pointer-events: none; }
       fieldset { margin: 0 0 20px; padding: 12px; border: 1px solid rgb(255 255 255 / 14%); }
       legend { padding: 0 6px; color: #ee4d2d; font-weight: 700; }
@@ -54,10 +54,17 @@
       <section class="preview"><div id="canvas-wrap" class="canvas-wrap" hidden><canvas id="preview-canvas" width="1200" height="1200"></canvas><img id="overlay" class="overlay" alt="對位圖（人工驗證專用）" hidden></div><p id="error" class="error" role="alert"></p></section>
     </main>
     <script type="module">
-      import { LAYOUT, createInitialState, renderLayoutToCanvas } from "./js/renderer.js";
+      import { LAYOUT_01_GOOGLE_PMAX_1200X1200 } from "./js/layout-01-google-pmax-1200x1200.js";
+      import { LAYOUT_02_GOOGLE_PMAX_1200X628 } from "./js/layout-02-google-pmax-1200x628.js";
+      import { createInitialState, renderLayoutToCanvas } from "./js/renderer.js";
       import { countTextUnits, formatUnits, isWithinLimit } from "./js/text-validation.js";
 
       const params = new URLSearchParams(location.search);
+      const layouts = Object.freeze({
+        [LAYOUT_01_GOOGLE_PMAX_1200X1200.id]: LAYOUT_01_GOOGLE_PMAX_1200X1200,
+        [LAYOUT_02_GOOGLE_PMAX_1200X628.id]: LAYOUT_02_GOOGLE_PMAX_1200X628
+      });
+      const LAYOUT = layouts[params.get("layout")] || LAYOUT_01_GOOGLE_PMAX_1200X1200;
       const status = document.querySelector("#status");
       const error = document.querySelector("#error");
       const wrap = document.querySelector("#canvas-wrap");
@@ -74,7 +81,9 @@
       };
       let styleId = params.get("style") || "smart-locker";
       if (!Object.hasOwn(LAYOUT.styles, styleId)) styleId = "smart-locker";
-      let state = createInitialState(styleId);
+      canvas.width = LAYOUT.canvas.width;
+      canvas.height = LAYOUT.canvas.height;
+      let state = createInitialState(styleId, LAYOUT);
       let renderSerial = 0;
 
       document.querySelector(`input[name="style"][value="${styleId}"]`).checked = true;
@@ -90,7 +99,7 @@
       async function render() {
         const serial = ++renderSerial;
         try {
-          const nextCanvas = await renderLayoutToCanvas({ styleId, state });
+          const nextCanvas = await renderLayoutToCanvas({ styleId, state, layout: LAYOUT });
           if (serial !== renderSerial) return;
           canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
           canvas.getContext("2d").drawImage(nextCanvas, 0, 0);
@@ -125,7 +134,7 @@
 
       document.querySelectorAll("input[name=style]").forEach((input) => input.addEventListener("change", () => {
         if (!input.checked) return;
-        styleId = input.value; state = createInitialState(styleId); mountTextFields(); syncColorControls(); render();
+        styleId = input.value; state = createInitialState(styleId, LAYOUT); mountTextFields(); syncColorControls(); render();
       }));
       document.querySelectorAll("input[name=logo]").forEach((input) => input.addEventListener("change", () => { if (input.checked) { state.logoMode = input.value; render(); } }));
       Object.entries(colorInputs).forEach(([key, input]) => input.addEventListener("input", () => {
@@ -134,7 +143,7 @@
       }));
       overlayToggle.addEventListener("change", () => { overlay.hidden = !overlayToggle.checked; });
       overlayOpacity.addEventListener("input", () => { overlay.style.opacity = String(Number(overlayOpacity.value) / 100); });
-      document.querySelector("#reset").addEventListener("click", () => { state = createInitialState(styleId); mountTextFields(); syncColorControls(); document.querySelector("input[name=logo][value=auto]").checked = true; render(); });
+      document.querySelector("#reset").addEventListener("click", () => { state = createInitialState(styleId, LAYOUT); mountTextFields(); syncColorControls(); document.querySelector("input[name=logo][value=auto]").checked = true; render(); });
       syncColorControls();
       mountTextFields();
       render();

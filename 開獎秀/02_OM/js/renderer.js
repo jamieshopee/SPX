@@ -153,9 +153,9 @@ function drawSupersampledLayer(context, layout, state) {
   context.restore();
 }
 
-export function createInitialState(styleId) {
-  const style = LAYOUT.styles[styleId];
-  if (!style) throw new Error(`OM 01 不支援的 style：${styleId}。`);
+export function createInitialState(styleId, layout = LAYOUT) {
+  const style = layout.styles[styleId];
+  if (!style) throw new Error(`${layout.name} 不支援的 style：${styleId}。`);
   return {
     text: {
       title: "12/12直播開獎",
@@ -168,42 +168,46 @@ export function createInitialState(styleId) {
   };
 }
 
-export async function renderLayoutToCanvas({ styleId, state }) {
-  const style = LAYOUT.styles[styleId];
-  if (!style) throw new Error(`OM 01 不支援的 style：${styleId}。`);
-  await ensureFontsReady(LAYOUT);
+export async function renderLayoutToCanvas({ styleId, state, layout = LAYOUT }) {
+  const style = layout.styles[styleId];
+  if (!style) throw new Error(`${layout.name} 不支援的 style：${styleId}。`);
+  await ensureFontsReady(layout);
   const variant = resolveLogoVariant(state.logoMode, state.colors.background);
   const [background, logo, secondaryLogo] = await Promise.all([
-    loadImage(style.backgroundSrc, style.backgroundPlacement, "OM 01 正式底圖"),
-    loadImage(LAYOUT.logo.src[variant], LAYOUT.logo.intrinsic, "OM 01 主 Logo"),
-    loadImage(LAYOUT.secondaryLogo.src[variant], LAYOUT.secondaryLogo.intrinsic, "OM 01 第二 Logo")
+    loadImage(style.backgroundSrc, style.backgroundPlacement, `${layout.name} 正式底圖`),
+    loadImage(layout.logo.src[variant], layout.logo.intrinsic, `${layout.name} 主 Logo`),
+    layout.secondaryLogo
+      ? loadImage(layout.secondaryLogo.src[variant], layout.secondaryLogo.intrinsic, `${layout.name} 第二 Logo`)
+      : Promise.resolve(null)
   ]);
 
   const canvas = document.createElement("canvas");
-  canvas.width = LAYOUT.canvas.width;
-  canvas.height = LAYOUT.canvas.height;
+  canvas.width = layout.canvas.width;
+  canvas.height = layout.canvas.height;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("瀏覽器無法建立 Canvas 2D context。");
   context.fillStyle = state.colors.background;
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(background, style.backgroundPlacement.x, style.backgroundPlacement.y, style.backgroundPlacement.width, style.backgroundPlacement.height);
 
-  const logoRect = computeContainRect(LAYOUT.logo.box, logo.naturalWidth, logo.naturalHeight, LAYOUT.horizontalAlign);
-  const secondaryLogoRect = computeContainRect(LAYOUT.secondaryLogo.box, secondaryLogo.naturalWidth, secondaryLogo.naturalHeight, LAYOUT.horizontalAlign);
+  const logoRect = computeContainRect(layout.logo.box, logo.naturalWidth, logo.naturalHeight, layout.horizontalAlign);
   context.save();
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
   context.drawImage(logo, logoRect.x, logoRect.y, logoRect.width, logoRect.height);
-  context.drawImage(secondaryLogo, secondaryLogoRect.x, secondaryLogoRect.y, secondaryLogoRect.width, secondaryLogoRect.height);
+  if (secondaryLogo) {
+    const secondaryLogoRect = computeContainRect(layout.secondaryLogo.box, secondaryLogo.naturalWidth, secondaryLogo.naturalHeight, layout.horizontalAlign);
+    context.drawImage(secondaryLogo, secondaryLogoRect.x, secondaryLogoRect.y, secondaryLogoRect.width, secondaryLogoRect.height);
+  }
   context.restore();
 
-  drawSupersampledLayer(context, LAYOUT, state);
-  LAYOUT.directFields.forEach((id) => {
-    const field = LAYOUT.text[id];
-    drawLayoutText(context, state.text[id], field, state.colors[field.colorKey], LAYOUT.horizontalAlign);
+  drawSupersampledLayer(context, layout, state);
+  layout.directFields.forEach((id) => {
+    const field = layout.text[id];
+    drawLayoutText(context, state.text[id], field, state.colors[field.colorKey], layout.horizontalAlign);
   });
-  if (canvas.width !== LAYOUT.canvas.width || canvas.height !== LAYOUT.canvas.height) {
-    throw new Error("OM 01 renderer 不得修改正式 Canvas 尺寸。");
+  if (canvas.width !== layout.canvas.width || canvas.height !== layout.canvas.height) {
+    throw new Error(`${layout.name} renderer 不得修改正式 Canvas 尺寸。`);
   }
   return canvas;
 }
