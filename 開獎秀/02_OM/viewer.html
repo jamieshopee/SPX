@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-Hant" data-spx-lottery-show-om-01-viewer="true">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開獎秀 — OM 01 Manual Verification Viewer</title>
+    <style>
+      :root { color-scheme: dark; font-family: system-ui, "Helvetica Neue", Arial, sans-serif; }
+      * { box-sizing: border-box; }
+      html, body { min-height: 100%; margin: 0; background: #080d0f; color: #f3f8f7; }
+      body { min-width: 1100px; }
+      .bar { display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; padding: 12px 18px; border-bottom: 1px dashed #ee4d2d; font-size: 13px; }
+      .bar strong, .error { color: #ee4d2d; }
+      .group { display: inline-flex; align-items: center; gap: 8px; }
+      .note { flex-basis: 100%; margin: 0; color: rgb(235 242 241 / 76%); font-size: 12px; }
+      .shell { display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: calc(100vh - 74px); }
+      aside { padding: 20px; border-right: 1px solid rgb(255 255 255 / 12%); background: rgb(10 16 18 / 78%); overflow-y: auto; }
+      .preview { display: grid; min-width: 0; place-items: center; padding: 32px; overflow: auto; }
+      .canvas-wrap { position: relative; display: inline-block; line-height: 0; box-shadow: 0 12px 40px rgb(0 0 0 / 40%); }
+      canvas, .overlay { display: block; width: min(78vw, 900px); height: auto; aspect-ratio: 1; }
+      .overlay { position: absolute; inset: 0; height: 100%; pointer-events: none; }
+      fieldset { margin: 0 0 20px; padding: 12px; border: 1px solid rgb(255 255 255 / 14%); }
+      legend { padding: 0 6px; color: #ee4d2d; font-weight: 700; }
+      label { display: block; margin: 10px 0; font-size: 13px; }
+      input[type="text"] { width: 100%; margin-top: 5px; padding: 7px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 4px; background: #111a1d; color: #f3f8f7; }
+      input[type="color"] { width: 100%; height: 30px; margin-top: 5px; padding: 2px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 4px; background: #111a1d; }
+      .counter { float: right; color: rgb(235 242 241 / 65%); font-size: 11px; }
+      button { padding: 7px 10px; border: 1px solid #ee4d2d; border-radius: 4px; background: transparent; color: #f3f8f7; cursor: pointer; }
+      button:hover, button:focus-visible { background: #ee4d2d; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <header class="bar">
+      <strong>OM 01 人工驗證</strong>
+      <span class="group">樣式：<label><input type="radio" name="style" value="smart-locker"> 智取櫃</label><label><input type="radio" name="style" value="store"> 門市</label></span>
+      <span class="group">Logo：<label><input type="radio" name="logo" value="auto" checked> Auto</label><label><input type="radio" name="logo" value="orange"> Orange</label><label><input type="radio" name="logo" value="white"> White</label></span>
+      <span class="group"><label><input id="overlay-toggle" type="checkbox"> 對位圖</label><input id="overlay-opacity" type="range" min="10" max="90" value="50" aria-label="對位圖透明度"></span>
+      <p id="status" class="note" role="status"></p>
+      <p class="note">本頁只供 OM 01 Manual Verification；不屬於正式 Console，不含 QR、Excel、Workspace、JSON 或 Export。</p>
+    </header>
+    <main class="shell">
+      <aside>
+        <fieldset><legend>文字</legend><div id="text-fields"></div></fieldset>
+        <fieldset>
+          <legend>顏色</legend>
+          <label>背景色<input id="color-background" type="color" value="#2660ad"></label>
+          <label>主標<input id="color-title" type="color" value="#fffac8"></label>
+          <label>副標<input id="color-subtitle" type="color" value="#fff000"></label>
+          <label>小字<input id="color-small" type="color" value="#fffac8"></label>
+        </fieldset>
+        <button id="reset" type="button">重設為預設文字與 Logo</button>
+      </aside>
+      <section class="preview"><div id="canvas-wrap" class="canvas-wrap" hidden><canvas id="preview-canvas" width="1200" height="1200"></canvas><img id="overlay" class="overlay" alt="對位圖（人工驗證專用）" hidden></div><p id="error" class="error" role="alert"></p></section>
+    </main>
+    <script type="module">
+      import { LAYOUT, createInitialState, renderLayoutToCanvas } from "./js/renderer.js";
+      import { countTextUnits, formatUnits, isWithinLimit } from "./js/text-validation.js";
+
+      const params = new URLSearchParams(location.search);
+      const status = document.querySelector("#status");
+      const error = document.querySelector("#error");
+      const wrap = document.querySelector("#canvas-wrap");
+      const canvas = document.querySelector("#preview-canvas");
+      const overlay = document.querySelector("#overlay");
+      const overlayToggle = document.querySelector("#overlay-toggle");
+      const overlayOpacity = document.querySelector("#overlay-opacity");
+      const textFields = document.querySelector("#text-fields");
+      const colorInputs = {
+        background: document.querySelector("#color-background"),
+        title: document.querySelector("#color-title"),
+        subtitle: document.querySelector("#color-subtitle"),
+        small: document.querySelector("#color-small")
+      };
+      let styleId = params.get("style") || "smart-locker";
+      if (!Object.hasOwn(LAYOUT.styles, styleId)) styleId = "smart-locker";
+      let state = createInitialState(styleId);
+      let renderSerial = 0;
+
+      document.querySelector(`input[name="style"][value="${styleId}"]`).checked = true;
+      overlay.src = LAYOUT.alignmentOverlaySrc.href;
+      overlay.style.opacity = String(Number(overlayOpacity.value) / 100);
+
+      function showError(message) { error.textContent = message; wrap.hidden = true; }
+      function updateStatus() { status.textContent = `${LAYOUT.name} · ${styleId} · Logo ${state.logoMode}`; }
+      function syncColorControls() {
+        Object.entries(colorInputs).forEach(([key, input]) => { input.value = state.colors[key]; });
+      }
+
+      async function render() {
+        const serial = ++renderSerial;
+        try {
+          const nextCanvas = await renderLayoutToCanvas({ styleId, state });
+          if (serial !== renderSerial) return;
+          canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+          canvas.getContext("2d").drawImage(nextCanvas, 0, 0);
+          error.textContent = "";
+          wrap.hidden = false;
+          updateStatus();
+        } catch (renderError) {
+          showError(renderError instanceof Error ? renderError.message : "OM 01 render 失敗。");
+        }
+      }
+
+      function mountTextFields() {
+        textFields.replaceChildren();
+        LAYOUT.textOrder.forEach((id) => {
+          const field = LAYOUT.text[id];
+          const label = document.createElement("label");
+          const counter = document.createElement("span");
+          const input = document.createElement("input");
+          counter.className = "counter";
+          input.type = "text"; input.value = state.text[id]; input.autocomplete = "off";
+          label.textContent = field.label; label.append(counter, input); textFields.append(label);
+          let lastValid = input.value; let composing = false;
+          const paint = (value) => { counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit}`; };
+          const rollback = () => { input.value = lastValid; paint(lastValid); };
+          const commit = (value) => { lastValid = value; state.text[id] = value; paint(value); render(); };
+          input.addEventListener("compositionstart", () => { composing = true; });
+          input.addEventListener("compositionend", () => { composing = false; if (isWithinLimit(input.value, field)) commit(input.value); else rollback(); });
+          input.addEventListener("input", () => { if (composing) { state.text[id] = input.value; paint(input.value); render(); return; } if (isWithinLimit(input.value, field)) commit(input.value); else rollback(); });
+          paint(input.value);
+        });
+      }
+
+      document.querySelectorAll("input[name=style]").forEach((input) => input.addEventListener("change", () => {
+        if (!input.checked) return;
+        styleId = input.value; state = createInitialState(styleId); mountTextFields(); syncColorControls(); render();
+      }));
+      document.querySelectorAll("input[name=logo]").forEach((input) => input.addEventListener("change", () => { if (input.checked) { state.logoMode = input.value; render(); } }));
+      Object.entries(colorInputs).forEach(([key, input]) => input.addEventListener("input", () => {
+        state.colors[key] = input.value;
+        render();
+      }));
+      overlayToggle.addEventListener("change", () => { overlay.hidden = !overlayToggle.checked; });
+      overlayOpacity.addEventListener("input", () => { overlay.style.opacity = String(Number(overlayOpacity.value) / 100); });
+      document.querySelector("#reset").addEventListener("click", () => { state = createInitialState(styleId); mountTextFields(); syncColorControls(); document.querySelector("input[name=logo][value=auto]").checked = true; render(); });
+      syncColorControls();
+      mountTextFields();
+      render();
+    </script>
+  </body>
+</html>
