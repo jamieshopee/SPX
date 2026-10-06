@@ -127,6 +127,7 @@ async function render() {
   itemColumnTitle.textContent = item.name;
   currentStyle.textContent = style.name;
   backLink.href = styleSelectionHref(item);
+  consoleShell.dataset.consoleItem = item.id;
 
   errorView.hidden = true;
   consoleShell.hidden = false;

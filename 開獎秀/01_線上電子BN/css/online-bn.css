@@ -51,6 +51,12 @@
   outline-offset: 3px;
 }
 
+/* Active state already has its own accent border. Keep the keyboard focus
+   state accessible without stacking a second orange focus ring on it. */
+.obn-layout-button[aria-current="true"]:focus-visible {
+  outline: none;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .obn-layout-button:not([aria-current="true"]):hover {
     border-color: rgb(238 77 45 / 45%);
@@ -105,23 +111,111 @@
 .obn-controls {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 14px;
 }
 
-.obn-control-section {
+.obn-control-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 11px;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 4%);
 }
 
 .obn-control-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
-  color: var(--accent, #ee4d2d);
-  font-size: 11px;
+  color: var(--text-primary, #f3f8f7);
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.1em;
   line-height: 1.4;
-  text-transform: uppercase;
+}
+
+.obn-control-number {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  flex: 0 0 24px;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--accent, #ee4d2d);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.obn-control-heading .obn-color-picker-only {
+  margin-left: auto;
+}
+
+.obn-control-status,
+.obn-logo-feedback {
+  margin: 0;
+  color: var(--text-tertiary, rgb(235 242 241 / 76%));
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.obn-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.obn-file-button,
+.obn-danger-button,
+.obn-primary-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 10px;
+  color: var(--text-primary, #f3f8f7);
+  background: rgb(255 255 255 / 7%);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.obn-file-button:hover,
+.obn-danger-button:hover,
+.obn-primary-button:hover {
+  border-color: var(--accent, #ee4d2d);
+}
+
+.obn-file-input:focus-visible + .obn-file-button,
+.obn-file-button:focus-visible,
+.obn-danger-button:focus-visible {
+  outline: 2px solid var(--accent, #ee4d2d);
+  outline-offset: 2px;
+}
+
+.obn-danger-button {
+  border-color: rgb(238 77 45 / 45%);
+  color: var(--accent, #ee4d2d);
+  background: rgb(238 77 45 / 8%);
+}
+
+.obn-primary-button {
+  border-color: rgb(238 77 45 / 55%);
+  color: #fff;
+  background: #ee4d2d;
+}
+
+.obn-primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .obn-field {
@@ -152,6 +246,43 @@
   line-height: 1.5;
 }
 
+.obn-text-color-row {
+  display: grid;
+  align-items: center;
+  gap: 6px 10px;
+  grid-template-columns: minmax(0, 1fr) auto 44px;
+  padding: 10px 0;
+}
+
+.obn-text-color-row + .obn-text-color-row {
+  border-top: 1px solid rgb(255 255 255 / 10%);
+}
+
+.obn-text-color-row > .obn-field {
+  display: contents;
+}
+
+.obn-text-color-row .obn-field-head {
+  display: contents;
+}
+
+.obn-text-color-row .obn-field-label {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.obn-text-color-row .obn-text-input {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.obn-text-color-row .obn-field-counter {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  white-space: nowrap;
+}
+
 .obn-text-input {
   width: 100%;
   padding: 9px 11px;
@@ -178,18 +309,42 @@
 }
 
 .obn-color-input {
-  width: 34px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border: 1px solid rgb(255 255 255 / 20%);
-  border-radius: 6px;
-  background: none;
+  overflow: hidden;
+  appearance: none;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 50%;
+  background: transparent;
   cursor: pointer;
+}
+
+.obn-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.obn-color-input::-webkit-color-swatch {
+  border: 0;
+  border-radius: 50%;
+}
+
+.obn-color-input::-moz-color-swatch {
+  border: 0;
+  border-radius: 50%;
 }
 
 .obn-color-input:focus-visible {
   outline: 2px solid var(--accent, #ee4d2d);
   outline-offset: 2px;
+}
+
+.obn-color-picker-only {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
 }
 
 .obn-color-readout {

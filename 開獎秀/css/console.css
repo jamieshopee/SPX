@@ -138,6 +138,14 @@ p {
   border-bottom: 1px solid var(--column-border);
 }
 
+/* The online-bn console owns its preview and controls headings inside the
+   shared shell. Hide only those two headers for that item; the item column
+   header and the empty-state headers for other items remain unchanged. */
+.console-shell[data-console-item="online-bn"] > .preview-column > .column-header,
+.console-shell[data-console-item="online-bn"] > .control-column > .column-header {
+  display: none;
+}
+
 .column-kicker {
   margin: 0 0 5px;
   color: var(--accent);
