@@ -628,11 +628,19 @@ M  開獎秀/js/console.js
 | Technical Self-Test | **PASS** |
 | 01 Regression Verification | **PASS** |
 | Jamie Manual Verification | **PASS** |
-| Code Commit（full） | `931c52261a4813c39c2bf3007c93888278cc53ed` |
-| Code Commit（short） | `931c522` |
-| Commit message | `feat(lottery-show): add online BN Mall HBN layout` |
-| Parent | `7b7740c1d72502e3c03a92715204a8be36d3411f` |
-| Docs Commit | Pending |
+| 初始 Code Commit（full） | `931c52261a4813c39c2bf3007c93888278cc53ed` |
+| 初始 Code Commit（short） | `931c522` |
+| 初始 Commit message | `feat(lottery-show): add online BN Mall HBN layout` |
+| 初始 Parent | `7b7740c1d72502e3c03a92715204a8be36d3411f` |
+| 初始 Docs Commit | Pending |
+| **Geometry Adjustment Code Commit（full）** | `57201a9c67cdac752f95bedfedc8b27d4b6decf3` |
+| **Geometry Adjustment Code Commit（short）** | `57201a9` |
+| **Geometry Adjustment Commit message** | `fix(lottery-show): align Mall HBN content vertically` |
+| **Geometry Adjustment Parent** | `4a1503ba42a2c8e92ca6f8fd99b1c175436b736f` |
+| **Geometry Adjustment Jamie Manual Verification** | **PASS** |
+| **Geometry Adjustment Docs Commit** | Pending |
+
+本章的 geometry 為 **2026-10-05 垂直對位調整後的現行正式值**（第 5.14 節）；`57201a9` 是該次調整的 commit，**不是 02 的初始建立 commit**（初始為 `931c522`）。
 
 ### 5.2 Canvas
 
@@ -649,6 +657,10 @@ M  開獎秀/js/console.js
 | Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 |
 
 Logo 沿用 online-bn 全版位共用素材（第 2.3 節），未新增 02 專屬 Logo。
+
+對位圖的**現行正式 SHA-256** 為 `80d3416179413891f7a7bdaa767f3a66b6ae4b292e9b5b5ab7c0443917f15396`（2026-10-05 垂直對位調整後的版本，第 5.14 節）。
+調整前的 `e6d6814704eacdf38ac0529ed622a3bc8a1196da5f53c2ea292982c4dff5ea15` 為 **historical / superseded**，**不是** current 值。
+兩張 style 底圖（智取櫃、門市）本次**未更動**，bytes 與尺寸皆維持原狀。
 
 對位圖只供 Manual Verification Viewer 作 DOM overlay，不是 renderer 或輸出的一部分。
 
@@ -683,7 +695,7 @@ Logo 沿用 online-bn 全版位共用素材（第 2.3 節），未新增 02 專�
 4. **2× 層**：主標 ＋ 小字 1 ＋ 小字 2 於 2400 × 720 離屏 canvas 繪製後，以單次 `drawImage` 合批貼回
 5. 副標（Bold，直接繪於正式 canvas）
 
-四個文字 box 的垂直範圍為 153–189、200–256、273–294、302–323，**兩兩不重疊**，因此合批與語意順序的算繪結果等價。
+四個文字 box 的垂直範圍為 123–159、170–226、243–264、272–293，**兩兩不重疊**，因此合批與語意順序的算繪結果等價。
 
 CTA、人物、場景、彩券等視覺元素**已 baked into style 底圖**，renderer 不個別繪製。
 
@@ -691,12 +703,12 @@ CTA、人物、場景、彩券等視覺元素**已 baked into style 底圖**，r
 
 | 項目 | 值 |
 |---|---|
-| box | x = 98、y = 96、width = 351、height = 50 |
+| box | x = 98、y = 66、width = 351、height = 50 |
 | fit | contain（`scale = min(boxW / srcW, boxH / srcH)`） |
 | 對齊 | **水平左對齊（destX = 98）**、垂直置中 |
 | 規則 | 不 crop、不 stretch、destination 座標不取整 |
 
-以素材 1678 × 272 代入為**高度受限**：`scale = min(351/1678, 50/272) = 50/272`，dest 約 **308.4559 × 50**，`destX = 98`、`destY = 96`。水平餘裕約 42.544px 全部留在 box 右側，**不左右平分**。
+以素材 1678 × 272 代入為**高度受限**：`scale = min(351/1678, 50/272) = 50/272`，dest 約 **308.4559 × 50**，`destX = 98`、`destY = 66`。水平餘裕約 42.544px 全部留在 box 右側，**不左右平分**。
 
 Logo 橘／白兩個 variant 的 geometry 一致，共用完全相同的 placement。模式與 Auto 判定依第 2.3 節。在 02 的預設色下：`#2660ad` → 白 Logo、`#ffda46` → 橘 Logo。
 
@@ -723,10 +735,10 @@ Logo 橘／白兩個 variant 的 geometry 一致，共用完全相同的 placeme
 
 | 元素 | x | y | width | height | 水平 | 垂直 |
 |---|---|---|---|---|---|---|
-| 主標 | 98 | 153 | 351 | 37 | left ink | ink-box center |
-| 副標 | 98 | 200 | 445 | 57 | left ink | ink-box center |
-| 小字 1 | 98 | 273 | 445 | 22 | left ink | ink-box center |
-| 小字 2 | 98 | 302 | 445 | 22 | left ink | ink-box center |
+| 主標 | 98 | 123 | 351 | 37 | left ink | ink-box center |
+| 副標 | 98 | 170 | 445 | 57 | left ink | ink-box center |
+| 小字 1 | 98 | 243 | 445 | 22 | left ink | ink-box center |
+| 小字 2 | 98 | 272 | 445 | 22 | left ink | ink-box center |
 
 **02 的五個元素（Logo ＋ 四個文字）共用同一個水平 anchor `x = 98`**，與 01 的共用水平中心不同。對位圖的五個 box 共用左緣 x=98、水平中心各異（273.5／320.5），因此 02 的 `horizontalAlign` 為 `left`（第 2.9 節）。
 
@@ -780,6 +792,58 @@ M  開獎秀/01_線上電子BN/launch/01_DDcard BN.command
 | 01 Regression Verification | **PASS**（01 canvas、兩組 base placement、Logo box 與水平置中、文字 ink center、30/45/18pt 與小字 Medium、01 不載 Regular、2× 成員與 1062 × 1584、limits、預設色、Logo Auto threshold、對位 overlay、weighted count 規則、01 launcher 可用、共用 console shell 與 Interface／門市清單未受影響） |
 | Browser visual verification | 由 **Jamie 實機 Manual Verification PASS** 認定（非自動化 browser test） |
 | Jamie Manual Verification | **PASS**（四行文字與 Logo 左緣對齊、小字 Regular、smart-locker 視覺、store 右貼齊、Logo Auto、對位 overlay 對位、01↔02 切換、01 無 regression） |
+
+### 5.14 垂直對位調整（2026-10-05）
+
+**Classification：Existing Layout Geometry Adjustment。** 不是新版位、不是 renderer redesign、不是 shared capability change、不是 typography change、不是 base asset change。
+
+**Reason：** Jamie 更新 02 正式對位圖，將左側 Main Logo、主標、副標、小字 1、小字 2 **整組精確上移 30px** 至中 BN 位置。
+
+**Pixel evidence：** 新版對位圖為舊版的精確垂直平移 —— 把舊版整體上移 30px 後與新版逐像素比對，alpha 差異像素 **0 / 432,000**；兩版 alpha 統計完全相同。五個 renderer box 的 x、width、height **全部 0 變化**。
+
+| 元素 | 調整前（historical） | **調整後（current final）** | Δy |
+|---|---|---|---|
+| Main Logo | 98 / 96 / 351 × 50 | **98 / 66 / 351 × 50** | **−30** |
+| 主標 | 98 / 153 / 351 × 37 | **98 / 123 / 351 × 37** | **−30** |
+| 副標 | 98 / 200 / 445 × 57 | **98 / 170 / 445 × 57** | **−30** |
+| 小字 1 | 98 / 273 / 445 × 22 | **98 / 243 / 445 × 22** | **−30** |
+| 小字 2 | 98 / 302 / 445 × 22 | **98 / 272 / 445 × 22** | **−30** |
+
+左欄為 **historical / superseded**，不再是 current 值；第 5.6、5.9 節已更新為調整後的正式值。uniform vertical shift = **−30px**，水平 geometry 與 `horizontalAlign: left` 皆未變。
+
+**本次只修改兩個 path：**
+
+```text
+M  開獎秀/01_線上電子BN/assets/對位/02_Mall HBN.png
+M  開獎秀/01_線上電子BN/js/layout-02-mall-hbn.js
+```
+
+descriptor 的 semantic diff 精確只有五個 `box.y`（96→66、153→123、200→170、273→243、302→272），共 5 insertions / 5 deletions。
+
+| 項目 | 本次狀態 |
+|---|---|
+| Typography（40→30 Medium／60→45 Bold／24→18 Regular ×2） | **NO CHANGE** |
+| smart base 與 placement `0,0,1200×360` | **NO CHANGE** |
+| store base 與 placement `47,0,1153×360` | **NO CHANGE** |
+| Launcher `02_Mall HBN.command`（100755、port 4176） | **NO CHANGE** |
+| `viewer.html`／`online-bn.js`／02 registration | **NO CHANGE** |
+| `layout-engine.js`／`controls.js`／`preview.js`／`logo-auto.js`／`online-bn.css` | **NO CHANGE** |
+| Shared capability | **NO CHANGE** |
+| Canvas 1200 × 360、Logo Mode／threshold 0.498708、limits 8／7／18／18、weighted count、no wrap／no auto-shrink、Console initial 空白 | **NO CHANGE** |
+| SPX AD | **UNTOUCHED** |
+
+**Verification 記錄（本次調整）：**
+
+| 項目 | 結果 |
+|---|---|
+| Change Investigation | **COMPLETE** |
+| Phase C Geometry Adjustment | **COMPLETE** |
+| Technical Self-Test | **PASS**（五個 box FINAL 值、Δy 全 −30、x／w／h 全不變、Typography 四項字串與 photoshopPt 不變、small 仍 Regular、兩 style placement 不變、Logo contain `308.4559 × 50 @ (98, 66)`） |
+| Render Test | **6 / 6 PASS**（2 style × 3 Logo mode，無 console error） |
+| Alignment Match | **5 / 5 exact**（descriptor ←→ 新版對位圖 pixel 實測） |
+| Focused Regression | **PASS**（01→02→03→02→01 切換，canvas 正確、state 重置、無 state leakage、01 與 03 geometry 未受影響） |
+| Alignment Asset Integrity | **PASS**（調整全程 SHA `80d34161…` 不變，未重存／轉檔／壓縮／重新輸出） |
+| Jamie Manual Verification | **PASS**（Smart／Store、Main Logo、主標、副標、小字 1、小字 2，整組左側內容上移後位置正確） |
 
 ## 6. 03_LPBN
 
