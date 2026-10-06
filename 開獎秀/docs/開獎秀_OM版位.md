@@ -79,7 +79,7 @@ OM 所有版位共用下列 default text：
 
 ## 8. Logo Contract
 
-OM 只有一個 `logoMode`：`Auto`、`Orange`、`White`。Main Logo 與 Shopping Logo 永遠共用同一個 resolved variant，不建立 `shoppingLogoMode`、`secondaryLogoMode` 或第二套 Auto threshold。
+OM 只有一個 `logoMode`：`Auto`、`Orange`、`White`。Main Logo 使用共用 resolved variant；若版位 descriptor 有 Shopping Logo，Main Logo 與 Shopping Logo 共用同一個 resolved variant。不建立 `shoppingLogoMode`、`secondaryLogoMode` 或第二套 Auto threshold。
 
 Main Logo：
 
@@ -95,11 +95,13 @@ Auto 依目前 runtime background color 判斷，threshold 為 `0.498708`。亮�
 
 ## 9. Viewer / Launcher Precedent
 
-Google_Pmax_1200x1200 standalone Viewer：`開獎秀/02_OM/viewer.html`。
+OM standalone Viewer：`開獎秀/02_OM/viewer.html`，目前支援 `Google_Pmax_1200x1200` 與 `Google_Pmax_1200x628`，透過 layout routing 選擇 active descriptor。
 
 目前支援：smart-locker／store、alignment overlay、overlay opacity、text editing、weighted text validation、runtime background color、title／subtitle／small color、logoMode Auto／Orange／White 與 Reset。Runtime background 先 fill Canvas，再繪製 style base asset；runtime text colors 即時 rerender；Auto Logo 使用 current runtime background。
 
-Launcher：`開獎秀/02_OM/launch/01_Google_Pmax_1200x1200.command`。
+OM 01 Launcher：`開獎秀/02_OM/launch/01_Google_Pmax_1200x1200.command`。
+
+OM 02 Launcher：`開獎秀/02_OM/launch/02_Google_Pmax_1200x628.command`。
 
 - repo-root local server
 - marker check
@@ -115,6 +117,7 @@ OM port `4177` 與 online-bn port `4176` 刻意分離。後續每個 OM layout �
 | No. | Layout | Canvas | Status | Manual Verification | Code Commit |
 |---:|---|---|---|---|---|
 | 01 | Google_Pmax_1200x1200 | 1200×1200 | Implemented | PASS | `9dbdfc2` |
+| 02 | Google_Pmax_1200x628 | 1200×628 | Implemented | PASS | `e292ff8` |
 
 未完成版位不預先列為 Implemented；若未來需要列出，必須標示 `Not Implemented / Pending`。
 
@@ -156,7 +159,74 @@ OM port `4177` 與 online-bn port `4176` 刻意分離。後續每個 OM layout �
 - store base：intrinsic 1200×575、1:1、bottom aligned，`x=0, y=625`。
 - 不使用 stretch、cover 或重新縮放填滿 Canvas。
 
-## 12. Assets
+## 12. Google_Pmax_1200x628 正式規格
+
+### 12.1 Canvas / Photoshop source
+
+- Photoshop document：1200×628、300 PPI
+- Canvas：1200×628
+- Document pixel → Canvas pixel：1:1
+
+### 12.2 Typography
+
+| Field | Font | Photoshop | Canvas | Rendering |
+|---|---|---:|---:|---|
+| title | ShopeeNotoSans(content)-Medium | 14pt @ 300 PPI | 58.333333333333336px | local 2× |
+| subtitle | ShopeeNotoSans(content)-Bold | 19pt @ 300 PPI | 79.16666666666667px | direct |
+| small1 | ShopeeNotoSans(content)-Medium | 7pt @ 300 PPI | 29.166666666666668px | local 2× |
+| small2 | ShopeeNotoSans(content)-Medium | 7pt @ 300 PPI | 29.166666666666668px | local 2× |
+
+Descriptor property：`fontSizePx`。不得記錄為 `canvasPt` 或 browser pt。
+
+### 12.3 Geometry — Manual Verified
+
+| Element | x | y | width | height |
+|---|---:|---:|---:|---:|
+| Main Lottery Logo | 42 | 192 | 359 | 58 |
+| Title | 42 | 267 | 532 | 54 |
+| Subtitle | 42 | 339 | 532 | 75 |
+| Small1 | 42 | 429 | 532 | 28 |
+| Small2 | 42 | 464 | 532 | 28 |
+
+以上 geometry 已 Manual Verification PASS。
+
+### 12.4 Background asset placement
+
+| Style | Asset intrinsic | Placement |
+|---|---:|---|
+| smart-locker | 602×628 | `x=598, y=0, width=602, height=628` |
+| store | 585×628 | `x=615, y=0, width=585, height=628` |
+
+兩者皆為 native 1:1、right aligned、full height；不使用 stretch、cover、contain scaling 或 crop。
+
+### 12.5 Shopping Logo difference
+
+Shopping Logo 已 baked into smart-locker／store base assets。OM 02 不繪製 Shopping Logo、不建立 Shopping Logo geometry、不載入 Shopping Logo runtime assets，也沒有獨立 Shopping Logo mode。`logoMode` 只控制 Main Lottery Logo。
+
+### 12.6 Main Logo / assets
+
+- Main Logo 使用共用 `logoMode`：Auto／Orange／White。
+- Auto threshold：`0.498708`，依 runtime background color 判斷。
+- Main Logo assets：`蝦皮大樂透_橘.png`、`蝦皮大樂透_白.png`。
+- OM 02 Manual Verification：PASS。
+
+### 12.7 Implementation / verification
+
+- Technical Self-Test：PASS
+- OM 01 Regression：PASS
+- Code Commit full：`e292ff869e0a6be222a0e36578014e8ba0bea374`
+- Code Commit short：`e292ff8`
+- Code Commit message：`feat(lottery-show): add OM Google Pmax 1200x628 layout`
+- Code Commit parent：`5546c12a45d20aa4120e5dc1932efe9ac879e1ff`
+- Committed paths：7（4 implementation files + 3 OM 02 assets）
+
+### 12.8 Viewer / launcher
+
+- Viewer：`開獎秀/02_OM/viewer.html`，支援 OM 01／OM 02 layout routing。
+- Launcher：`開獎秀/02_OM/launch/02_Google_Pmax_1200x628.command`。
+- Port：`4177`，repo-root server、marker check、fail-closed、Chrome、mode `755`。
+
+## 13. Assets
 
 | Asset | Path | Intrinsic |
 |---|---|---:|
@@ -168,7 +238,7 @@ OM port `4177` 與 online-bn port `4176` 刻意分離。後續每個 OM layout �
 | Shopping Logo Orange | `開獎秀/02_OM/assets/直式蝦皮購物_橘.png` | 83×112 |
 | Shopping Logo White | `開獎秀/02_OM/assets/直式蝦皮購物_白.png` | 83×112 |
 
-## 13. Code Commit / Manual Verification
+## 14. Code Commit / Manual Verification
 
 Implementation：DONE
 
@@ -186,9 +256,9 @@ Code Commit：
 
 Docs Commit：尚未建立；不得虛構 Docs Commit hash。
 
-## 14. Explicitly Deferred Work
+## 15. Explicitly Deferred Work
 
-- OM 其餘 layouts
+- OM 其餘 layouts（OM 03+）
 - OM 正式 Console integration
 - OM Excel import
 - OM JSON workspace
@@ -196,8 +266,8 @@ Docs Commit：尚未建立；不得虛構 Docs Commit hash。
 - OM ZIP
 - OM 全版位整合
 
-Google_Pmax_1200x1200 standalone baseline 完成，不等於 OM item 全部完成。
+Google_Pmax_1200x1200 與 Google_Pmax_1200x628 standalone baselines 完成，不等於 OM item 全部完成。
 
-## 15. 後續 OM 版位追加治理
+## 16. 後續 OM 版位追加治理
 
 新增 OM 版位時，先確認 source document 實際 PPI、document／Canvas dimensions、assets、geometry、typography 與 Manual Verification scope，再追加本文件對應章節與 completed layout table。未完成工作不得宣稱 Implemented；每個版位的 Code Commit 與 Manual Verification 必須以實際 repository evidence 記錄。
