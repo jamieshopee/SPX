@@ -329,17 +329,16 @@ fit 一律沿用既有 `computeContainRect()` 與該 layout 的 `horizontalAlign
 
 **QR（optional descriptor，12 導入）**
 
-只有宣告 `qr` 的 descriptor 才啟用；contract 為 `box` 與 `defaultUrl`，目前由 12～16 使用。`createInitialState()` 只對 opt-in layout 新增 `qrUrl`，由 `qr.defaultUrl` 初始化。01～11 的 state shape 不增加 `qrUrl`，沒有 QR vendor load、encode 或 draw side effect。
+只有宣告 `qr` 的 descriptor 才啟用；contract 為 `box` 與 `defaultUrl`，目前由 12～17 使用。`createInitialState()` 只對 opt-in layout 新增 `qrUrl`，由 `qr.defaultUrl` 初始化。01～11 的 state shape 不增加 `qrUrl`，沒有 QR vendor load、encode 或 draw side effect。
 
-共用 pipeline 順序為 background → style base → main Logo → optional secondaryLogo → optional QR → local 2× text layer → direct text。QR geometry 必須為畫布內、有限數、非零正方形；URL 空值／非法值跳過 QR，其餘 BN 正常 render；geometry、vendor、encoder 或 generated-image readiness failure 則整次 render reject，沿用 Preview fail-closed。URL utility、local vendor、readiness 與 control 的最小正式 contract 見第 15.14 節；不代表已實作工單、workspace 或 Export。
+共用 pipeline 順序為 background → style base → main Logo → optional secondaryLogo → optional QR → local 2× text layer → direct text。QR geometry 必須為畫布內、有限數、非零正方形；URL 空值／非法值跳過 QR，其餘 BN 正常 render；geometry、vendor、encoder 或 generated-image readiness failure 則整次 render reject，沿用 Preview fail-closed。URL utility、local vendor、readiness 與 control 的最小正式 contract 見第 15.14 節；shared workspace、正式工單匯入與 Export contract 見第 20.1 節。
 
 **12～17 QR default 與 future integration boundary（Jamie 正式裁決）**
 
 12～17 的 QR default URL 目前統一為 `https://shopee.tw/m/spxlottery`。
 
 - **已實作（12～17）**：descriptor `qr.defaultUrl` → `state.qrUrl`、QR control「縮址」與 renderer QR。
-- **未來正式邊界**：工單「縮址」→ 對應版位 `qrUrl` → renderer QR。
-- **Work-order integration：NOT IMPLEMENTED YET**。目前未實作正式工單縮址自動帶入；不得將上述邊界解讀為已可由工單帶入 QR，亦不新增工單 architecture 規格。
+- **正式整合**：工單「縮址」→ shared `workspace.qrUrl` → descriptor opt-in layout 的 renderer QR；Excel／JSON／Export contract 見第 20.1 節。
 
 Logo Auto 的純邏輯維持獨立於 `開獎秀/01_線上電子BN/js/logo-auto.js`，engine 引用之，未修改。
 
@@ -437,7 +436,7 @@ sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正�
 
 ### 2.17 目前共通層未涵蓋的項目
 
-以下尚未裁決，不得自行補完：Excel 工單匯入、JSON workspace、Export／下載及其 encoder 與輸出格式，以及 17 除第 2.12 節共通 QR default 裁決外的版位規格。12～16 已使用的 local QR encoder 不等同 Export capability；正式工單縮址自動帶入仍為 NOT IMPLEMENTED YET。
+以下尚未裁決，不得自行補完：OM、直播與門市清單的後續版位、Excel 工單、JSON workspace、Export／下載及其 encoder 細節。online-bn 01～17 的 Excel、shared workspace、JSON、Export 與 encoder contract 已於第 20.1 節完成正式定義。
 
 ## 3. 版位總表
 
@@ -608,7 +607,7 @@ M  開獎秀/js/console.js
 
 **Current state（02 導入後）**：01 的 rendering plumbing 已改為共用架構 —— `layout-01-ddcard-bn.js` 現在是 **01 的 layout descriptor**（純資料，不含繪製邏輯），繪製一律由共用的 `layout-engine.js` 執行（第 2.12 節）。此變更隨 Code Commit `931c522` 進入版本控制，**01 的正式數值與視覺輸出完全未變**，01 Regression Verification = PASS（第 5.13 節）。
 
-**Shared console integration**：`console.html` 只新增三個掛載點 id；`console.js` 只在 `item.id === "online-bn"` 時動態 import online-bn 版位模組。OM 與直播走不到該 import，不載入 online-bn 的 JS 與 CSS，三欄維持既有 empty state。`開獎秀/js/registry.js` 與 `開獎秀/css/console.css` 未修改。online-bn 專屬 CSS 由版位模組於 mount 時動態載入一次，`console.html` 不靜態引用。
+**Shared console integration**：`console.js` 只在 `item.id === "online-bn"` 時動態 import online-bn 版位模組。OM 與直播走不到該 import，不載入 online-bn 的 JS 與 CSS，維持各自的 shell／empty state。online-bn scoped Console fix 只在 online-bn context 隱藏中欄／右欄 header；`開獎秀/js/registry.js` 未修改。online-bn 專屬 CSS 由版位模組於 mount 時動態載入一次，`console.html` 不靜態引用。
 
 ### 4.13 Verification 記錄
 
@@ -2990,7 +2989,7 @@ Launcher 沿用 **127.0.0.1、port 4176、SPX repo root、Python ThreadingHTTPSe
 - QR draw 使用局部 `save()` → `imageSmoothingEnabled=false` → `drawImage` → `restore()`，不影響其他 drawing。
 - 縮址 control：initial 為 default URL；有效值 normalize 並 redraw；empty 清空 `qrUrl`；invalid 顯示 feedback／`aria-invalid` 並清除舊 QR；合法 blur 回寫 normalized URL。
 
-**Engine Change = NO；Controls Change = NO；QR Helpers Change = NO；vendor／license 未修改。** 正式工單「縮址」→ `qrUrl` 自動帶入為 **NOT IMPLEMENTED YET**，不代表目前已串接工單。
+**Engine Change = NO；Controls Change = YES（shared workspace／JSON／Export integration）；QR Helpers Change = NO。** 正式工單「縮址」→ shared `workspace.qrUrl` 已由第 20.1 節 contract 完成串接。
 
 ### 16.15 Implementation files
 
@@ -3122,7 +3121,7 @@ Phase A 與 13 素材比較：
 
 **Engine Change = NO；Controls Change = NO；QR Helpers Change = NO；CSS Change = NO；Vendor Change = NO；13 Descriptor Change = NO。** 14 沿用既有 optional QR capability，default URL 為 `https://shopee.tw/m/spxlottery`。
 
-Work-order Integration 仍為 **NOT IMPLEMENTED YET**。未來正式邊界維持「工單 `縮址` → `qrUrl`」，不得解讀為目前已完成工單串接。
+Work-order Integration 已由第 20.1 節正式完成：工單 `縮址` → shared `workspace.qrUrl`；14 沿用 descriptor QR capability，不建立版位專屬 import special case。
 
 ### 17.7 Implementation files
 
@@ -3226,7 +3225,7 @@ smart-locker 預設色：#2660ad／#fffac8／#fff000／#fffac8；store：#ffda46
 
 原始 source geometry 2538 / 2761 / 429 / 430 不屬於正式 2700 × 3380 renderer coordinates，不採用；(186,2814,324,324) 是 reference QR 黑色 modules bbox，不是 renderer box，亦不採用。
 
-Draw order 沿用 background → style base → main Logo → optional secondaryLogo → optional QR → local 2× fields → direct subtitle。15 啟用 secondaryLogo 與 QR；Engine、Controls、QR Helpers、CSS 均未修改。Work-order「縮址」→ qrUrl 仍為 NOT IMPLEMENTED。
+Draw order 沿用 background → style base → main Logo → optional secondaryLogo → optional QR → local 2× fields → direct subtitle。15 啟用 secondaryLogo 與 QR；Engine、QR Helpers、CSS 均未修改。Work-order「縮址」→ shared `workspace.qrUrl` 由第 20.1 節統一處理。
 
 ### 18.5 Console、Viewer、launcher 與 Verification
 
@@ -3310,7 +3309,7 @@ Manual Verification 曾發現初始 `(74,438,90,90)` QR 視覺過小。Jamie 裁
 
 Main Logo、QR image、四欄文字為 renderer-owned；Shopee Shopping Logo、QR white card、QR caption 為 base baked-in。16 relevant draw order 為：background → base → Main Logo → QR → local 2× fields → direct subtitle。Engine、Controls、QR Helpers、CSS、vendor 均 **NO CHANGE**。
 
-Work-order「縮址」→ `qrUrl` 仍為 **NOT IMPLEMENTED YET**；未包含工單 parser、shortening API 或 SPX AD state／DOM architecture。
+Work-order「縮址」→ shared `workspace.qrUrl` 已完成；不包含 shortening API 或 SPX AD state／DOM architecture。
 
 ### 19.6 Console、Viewer、launcher 與 Verification
 
@@ -3336,11 +3335,110 @@ Launcher 為 `開獎秀/01_線上電子BN/launch/16_繳費機下方BN-立保.com
 
 以下尚未裁決，下一階段不得自行假設：
 
-- online-bn 的 Excel 工單 schema 與匯入流程；已裁決的「縮址」→ `qrUrl` 邊界不代表串接完成，Work-order integration **NOT IMPLEMENTED YET**。
-- online-bn 的 JSON／workspace 資料結構。
-- online-bn 的 Export、Export encoder、輸出格式與檔名規則（不含第 15.14 節已完成的 local QR encoder）。
-- 跨版位是否需要保留各自 state（目前切換版位即重設，見第 2.14 節）。
+- OM、直播與門市清單的後續正式版位、Workspace、Excel、JSON、Export 細節。
+- online-bn 以外項目的 renderer、geometry、輸出格式與跨版位資料邊界。
+- online-bn 未列入本文件的未來功能；不得因本文件的 01～17 contract 推導 OM、直播或門市清單行為。
+
+online-bn 的 Excel、Workspace JSON、Export、shared workspace 與跨版位保留行為已於第 20.1 節完成正式整合，不再列為未決項目。
 17 已完成正式規格、實作、Technical Self-Test、Manual Verification 與 Code Commit；不再列為未決或待製作版位。
+
+## 20.1 Phase C 正式 Console、Workspace、Excel 與 Export 整合
+
+### 20.1.1 Status 與 Code Commit
+
+| 項目 | 值 |
+|---|---|
+| Status | **Implemented / PASS** |
+| Formal Console Integration | **PASS** |
+| Technical Self-Test | **PASS** |
+| Jamie Manual Verification | **PASS** |
+| Code Commit（full） | `6a29fd034a4e063a868f7980e9b9dd26c9780d55` |
+| Code Commit（short） | `6a29fd0` |
+| Commit message | `feat(lottery-show): integrate online bn workspace and export` |
+| Parent | `716cd66df54210aeee57ddba84a8253964838907` |
+| Docs Commit | Pending |
+
+01～17 已全部接入正式 `console.html?item=online-bn&style=<style>`。正式控制台包含左側 01～17 版位清單、中欄 Preview、右欄 controls，支援 `smart-locker`／`store`、目前 style only、ArrowUp／ArrowDown 版位切換、active／focus accessibility 行為，以及 online-bn scoped 的中欄／右欄 header 隱藏；OM／直播的共用 shell 行為不受影響。
+
+### 20.1.2 Shared Workspace
+
+每一個 mount session 只有一份 shared workspace：
+
+```text
+text:   title, subtitle, small1, small2
+colors: background, title, subtitle, small
+logoMode
+qrUrl
+```
+
+workspace 只存在於目前 mount session，不使用 localStorage、sessionStorage 或 `history.state`，不建立 per-layout state/cache。切換版位時依 descriptor 的 `textOrder` 套用 shared text；style boundary 不跨 mount persistence。
+
+文字 weighted count 為 Han = 1、英文／數字／符號／空白 = 0.5；limits 為 title 8、subtitle 7、small1 18、small2 18。手動輸入與 Excel 共用同一套 validator。smart-locker defaults 為 `#2660ad`／`#fffac8`／`#fff000`／`#fffac8`；store defaults 為 `#ffda46`／`#472704`／`#eb1717`／`#472704`。Logo mode 為 auto／orange／white，Auto 沿用 threshold `0.498708`。
+
+### 20.1.3 Excel Import 與 Shared QR
+
+正式工單使用工作表 `美術工單_線上電子BN`，identity `B4 = 蝦皮店到店 百萬開獎秀電子版位曝光`，canonical mapping 為：
+
+| Workspace field | Excel cell |
+|---|---|
+| title | `B15` |
+| subtitle | `B16` |
+| small1 | `B17` |
+| small2 | `B18` |
+| qrUrl | `E15` |
+
+01～07 與 11～17 使用四文字欄；08～10 使用 subtitle only；12～17 具有 QR capability。Excel import 為 atomic、fail-closed，使用 Lottery-local SheetJS 0.20.3。
+
+`workspace.qrUrl` 的正式 default 為 `https://shopee.tw/m/spxlottery`。Excel E15 或人工 QR 會更新 shared QR；切換 QR-capable layout 會保留最新值；是否顯示／render QR 只由 `descriptor.qr` 決定；Reset 回正式 default QR。11 使用 title／subtitle／small1／small2 四欄，沒有 small1／small2 import special case。
+
+### 20.1.4 JSON Workspace
+
+正式 JSON format 為 `SPX Lottery Show Online BN Workspace`、version `1`，保存 `styleId`、`activeLayoutId`、`workspace.text`、`workspace.colors`、`workspace.logoMode`、`workspace.qrUrl` 與 `import.sourceName`。
+
+JSON restore 會驗證 format、version、目前 style exact match、active layout、文字 limits、colors、logoMode 與 QR；全部通過後才 atomic commit。style mismatch 直接 reject。JSON 不負責切 style、改 URL 或 navigation，也不保存 renderer、geometry、canvas、image binary、DOM、per-layout cache 或 executable data。
+
+### 20.1.5 Right Panel 與 Reset
+
+右欄正式順序：
+
+```text
+01 匯入工單 Excel 或暫存檔
+02 背景色設定
+03 Logo 模式
+04 編輯文字＋顏色
+05 QR Code（conditional）
+06 下載完整專案
+07 重設工作區域
+```
+
+online-bn 不包含 KV。Reset confirmation 後清除 Excel／JSON imported state、import metadata、shared text／colors／logoMode／qrUrl、import status 與 export status；恢復目前 style defaults、空白文字、Logo auto 與正式 default QR，同時保持 active layout、style 與 URL。
+
+### 20.1.6 Complete Project Export
+
+Export 只輸出目前 URL style，一次產生 17 images + 1 JSON，再封裝為一個 ZIP；不輸出另一個 style、HTML、JS、vendor 或 source files。檔名使用 descriptor name 加正式 extension，ZIP 為 `線上電子BN_MMDD.zip`，JSON 為 `線上電子BN_MMDD.json`，MMDD 取下載當下 browser local date。
+
+| Layout | Format |
+|---|---|
+| 01 | JPG |
+| 02 | JPG |
+| 03 | JPG |
+| 04 | PNG |
+| 05 | JPG |
+| 06 | JPG |
+| 07 | JPG |
+| 08 | JPG |
+| 09 | JPG |
+| 10 | PNG |
+| 11 | PNG |
+| 12～17 | JPG |
+
+一般 JPG 使用 quality `1.0` 且無容量上限。02_Mall HBN 使用 initial quality `1.0`、max `145000` bytes、floor `0.5`、7 steps binary search；floor 仍超限則整次 Export fail-closed。04_POP UP 使用 native PNG、pHYs 72 DPI、max `250000` bytes，超限時使用 UPNG 256-color fallback 並再次 patch 72 DPI；仍超限則整次 Export fail-closed。10／11 為 native PNG，不套用 250000 bytes、72 DPI 或 UPNG fallback。
+
+任一 font、asset、QR、render、encode、compression 或 ZIP failure 都使整次 Export fail-closed，不產生 partial ZIP、少圖、placeholder 或 fake image；Export 不 mutation workspace。local vendor 僅使用 SheetJS 0.20.3、JSZip 3.10.1、pako 2.1.0 與 repo-vendored UPNG，不使用 CDN。
+
+### 20.1.7 Final Verification
+
+Jamie Manual Verification：**PASS**。已確認 01～17 Preview／controls、Excel、shared text／colors／logo／QR、JSON save／restore、style mismatch、active layout restore、ZIP 18 entries、ZIP／JSON naming、04／10／11 PNG、其餘 JPG、02 ≤145 KB、04 ≤250 KB、smart-locker、store、Reset、keyboard navigation 與 online-bn Console header behavior。
 
 ## 21. 17_繳費機下方BN-博辰
 
