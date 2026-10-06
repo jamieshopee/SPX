@@ -28,7 +28,7 @@ export const LAYOUT_02_MALL_HBN = Object.freeze({
   horizontalAlign: "left",
 
   logo: Object.freeze({
-    box: Object.freeze({ x: 98, y: 96, width: 351, height: 50 }),
+    box: Object.freeze({ x: 98, y: 66, width: 351, height: 50 }),
     intrinsic: Object.freeze({ width: 1678, height: 272 }),
     src: Object.freeze({
       orange: new URL("../assets/蝦皮大樂透_橘.png", import.meta.url),
@@ -42,7 +42,7 @@ export const LAYOUT_02_MALL_HBN = Object.freeze({
     title: Object.freeze({
       id: "title",
       label: "主標",
-      box: Object.freeze({ x: 98, y: 153, width: 351, height: 37 }),
+      box: Object.freeze({ x: 98, y: 123, width: 351, height: 37 }),
       photoshopPt: 40,
       canvasPt: 30,
       family: "medium",
@@ -52,7 +52,7 @@ export const LAYOUT_02_MALL_HBN = Object.freeze({
     subtitle: Object.freeze({
       id: "subtitle",
       label: "副標",
-      box: Object.freeze({ x: 98, y: 200, width: 445, height: 57 }),
+      box: Object.freeze({ x: 98, y: 170, width: 445, height: 57 }),
       photoshopPt: 60,
       canvasPt: 45,
       family: "bold",
@@ -62,7 +62,7 @@ export const LAYOUT_02_MALL_HBN = Object.freeze({
     small1: Object.freeze({
       id: "small1",
       label: "小字 1",
-      box: Object.freeze({ x: 98, y: 273, width: 445, height: 22 }),
+      box: Object.freeze({ x: 98, y: 243, width: 445, height: 22 }),
       photoshopPt: 24,
       canvasPt: 18,
       family: "regular",
@@ -72,7 +72,7 @@ export const LAYOUT_02_MALL_HBN = Object.freeze({
     small2: Object.freeze({
       id: "small2",
       label: "小字 2",
-      box: Object.freeze({ x: 98, y: 302, width: 445, height: 22 }),
+      box: Object.freeze({ x: 98, y: 272, width: 445, height: 22 }),
       photoshopPt: 24,
       canvasPt: 18,
       family: "regular",
