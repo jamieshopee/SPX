@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant" data-spx-lottery-show-om-01-viewer="true" data-spx-lottery-show-om-02-viewer="true" data-spx-lottery-show-om-03-viewer="true" data-spx-lottery-show-om-04-viewer="true" data-spx-lottery-show-om-05-viewer="true" data-spx-lottery-show-om-06-viewer="true" data-spx-lottery-show-om-07-viewer="true">
+<html lang="zh-Hant" data-spx-lottery-show-om-01-viewer="true" data-spx-lottery-show-om-02-viewer="true" data-spx-lottery-show-om-03-viewer="true" data-spx-lottery-show-om-04-viewer="true" data-spx-lottery-show-om-05-viewer="true" data-spx-lottery-show-om-06-viewer="true" data-spx-lottery-show-om-07-viewer="true" data-spx-lottery-show-om-08-viewer="true">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -70,6 +70,7 @@
       import { LAYOUT_05_LINE_VOOM } from "./js/layout-05-line-voom.js";
       import { LAYOUT_06_PIXNET_SIDE_STICKER_SIDE_IMAGE } from "./js/layout-06-pixnet-side-sticker-side-image.js";
       import { LAYOUT_07_PIXNET_SIDE_STICKER_BANNER } from "./js/layout-07-pixnet-side-sticker-banner.js";
+      import { LAYOUT_08_YAHOO_MBBANNER } from "./js/layout-08-yahoo-mbbanner.js";
       import { createInitialState, renderLayoutToCanvas } from "./js/renderer.js";
       import { countTextUnits, formatUnits, isWithinLimit } from "./js/text-validation.js";
 
@@ -81,7 +82,8 @@
         [LAYOUT_04_LINE_OA.id]: LAYOUT_04_LINE_OA,
         [LAYOUT_05_LINE_VOOM.id]: LAYOUT_05_LINE_VOOM,
         [LAYOUT_06_PIXNET_SIDE_STICKER_SIDE_IMAGE.id]: LAYOUT_06_PIXNET_SIDE_STICKER_SIDE_IMAGE,
-        [LAYOUT_07_PIXNET_SIDE_STICKER_BANNER.id]: LAYOUT_07_PIXNET_SIDE_STICKER_BANNER
+        [LAYOUT_07_PIXNET_SIDE_STICKER_BANNER.id]: LAYOUT_07_PIXNET_SIDE_STICKER_BANNER,
+        [LAYOUT_08_YAHOO_MBBANNER.id]: LAYOUT_08_YAHOO_MBBANNER
       });
       const LAYOUT = layouts[params.get("layout")] || LAYOUT_01_GOOGLE_PMAX_1200X1200;
       const status = document.querySelector("#status");
