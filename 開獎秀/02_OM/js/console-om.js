@@ -7,6 +7,9 @@
 
 import { createInitialState, renderLayoutToCanvas } from "./renderer.js";
 import { countTextUnits, formatUnits } from "./text-validation.js";
+import { parseOmWorkOrderCandidate } from "./work-order-import.js";
+import { exportWorkspace } from "./export.js";
+import { parseWorkspaceJson } from "./workspace.js";
 import { LAYOUT_01_GOOGLE_PMAX_1200X1200 } from "./layout-01-google-pmax-1200x1200.js";
 import { LAYOUT_02_GOOGLE_PMAX_1200X628 } from "./layout-02-google-pmax-1200x628.js";
 import { LAYOUT_03_GOOGLE_PMAX_960X1200 } from "./layout-03-google-pmax-960x1200.js";
@@ -17,6 +20,8 @@ import { LAYOUT_07_PIXNET_SIDE_STICKER_BANNER } from "./layout-07-pixnet-side-st
 import { LAYOUT_08_YAHOO_MBBANNER } from "./layout-08-yahoo-mbbanner.js";
 
 const OM_STYLESHEET_URL = new URL("../css/om-console.css", import.meta.url);
+const SHEETJS_URL = new URL("../../01_線上電子BN/vendor/xlsx.full.min.js", import.meta.url);
+const SHEETJS_MARK = "omSheetJs";
 const LOGO_MODES = Object.freeze(["auto", "orange", "white"]);
 const LOGO_LABELS = Object.freeze({ auto: "自動", orange: "橘色", white: "白色" });
 const LAYOUTS = Object.freeze([
@@ -29,6 +34,8 @@ const LAYOUTS = Object.freeze([
   LAYOUT_07_PIXNET_SIDE_STICKER_BANNER,
   LAYOUT_08_YAHOO_MBBANNER
 ]);
+
+let sheetJsPromise = null;
 
 function loadStylesheet() {
   const existing = document.querySelector(`link[data-om-console-stylesheet="true"]`);
@@ -45,8 +52,42 @@ function loadStylesheet() {
   });
 }
 
+function loadSheetJs() {
+  if (globalThis.XLSX?.version === "0.20.3") return Promise.resolve(globalThis.XLSX);
+  sheetJsPromise ||= new Promise((resolve, reject) => {
+    const existing = document.querySelector("script[data-om-sheet-js]");
+    if (existing) {
+      existing.addEventListener("load", () => resolve(globalThis.XLSX), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Excel 解析器載入失敗。")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = SHEETJS_URL.href;
+    script.dataset[SHEETJS_MARK] = "true";
+    script.addEventListener("load", () => {
+      if (globalThis.XLSX?.version !== "0.20.3") {
+        reject(new Error("Excel 解析器版本不符合正式需求。"));
+        return;
+      }
+      resolve(globalThis.XLSX);
+    }, { once: true });
+    script.addEventListener("error", () => reject(new Error("Excel 解析器載入失敗。")), { once: true });
+    document.head.append(script);
+  }).catch((error) => {
+    sheetJsPromise = null;
+    throw error;
+  });
+  return sheetJsPromise;
+}
+
 function createState(layout, styleId) {
   return createInitialState(styleId, layout);
+}
+
+function createConsoleState(layout, styleId) {
+  const state = createState(layout, styleId);
+  state.text = { title: "", subtitle: "", small1: "", small2: "" };
+  return state;
 }
 
 function createSection(number, title) {
@@ -68,7 +109,7 @@ function normalizeHex(value) {
   return match ? `#${match[1].toLowerCase()}` : null;
 }
 
-function createTextRow(field, state, onChange) {
+function createTextRow(field, state, onChange, onTextChange) {
   const row = document.createElement("div");
   row.className = "om-text-row";
 
@@ -101,7 +142,7 @@ function createTextRow(field, state, onChange) {
   };
   const commit = (value) => {
     lastValid = value;
-    state.text[field.id] = value;
+    onTextChange(field.id, value);
     paintCounter(value);
     onChange();
   };
@@ -118,7 +159,7 @@ function createTextRow(field, state, onChange) {
   input.addEventListener("input", () => {
     const value = input.value;
     if (composing) {
-      state.text[field.id] = value;
+      onTextChange(field.id, value);
       paintCounter(value);
       onChange();
       return;
@@ -139,7 +180,7 @@ function createTextRow(field, state, onChange) {
   return row;
 }
 
-function createColorInput(field, state, onChange, { compact = false } = {}) {
+function createColorInput(field, state, onChange, { compact = false, onColorChange } = {}) {
   const wrapper = document.createElement("label");
   wrapper.className = compact ? "om-color-picker-only" : "om-color-field";
   if (!compact) wrapper.append(document.createTextNode(field.label));
@@ -153,14 +194,14 @@ function createColorInput(field, state, onChange, { compact = false } = {}) {
   input.addEventListener("input", () => {
     const next = normalizeHex(input.value);
     if (!next) return;
-    state.colors[field.id] = next;
+    onColorChange?.(field.id, next);
     onChange();
   });
   wrapper.append(input);
   return { wrapper, input };
 }
 
-function createLogoMode(state, onChange) {
+function createLogoMode(state, onChange, onLogoModeChange) {
   const fieldset = document.createElement("fieldset");
   fieldset.className = "om-logo-mode";
   const legend = document.createElement("legend");
@@ -180,7 +221,7 @@ function createLogoMode(state, onChange) {
     radio.checked = state.logoMode === mode;
     radio.addEventListener("change", () => {
       if (!radio.checked) return;
-      state.logoMode = mode;
+      onLogoModeChange?.(mode);
       onChange();
     });
     label.append(radio, document.createTextNode(LOGO_LABELS[mode]));
@@ -190,7 +231,19 @@ function createLogoMode(state, onChange) {
   return fieldset;
 }
 
-function mountControls(root, layout, state, { onChange, onReset }) {
+function mountControls(root, layout, state, {
+  onChange,
+  onReset,
+  onImport,
+  onTextChange,
+  onColorChange,
+  onLogoModeChange,
+  onImportJson,
+  onExport,
+  exportBusy = false,
+  exportStatusText = "準備下載",
+  importStatusText = "尚未匯入工單"
+}) {
   root.replaceChildren();
   root.classList.add("om-controls");
 
@@ -199,36 +252,59 @@ function mountControls(root, layout, state, { onChange, onReset }) {
   excelButton.type = "button";
   excelButton.className = "om-file-button";
   excelButton.textContent = "選擇 Excel";
-  excelButton.disabled = true;
+  const excelInput = document.createElement("input");
+  excelInput.type = "file";
+  excelInput.accept = ".xlsx,.xls";
+  excelInput.hidden = true;
+  excelInput.setAttribute("aria-label", "選擇 Excel 工單");
+  excelButton.addEventListener("click", () => excelInput.click());
   const jsonButton = document.createElement("button");
   jsonButton.type = "button";
   jsonButton.className = "om-file-button";
   jsonButton.textContent = "選擇 JSON";
-  jsonButton.disabled = true;
+  jsonButton.disabled = false;
+  const jsonInput = document.createElement("input");
+  jsonInput.type = "file";
+  jsonInput.accept = ".json,application/json";
+  jsonInput.hidden = true;
+  jsonInput.setAttribute("aria-label", "選擇 JSON 暫存檔");
+  jsonButton.addEventListener("click", () => jsonInput.click());
   const importStatus = document.createElement("p");
   importStatus.className = "om-control-status";
-  importStatus.textContent = "OM 工單功能尚未實作";
-  importSection.append(excelButton, jsonButton, importStatus);
+  importStatus.dataset.omStatus = "import";
+  importStatus.setAttribute("aria-live", "polite");
+  importStatus.textContent = importStatusText;
+  excelInput.addEventListener("change", () => {
+    const [file] = excelInput.files ?? [];
+    if (file) onImport(file);
+    excelInput.value = "";
+  });
+  jsonInput.addEventListener("change", async () => {
+    const [file] = jsonInput.files ?? [];
+    if (file) await onImportJson(file);
+    jsonInput.value = "";
+  });
+  importSection.append(excelInput, jsonInput, excelButton, jsonButton, importStatus);
 
   const backgroundField = layout.colorFields.find((field) => field.id === "background");
   const backgroundSection = createSection("02", "背景色設定");
   if (backgroundField) {
-    const picker = createColorInput(backgroundField, state, onChange);
+    const picker = createColorInput(backgroundField, state, onChange, { compact: true, onColorChange });
     backgroundSection.querySelector(".om-control-heading").append(picker.wrapper);
   }
 
   const logoSection = createSection("03", "Logo 模式");
-  logoSection.append(createLogoMode(state, onChange));
+  logoSection.append(createLogoMode(state, onChange, onLogoModeChange));
 
   const textSection = createSection("04", "編輯文字＋顏色");
   const colorInputs = new Map();
   layout.colorFields.forEach((field) => {
     if (field.id === "background") return;
-    colorInputs.set(field.id, createColorInput(field, state, onChange, { compact: true }));
+    colorInputs.set(field.id, createColorInput(field, state, onChange, { compact: true, onColorChange }));
   });
   layout.textOrder.forEach((id) => {
     const field = layout.text[id];
-    const row = createTextRow(field, state, onChange);
+    const row = createTextRow(field, state, onChange, onTextChange);
     const color = colorInputs.get(field.colorKey);
     if (color) row.append(color.wrapper);
     textSection.append(row);
@@ -239,10 +315,13 @@ function mountControls(root, layout, state, { onChange, onReset }) {
   exportButton.type = "button";
   exportButton.className = "om-primary-button";
   exportButton.textContent = "下載完整專案";
-  exportButton.disabled = true;
+  exportButton.disabled = exportBusy;
+  exportButton.addEventListener("click", onExport);
   const exportStatus = document.createElement("p");
   exportStatus.className = "om-control-status";
-  exportStatus.textContent = "OM Export 尚未實作";
+  exportStatus.dataset.omStatus = "export";
+  exportStatus.setAttribute("aria-live", "polite");
+  exportStatus.textContent = exportStatusText;
   exportSection.append(exportButton, exportStatus);
 
   const resetSection = createSection("06", "重設工作區域");
@@ -254,6 +333,10 @@ function mountControls(root, layout, state, { onChange, onReset }) {
   resetSection.append(resetButton);
 
   root.append(importSection, backgroundSection, logoSection, textSection, exportSection, resetSection);
+  return {
+    setExportBusy: (busy) => { exportButton.disabled = busy; },
+    setExportStatus: (value) => { exportStatus.textContent = value; }
+  };
 }
 
 function createErrorCard(layout, error) {
@@ -285,11 +368,25 @@ export async function mountOm({ styleId, mounts }) {
   }
 
   const { layoutList, layoutListEmpty, previewBody, controlBody } = mounts;
-  const states = new Map(LAYOUTS.map((layout) => [layout.id, createState(layout, styleId)]));
+  const states = new Map(LAYOUTS.map((layout) => [layout.id, createConsoleState(layout, styleId)]));
   let activeLayout = LAYOUTS[0];
   let activeCanvas = null;
   let activeCanvasSize = null;
   let renderToken = 0;
+  let importStatus = "尚未匯入工單";
+  let exportStatus = "準備下載";
+  let exportBusy = false;
+  let controls = null;
+
+  const broadcastText = (fieldId, value) => {
+    LAYOUTS.forEach((layout) => { states.get(layout.id).text[fieldId] = value; });
+  };
+  const broadcastColor = (fieldId, value) => {
+    LAYOUTS.forEach((layout) => { states.get(layout.id).colors[fieldId] = value; });
+  };
+  const broadcastLogoMode = (value) => {
+    LAYOUTS.forEach((layout) => { states.get(layout.id).logoMode = value; });
+  };
 
   previewBody.classList.add("om-preview-body");
   layoutList.classList.add("om-layout-list");
@@ -325,16 +422,100 @@ export async function mountOm({ styleId, mounts }) {
     }
   };
 
+  const setImportStatus = (value) => {
+    importStatus = value;
+    controlBody.querySelector('[data-om-status="import"]')?.replaceChildren(document.createTextNode(value));
+  };
+
+  const importWorkOrder = async (file) => {
+    setImportStatus("正在讀取工單…");
+    try {
+      const XLSX = await loadSheetJs();
+      const candidate = await parseOmWorkOrderCandidate(file, XLSX);
+      Object.entries(candidate).forEach(([fieldId, value]) => broadcastText(fieldId, value));
+      mountActiveControls();
+      await render();
+      setImportStatus(`已匯入：${file.name}`);
+    } catch (error) {
+      setImportStatus(`匯入失敗：${error instanceof Error ? error.message : "OM 工單匯入失敗。"}`);
+    }
+  };
+
+  const commitWorkspaceState = (candidate) => {
+    LAYOUTS.forEach((layout) => {
+      const next = createConsoleState(layout, styleId);
+      next.text = { ...candidate.state.text };
+      next.colors = { ...candidate.state.colors };
+      next.logoMode = candidate.state.logoMode;
+      states.set(layout.id, next);
+    });
+  };
+
+  const importWorkspace = async (file) => {
+    setImportStatus("正在匯入暫存檔…");
+    try {
+      const candidate = parseWorkspaceJson(await file.text(), {
+        currentStyleId: styleId,
+        layoutIds: LAYOUTS.map((layout) => layout.id)
+      });
+      commitWorkspaceState(candidate);
+      await selectLayout(LAYOUTS.find((layout) => layout.id === candidate.activeLayoutId));
+      setImportStatus(`已匯入：${file.name}`);
+    } catch (error) {
+      setImportStatus(`匯入失敗：${error instanceof Error ? error.message : "OM 暫存檔匯入失敗。"}`);
+    }
+  };
+
+  const runExport = async () => {
+    if (exportBusy) return;
+    exportBusy = true;
+    controls?.setExportBusy(true);
+    exportStatus = "正在建立完整專案…";
+    controls?.setExportStatus(exportStatus);
+    const snapshot = {
+      styleId,
+      activeLayoutId: activeLayout.id,
+      state: structuredClone(states.get(activeLayout.id))
+    };
+    try {
+      const result = await exportWorkspace({ ...snapshot, layouts: LAYOUTS });
+      exportStatus = `已下載：${result.zipName}`;
+      controls?.setExportStatus(exportStatus);
+    } catch (error) {
+      exportStatus = `下載失敗：${error instanceof Error ? error.message : "OM 完整專案下載失敗。"}`;
+      controls?.setExportStatus(exportStatus);
+    } finally {
+      exportBusy = false;
+      controls?.setExportBusy(false);
+    }
+  };
+
   const buttons = new Map();
+  const mountActiveControls = () => {
+    controls = mountControls(controlBody, activeLayout, states.get(activeLayout.id), {
+      onChange: render,
+      onReset: reset,
+      onImport: importWorkOrder,
+      onImportJson: importWorkspace,
+      onExport: runExport,
+      exportBusy,
+      exportStatusText: exportStatus,
+      onTextChange: broadcastText,
+      onColorChange: broadcastColor,
+      onLogoModeChange: broadcastLogoMode,
+      importStatusText: importStatus
+    });
+  };
   const selectLayout = (layout) => {
     activeLayout = layout;
     buttons.forEach((button, id) => button.setAttribute("aria-current", id === layout.id ? "true" : "false"));
-    mountControls(controlBody, layout, states.get(layout.id), { onChange: render, onReset: reset });
-    render();
+    mountActiveControls();
+    return render();
   };
   const reset = () => {
-    states.set(activeLayout.id, createState(activeLayout, styleId));
-    mountControls(controlBody, activeLayout, states.get(activeLayout.id), { onChange: render, onReset: reset });
+    LAYOUTS.forEach((layout) => states.set(layout.id, createConsoleState(layout, styleId)));
+    exportStatus = "準備下載";
+    mountActiveControls();
     render();
   };
 
@@ -359,7 +540,7 @@ export async function mountOm({ styleId, mounts }) {
     layoutList.append(button);
   });
 
-  mountControls(controlBody, activeLayout, states.get(activeLayout.id), { onChange: render, onReset: reset });
+  mountActiveControls();
   await render();
 }
 
