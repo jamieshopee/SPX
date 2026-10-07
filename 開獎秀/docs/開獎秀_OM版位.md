@@ -139,6 +139,57 @@ OM port `4177` 與 online-bn port `4176` 刻意分離。後續每個 OM layout �
 
 未完成版位不預先列為 Implemented；若未來需要列出，必須標示 `Not Implemented / Pending`。
 
+### 10.1 OM Console Integration
+
+OM01～OM08 已全部正式掛入 shared console，使用既有 `開獎秀/console.html`：
+
+```text
+console.html?item=om&style=smart-locker
+console.html?item=om&style=store
+```
+
+左欄固定順序：
+
+1. `Google_Pmax_1200x1200`
+2. `Google_Pmax_1200x628`
+3. `Google_Pmax_960x1200`
+4. `Line OA`
+5. `Line Voom`
+6. `Pixnet_Side sticker_side image`
+7. `Pixnet_Side sticker_Banner`
+8. `Yahoo_mbbanner`
+
+style 由 URL context 固定為 `smart-locker` 或 `store`，不是右欄 control。OM01～OM08 直接 consumption existing descriptors；shared renderer `開獎秀/02_OM/js/renderer.js`、OM01～OM08 descriptors 與 standalone Viewer 均 unchanged。
+
+OM console 使用 shared shell：左欄 `250px`、中欄 Preview、右欄 `360px`、工作區 `100vh`、`body` `min-width: 1180px`。`開獎秀/js/console.js` 依 `item=om` dynamic import `開獎秀/02_OM/js/console-om.js`；`開獎秀/02_OM/css/om-console.css` 只在 OM mount 時載入。online-bn 不載入 OM module／CSS；live 維持 untouched／empty-state precedent。
+
+每個 layout 維持獨立 session state，包含 background、logoMode、title、subtitle、small1、small2、title color、subtitle color 與 shared small color；不使用 localStorage，不建立 Workspace persistence。OM common text limits 為 Title 8、Subtitle 7、Small1 18、Small2 18；weighted count 為 Han = 1、non-Han = 0.5；IME-safe，超限 rollback。
+
+OM 右欄最終為：
+
+| Section | 名稱 | 狀態 |
+|---:|---|---|
+| 01 | 匯入工單 Excel 或暫存檔 | UI PRESENT；功能 NOT YET IMPLEMENTED |
+| 02 | 背景色設定 | IMPLEMENTED |
+| 03 | Logo 模式 | IMPLEMENTED：Auto／Orange／White |
+| 04 | 編輯文字＋顏色 | IMPLEMENTED：title／subtitle／small1／small2 與 title／subtitle／shared small color |
+| 05 | 下載完整專案 | UI PRESENT；Export backend NOT YET IMPLEMENTED |
+| 06 | 重設工作區域 | IMPLEMENTED；只 reset current selected layout |
+
+OM 沒有 QR Code section。若 layout 有 renderer-drawn `secondaryLogo`，它與 Main Logo 共用同一個 `logoMode`，不建立獨立 control。
+
+Final Manual Verification：PASS。已確認中央 `PREVIEW／預覽` header 移除、右側 `CONTROLS／操作` header 移除、左欄 keyboard selected 單橘框、QR Code section 移除、Excel／JSON button visual size 一致、Section 04 四個 text input visible width 一致，以及 OM01～OM08 smart-locker／store 均 PASS。
+
+Code Commit：
+
+- Full：`bb73eac2a438e8d92e0565e39a64f58bcb9458a2`
+- Short：`bb73eac`
+- Message：`feat(lottery-show): integrate OM console`
+- Parent：`067e306fa1e62788d348b81a975ab2d23e927d9e`
+- Committed paths：`開獎秀/js/console.js`、`開獎秀/02_OM/js/console-om.js`、`開獎秀/02_OM/css/om-console.css`
+- Manual Verification：PASS
+- Docs Commit：Pending；本次 Documentation Update 尚未建立 commit。
+
 ## 11. Google_Pmax_1200x1200 正式規格
 
 ### 11.1 Canvas / Photoshop source
@@ -476,7 +527,7 @@ Main Lottery Logo 與 Vertical Shopee Logo 共用唯一 `logoMode`：Auto／Oran
 
 OM05 沿用 OM 共用 text limits：Title 8、Subtitle 7、Small1 18、Small2 18；weighted count：Han = 1、non-Han = 0.5。Smart-locker defaults 為 background `#2660ad`、title `#fffac8`、subtitle `#fff000`、small `#fffac8`；Store defaults 為 background `#ffda46`、title `#472704`、subtitle `#eb1717`、small `#472704`。Default text 沿用本文件第 7 節。
 
-Implementation：`開獎秀/02_OM/js/layout-05-line-voom.js`。Shared Viewer：`開獎秀/02_OM/viewer.html`。Shared Renderer：`開獎秀/02_OM/js/renderer.js`，OM05 未修改。Launcher：`開獎秀/02_OM/launch/05_Line_Voom.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。OM01～OM04 regression PASS。Console integration 保持 Pending；OM05 為 standalone Viewer／renderer baseline，不代表正式 Console integration 完成。Image Generation：NO；Images Modified By Codex：NO。
+Implementation：`開獎秀/02_OM/js/layout-05-line-voom.js`。Shared Viewer：`開獎秀/02_OM/viewer.html`。Shared Renderer：`開獎秀/02_OM/js/renderer.js`，OM05 未修改。Launcher：`開獎秀/02_OM/launch/05_Line_Voom.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。OM01～OM04 regression PASS。OM05 standalone Viewer／renderer baseline 與 OM Console integration 均已完成；Console integration current state 見第 10.1 節。Image Generation：NO；Images Modified By Codex：NO。
 
 ## 16. Assets
 
@@ -511,7 +562,6 @@ Docs Commit：尚未建立；不得虛構 Docs Commit hash。
 ## 18. Explicitly Deferred Work
 
 - OM 其餘 layouts（OM 06+）
-- OM 正式 Console integration
 - OM Excel import
 - OM JSON workspace
 - OM formal Export
@@ -593,7 +643,7 @@ OM06 沿用 OM 共用 text limits：Title 8、Subtitle 7、Small1 18、Small2 18
 
 Viewer：`開獎秀/02_OM/viewer.html`，沿用 `.canvas-wrap` checkerboard presentation；checkerboard 只顯示 Canvas transparent margins，不畫入 Canvas pixels 或 output。Implementation descriptor：`開獎秀/02_OM/js/layout-06-pixnet-side-sticker-side-image.js`。Shared Renderer：`開獎秀/02_OM/js/renderer.js`，OM06 未修改。Launcher：`開獎秀/02_OM/launch/06_Pixnet_Side_sticker_side_image.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。
 
-OM06 Technical Self-Test：PASS。OM06 Manual Verification：PASS。OM01～OM05 Regression：PASS。BackgroundShape、transparent Canvas margins、checkerboard、Main Logo mode 與 shared logoMode 均 PASS。Console integration 保持 Pending；OM06 為 standalone Viewer／renderer baseline，不代表正式 Console integration 完成。Image Generation：NO；Images Modified By Codex：NO。
+OM06 Technical Self-Test：PASS。OM06 Manual Verification：PASS。OM01～OM05 Regression：PASS。BackgroundShape、transparent Canvas margins、checkerboard、Main Logo mode 與 shared logoMode 均 PASS。OM06 standalone Viewer／renderer baseline 與 OM Console integration 均已完成；Console integration current state 見第 10.1 節。Image Generation：NO；Images Modified By Codex：NO。
 
 ## 21. Pixnet_Side sticker_Banner 正式規格
 
@@ -660,7 +710,7 @@ OM07 沿用 OM 共用 text limits：Title 8、Subtitle 7、Small1 18、Small2 18
 
 Viewer：`開獎秀/02_OM/viewer.html`。Implementation descriptor：`開獎秀/02_OM/js/layout-07-pixnet-side-sticker-banner.js`。Shared Renderer：`開獎秀/02_OM/js/renderer.js`，OM07 未修改。Launcher：`開獎秀/02_OM/launch/07_Pixnet_Side_sticker_Banner.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。
 
-OM07 Technical Self-Test：PASS。OM07 Manual Verification：PASS。OM01～OM06 Regression：PASS。Full Canvas background、Smart／Store base placement、Main Logo、Vertical Shopee Logo、shared logoMode 與無 independent secondary Logo control 均 PASS。Console integration 保持 Pending；OM07 為 standalone Viewer／renderer baseline，不代表正式 Console integration 完成。Image Generation：NO；Images Modified By Codex：NO。
+OM07 Technical Self-Test：PASS。OM07 Manual Verification：PASS。OM01～OM06 Regression：PASS。Full Canvas background、Smart／Store base placement、Main Logo、Vertical Shopee Logo、shared logoMode 與無 independent secondary Logo control 均 PASS。OM07 standalone Viewer／renderer baseline 與 OM Console integration 均已完成；Console integration current state 見第 10.1 節。Image Generation：NO；Images Modified By Codex：NO。
 
 ## 22. Yahoo_mbbanner 正式規格
 
@@ -727,4 +777,4 @@ OM08 沿用 OM 共用 text limits：Title 8、Subtitle 7、Small1 18、Small2 18
 
 Viewer：`開獎秀/02_OM/viewer.html`。Implementation descriptor：`開獎秀/02_OM/js/layout-08-yahoo-mbbanner.js`。Shared Renderer：`開獎秀/02_OM/js/renderer.js`，OM08 未修改。Launcher：`開獎秀/02_OM/launch/08_Yahoo_mbbanner.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。
 
-OM08 Technical Self-Test：PASS。OM08 Manual Verification：PASS。OM01～OM07 Regression：PASS。Full Canvas background、Smart／Store base placement、Main Logo、Vertical Shopee Logo、shared logoMode 與無 independent secondary Logo control 均 PASS。Console integration 保持 Pending；OM08 為 standalone Viewer／renderer baseline，不代表正式 Console integration 完成。Image Generation：NO；Images Modified By Codex：NO。
+OM08 Technical Self-Test：PASS。OM08 Manual Verification：PASS。OM01～OM07 Regression：PASS。Full Canvas background、Smart／Store base placement、Main Logo、Vertical Shopee Logo、shared logoMode 與無 independent secondary Logo control 均 PASS。OM08 standalone Viewer／renderer baseline 與 OM Console integration 均已完成；Console integration current state 見第 10.1 節。Image Generation：NO；Images Modified By Codex：NO。
