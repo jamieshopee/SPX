@@ -95,7 +95,7 @@ Auto 依目前 runtime background color 判斷，threshold 為 `0.498708`。亮�
 
 ## 9. Viewer / Launcher Precedent
 
-OM standalone Viewer：`開獎秀/02_OM/viewer.html`，目前支援 `Google_Pmax_1200x1200`、`Google_Pmax_1200x628` 與 `Google_Pmax_960x1200`，透過 layout routing 選擇 active descriptor。
+OM standalone Viewer：`開獎秀/02_OM/viewer.html`，目前支援 `Google_Pmax_1200x1200`、`Google_Pmax_1200x628`、`Google_Pmax_960x1200`、`Line OA` 與 `Line Voom`，透過 layout routing 選擇 active descriptor。
 
 目前支援：smart-locker／store、alignment overlay、overlay opacity、text editing、weighted text validation、runtime background color、title／subtitle／small color、logoMode Auto／Orange／White 與 Reset。Runtime background 先 fill Canvas，再繪製 style base asset；runtime text colors 即時 rerender；Auto Logo 使用 current runtime background。
 
@@ -124,6 +124,7 @@ OM port `4177` 與 online-bn port `4176` 刻意分離。後續每個 OM layout �
 | 02 | Google_Pmax_1200x628 | 1200×628 | Implemented | PASS | `e292ff8` |
 | 03 | Google_Pmax_960x1200 | 960×1200 | Implemented | PASS | `ed2762d` |
 | 04 | Line OA | 1040×1040 | Implemented | PASS | `e9b3d6d` |
+| 05 | Line Voom | 1080×1080 | Implemented | PASS | `b2537ba` |
 
 未完成版位不預先列為 Implemented；若未來需要列出，必須標示 `Not Implemented / Pending`。
 
@@ -403,7 +404,70 @@ Default text 沿用本文件第 7 節。Viewer 為 `開獎秀/02_OM/viewer.html`
 
 Renderer 記錄目前正式行為：descriptor-driven optional `backgroundShape`；OM04 Store source 1016×833 可繪製至 destination 1016×822；OM01～OM03 Regression PASS。OM04 Smart、OM04 Store 與 OM04 overall Manual Verification 均 PASS。Image Generation：NO；Images Modified By Codex：NO。
 
-## 15. Assets
+## 15. Line Voom 正式規格
+
+### 15.1 Identity / Canvas
+
+- Layout：Line Voom
+- Status：Implemented / Technical Self-Test PASS / Manual Verification PASS
+- Canvas：1080×1080
+- Final output：1080×1080 PNG
+- Photoshop source：300 PPI
+- Photoshop document pixel → Canvas pixel：1:1
+- Typography conversion：`fontSizePx = Photoshop pt × 300 / 72`
+- Renderer 使用 px；不得使用 browser pt。
+
+Code Commit：
+
+- Full：`b2537ba9d2beeb1fdb081ba292837fd60098b7af`
+- Short：`b2537ba`
+- Message：`feat(lottery-show): add OM Line Voom layout`
+- Parent：`b3b151b00b014b1203f0cc1bd3e76ac80de2eec8`
+- Docs Commit：Pending；不得虛構 Docs Commit hash。
+
+### 15.2 Typography
+
+| Field | Photoshop | `fontSizePx` | Font | Rendering |
+|---|---:|---:|---|---|
+| Title | 18pt @ 300 PPI | 75px | ShopeeNotoSans(content)-Medium | local 2× |
+| Subtitle | 23pt @ 300 PPI | 95.83333333333333px | ShopeeNotoSans(content)-Bold | direct |
+| Small1 | 10pt @ 300 PPI | 41.66666666666667px | ShopeeNotoSans(content)-Medium | local 2× |
+| Small2 | 10pt @ 300 PPI | 41.66666666666667px | ShopeeNotoSans(content)-Medium | local 2× |
+
+Medium local 2× 只負責 rendering quality，final logical scale = 1。沿用 actualBoundingBox ink-box semantics；不使用 auto-wrap 或 auto-shrink。
+
+### 15.3 Geometry / Background
+
+| Object | x | y | width | height |
+|---|---:|---:|---:|---:|
+| Main Lottery Logo | 263 | 121 | 554 | 90 |
+| Vertical Shopee Logo | 929 | 25 | 107 | 146 |
+| Title | 171 | 242 | 738 | 69 |
+| Subtitle | 171 | 329 | 738 | 90 |
+| Small1 | 171 | 435 | 738 | 39 |
+| Small2 | 171 | 485 | 738 | 39 |
+| Smart-locker base | 0 | 0 | 1080 | 1080 |
+| Store base | 0 | 550 | 1080 | 530 |
+
+Background：full Canvas editable background；OM05 不使用 `backgroundShape`。
+
+### 15.4 Assets / Logo Behavior
+
+- Overlay：`開獎秀/02_OM/assets/對位/Line Voom.png`，1080×1080，SHA-256 `2623e4d99e44243ceea86b4e5223b6258f517cb4dbd31bfb250c2a1cc551d21a`。
+- Smart-locker：`開獎秀/02_OM/assets/智取櫃/Line Voom.png`，1080×1080，SHA-256 `bdd51f660494f9f80d74692785ef42402d36ec2514934b6574d05ef8e37bd1ff`。
+- Store：`開獎秀/02_OM/assets/門市/Line Voom.png`，1080×530，SHA-256 `5886a9852dd45b171d8fa276ecdbaef56fac1ff62611cb0c3cfa291e0e5f488b`。
+- Main Lottery Logo：`開獎秀/02_OM/assets/蝦皮大樂透_橘.png`、`開獎秀/02_OM/assets/蝦皮大樂透_白.png`。
+- Vertical Shopee Logo：`開獎秀/02_OM/assets/直式蝦皮購物_橘.png`、`開獎秀/02_OM/assets/直式蝦皮購物_白.png`。
+
+Main Lottery Logo 與 Vertical Shopee Logo 共用唯一 `logoMode`：Auto／Orange／White；Auto threshold `0.498708`。Vertical Shopee Logo 不建立獨立控制。
+
+### 15.5 Defaults / Verification
+
+OM05 沿用 OM 共用 text limits：Title 8、Subtitle 7、Small1 18、Small2 18；weighted count：Han = 1、non-Han = 0.5。Smart-locker defaults 為 background `#2660ad`、title `#fffac8`、subtitle `#fff000`、small `#fffac8`；Store defaults 為 background `#ffda46`、title `#472704`、subtitle `#eb1717`、small `#472704`。Default text 沿用本文件第 7 節。
+
+Implementation：`開獎秀/02_OM/js/layout-05-line-voom.js`。Shared Viewer：`開獎秀/02_OM/viewer.html`。Shared Renderer：`開獎秀/02_OM/js/renderer.js`，OM05 未修改。Launcher：`開獎秀/02_OM/launch/05_Line_Voom.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。OM01～OM04 regression PASS。Console integration 保持 Pending；OM05 為 standalone Viewer／renderer baseline，不代表正式 Console integration 完成。Image Generation：NO；Images Modified By Codex：NO。
+
+## 16. Assets
 
 | Asset | Path | Intrinsic |
 |---|---|---:|
@@ -415,7 +479,7 @@ Renderer 記錄目前正式行為：descriptor-driven optional `backgroundShape`
 | Shopping Logo Orange | `開獎秀/02_OM/assets/直式蝦皮購物_橘.png` | 83×112 |
 | Shopping Logo White | `開獎秀/02_OM/assets/直式蝦皮購物_白.png` | 83×112 |
 
-## 16. Code Commit / Manual Verification
+## 17. Code Commit / Manual Verification
 
 Implementation：DONE
 
@@ -433,9 +497,9 @@ Code Commit：
 
 Docs Commit：尚未建立；不得虛構 Docs Commit hash。
 
-## 17. Explicitly Deferred Work
+## 18. Explicitly Deferred Work
 
-- OM 其餘 layouts（OM 05+）
+- OM 其餘 layouts（OM 06+）
 - OM 正式 Console integration
 - OM Excel import
 - OM JSON workspace
@@ -445,6 +509,6 @@ Docs Commit：尚未建立；不得虛構 Docs Commit hash。
 
 Google_Pmax_1200x1200、Google_Pmax_1200x628、Google_Pmax_960x1200 與 Line OA standalone baselines 完成，不等於 OM item 全部完成。
 
-## 18. 後續 OM 版位追加治理
+## 19. 後續 OM 版位追加治理
 
 新增 OM 版位時，先確認 source document 實際 PPI、document／Canvas dimensions、assets、geometry、typography 與 Manual Verification scope，再追加本文件對應章節與 completed layout table。未完成工作不得宣稱 Implemented；每個版位的 Code Commit 與 Manual Verification 必須以實際 repository evidence 記錄。
