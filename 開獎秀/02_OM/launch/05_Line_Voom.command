@@ -1,0 +1,102 @@
+#!/bin/zsh
+
+# SPX 開獎秀 — OM 05 Manual Verification launcher
+
+set -u
+
+readonly OM_LAUNCH_DIR="${0:A:h}"
+readonly SPX_ROOT="${OM_LAUNCH_DIR:h:h:h}"
+readonly SPX_HOST="127.0.0.1"
+readonly SPX_PORT="4177"
+readonly SPX_BASE_URL="http://${SPX_HOST}:${SPX_PORT}"
+readonly SPX_VIEWER_PATH="/%E9%96%8B%E7%8D%8E%E7%A7%80/02_OM/viewer.html?layout=line-voom&style=smart-locker"
+readonly SPX_VIEWER_URL="${SPX_BASE_URL}${SPX_VIEWER_PATH}"
+readonly SPX_VIEWER_MARKER='data-spx-lottery-show-om-05-viewer="true"'
+readonly SPX_PYTHON="/usr/bin/python3"
+readonly SPX_CURL="/usr/bin/curl"
+readonly SPX_LSOF="/usr/sbin/lsof"
+readonly SPX_GREP="/usr/bin/grep"
+readonly SPX_OPEN="/usr/bin/open"
+
+om_server_pid=""
+
+stop_om_server() {
+  if [[ -n "${om_server_pid}" ]] && kill -0 "${om_server_pid}" 2>/dev/null; then
+    kill "${om_server_pid}" 2>/dev/null
+    wait "${om_server_pid}" 2>/dev/null
+  fi
+}
+
+pause_before_exit() { echo; read -r "?按 Enter 關閉視窗…"; }
+
+viewer_is_ready() {
+  "${SPX_CURL}" --silent --fail --max-time 1 "${SPX_VIEWER_URL}" 2>/dev/null |
+    "${SPX_GREP}" --fixed-strings --quiet "${SPX_VIEWER_MARKER}"
+}
+
+open_viewer() {
+  if ! "${SPX_OPEN}" -a "Google Chrome" "${SPX_VIEWER_URL}"; then
+    echo "Viewer 已就緒，但無法自動以 Google Chrome 開啟。"
+    echo "請手動開啟：${SPX_VIEWER_URL}"
+    return 1
+  fi
+}
+
+trap stop_om_server EXIT INT TERM HUP
+
+if viewer_is_ready; then
+  echo "重用既有 OM Viewer Server：${SPX_BASE_URL}"
+  open_viewer || pause_before_exit
+  exit
+fi
+
+if "${SPX_LSOF}" -nP -iTCP:"${SPX_PORT}" -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "Port ${SPX_PORT} 已被其他程式占用，OM 05 Viewer fail-closed。"
+  pause_before_exit
+  exit 1
+fi
+
+if [[ ! -x "${SPX_PYTHON}" ]]; then
+  echo "找不到 macOS Python 3，無法啟動 OM 05 Viewer。"
+  pause_before_exit
+  exit 1
+fi
+
+if ! cd "${SPX_ROOT}"; then
+  echo "無法切換到 SPX 根目錄：${SPX_ROOT}"
+  pause_before_exit
+  exit 1
+fi
+
+"${SPX_PYTHON}" - "${SPX_PORT}" "${SPX_HOST}" <<'PYTHON' &
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import sys
+
+class NoCacheHTTPRequestHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        request_path = self.path.split("?", 1)[0].lower()
+        if request_path.endswith((".js", ".css")):
+            self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
+ThreadingHTTPServer((sys.argv[2], int(sys.argv[1])), NoCacheHTTPRequestHandler).serve_forever()
+PYTHON
+om_server_pid=$!
+
+om_server_ready=false
+for _ in {1..50}; do
+  if ! kill -0 "${om_server_pid}" 2>/dev/null; then break; fi
+  if viewer_is_ready; then om_server_ready=true; break; fi
+  sleep 0.1
+done
+
+if [[ "${om_server_ready}" != true ]]; then
+  echo "無法啟動 OM 05 HTTP Server。"
+  pause_before_exit
+  exit 1
+fi
+
+if ! open_viewer; then pause_before_exit; exit 1; fi
+echo "OM 05 Viewer 已啟動：${SPX_VIEWER_URL}"
+echo "關閉此視窗或按 Control-C 即可停止 Server。"
+wait "${om_server_pid}"
