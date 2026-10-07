@@ -105,6 +105,8 @@ OM 02 Launcher：`開獎秀/02_OM/launch/02_Google_Pmax_1200x628.command`。
 
 OM 03 Launcher：`開獎秀/02_OM/launch/03_Google_Pmax_960x1200.command`。
 
+OM 04 Launcher：`開獎秀/02_OM/launch/04_Line_OA.command`。
+
 - repo-root local server
 - marker check
 - fail-closed
@@ -121,6 +123,7 @@ OM port `4177` 與 online-bn port `4176` 刻意分離。後續每個 OM layout �
 | 01 | Google_Pmax_1200x1200 | 1200×1200 | Implemented | PASS | `9dbdfc2` |
 | 02 | Google_Pmax_1200x628 | 1200×628 | Implemented | PASS | `e292ff8` |
 | 03 | Google_Pmax_960x1200 | 960×1200 | Implemented | PASS | `ed2762d` |
+| 04 | Line OA | 1040×1040 | Implemented | PASS | `e9b3d6d` |
 
 未完成版位不預先列為 Implemented；若未來需要列出，必須標示 `Not Implemented / Pending`。
 
@@ -322,7 +325,85 @@ Formal conversion：`fontSizePx = Photoshop pt × 300 / 72`。Descriptor 使用 
 - Committed paths：6
 - Docs Commit：Pending；不得虛構 Docs Commit hash。
 
-## 14. Assets
+## 14. Line OA 正式規格
+
+### 14.1 Identity / Canvas
+
+- Layout：Line OA
+- Status：Implemented / Manual Verification PASS
+- Canvas：1040×1040
+- Final output：1040×1040 PNG
+- Photoshop source：300 PPI
+- Photoshop document pixel → Canvas pixel：1:1
+
+Code Commit：
+
+- Full：`e9b3d6d0a8a0238cd28d6bdea386839ce19cb6ce`
+- Short：`e9b3d6d`
+- Message：`feat(lottery-show): add OM Line OA layout`
+- Parent：`07d11a15fe717a7c14c48f7607108cd817817143`
+- Docs Commit：Pending
+
+### 14.2 Background Shape
+
+OM04 使用固定 Canvas 內的可變色 rounded background shape；shape 外區域保持透明。
+
+| x | y | width | height | radius |
+|---:|---:|---:|---:|---:|
+| 12 | 12 | 1016 | 989 | 30 |
+
+Background color 使用既有 `state.colors.background`。這是 OM04 descriptor-driven optional `backgroundShape`；OM01～OM03 未定義 `backgroundShape` 時，維持既有 full-canvas background 行為。
+
+### 14.3 Background Assets
+
+Smart-locker base：`開獎秀/02_OM/assets/智取櫃/Line OA.png`
+
+- Placement：`x=12, y=548, width=1016, height=471`
+- Manual Verification：PASS
+
+Store base：`開獎秀/02_OM/assets/門市/Line OA.png`
+
+- Source intrinsic dimensions：1016×833
+- Destination placement：`x=12, y=197, width=1016, height=822`
+- SHA-256：`54874c456239e08fbb767be7348aa1b44552454e96450f75812364b4d981e91e`
+- Manual Verification：PASS
+
+Source intrinsic dimensions 與 destination placement 是不同概念；不得把 destination 1016×822 寫成 source PNG 必須為 1016×822。
+
+Overlay：`開獎秀/02_OM/assets/對位/Line OA.png`，intrinsic 1040×1039。Canonical output Canvas 仍為 1040×1040。
+
+### 14.4 Logo Geometry / Contract
+
+Main Lottery Logo：`x=257, y=131, width=526, height=81`。
+
+Shopping Logo：`x=883, y=42, width=102, height=140`。
+
+兩者由 renderer 繪製並共用唯一 `logoMode`：Auto／Orange／White。Auto 沿用 OM 共用規則：linearized sRGB relative luminance，threshold `0.498708`；`L >= threshold` 使用 Orange，否則使用 White。不得建立 Shopping Logo 獨立控制。
+
+### 14.5 Text Geometry / Typography
+
+| Field | x | y | width | height | Photoshop | `fontSizePx` | Font | Rendering |
+|---|---:|---:|---:|---:|---:|---:|---|---|
+| Title | 166 | 244 | 711 | 68 | 17.5pt @ 300 PPI | 72.91666666666667px | ShopeeNotoSans(content)-Medium | local 2× |
+| Subtitle | 166 | 329 | 711 | 87 | 22pt @ 300 PPI | 91.66666666666667px | ShopeeNotoSans(content)-Bold | direct |
+| Small1 | 166 | 433 | 711 | 37 | 9.5pt @ 300 PPI | 39.583333333333336px | ShopeeNotoSans(content)-Medium | local 2× |
+| Small2 | 166 | 482 | 711 | 37 | 9.5pt @ 300 PPI | 39.583333333333336px | ShopeeNotoSans(content)-Medium | local 2× |
+
+正式規則：`fontSizePx = Photoshop pt × 300 / 72`。Renderer 使用 px；Medium local 2× 只負責 rasterization quality，最終 logical scale = 1，不使用 browser pt。
+
+沿用 OM 共用 text semantics：actualBoundingBox ink-box positioning、不 auto-wrap、不 auto-shrink、weighted text validation（Han = 1、non-Han = 0.5）。文字上限為 Title 8、Subtitle 7、Small1 18、Small2 18。
+
+### 14.6 Defaults / Viewer / Launcher / Verification
+
+Smart-locker defaults：background `#2660ad`、title `#fffac8`、subtitle `#fff000`、small `#fffac8`。
+
+Store defaults：background `#ffda46`、title `#472704`、subtitle `#eb1717`、small `#472704`。
+
+Default text 沿用本文件第 7 節。Viewer 為 `開獎秀/02_OM/viewer.html`，支援 OM04 layout routing 與 checkerboard presentation；checkerboard 只存在 viewer presentation layer，不進入 Canvas pixel output 或 Export output。Launcher 為 `開獎秀/02_OM/launch/04_Line_OA.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。
+
+Renderer 記錄目前正式行為：descriptor-driven optional `backgroundShape`；OM04 Store source 1016×833 可繪製至 destination 1016×822；OM01～OM03 Regression PASS。OM04 Smart、OM04 Store 與 OM04 overall Manual Verification 均 PASS。Image Generation：NO；Images Modified By Codex：NO。
+
+## 15. Assets
 
 | Asset | Path | Intrinsic |
 |---|---|---:|
@@ -334,7 +415,7 @@ Formal conversion：`fontSizePx = Photoshop pt × 300 / 72`。Descriptor 使用 
 | Shopping Logo Orange | `開獎秀/02_OM/assets/直式蝦皮購物_橘.png` | 83×112 |
 | Shopping Logo White | `開獎秀/02_OM/assets/直式蝦皮購物_白.png` | 83×112 |
 
-## 15. Code Commit / Manual Verification
+## 16. Code Commit / Manual Verification
 
 Implementation：DONE
 
@@ -352,9 +433,9 @@ Code Commit：
 
 Docs Commit：尚未建立；不得虛構 Docs Commit hash。
 
-## 16. Explicitly Deferred Work
+## 17. Explicitly Deferred Work
 
-- OM 其餘 layouts（OM 04+）
+- OM 其餘 layouts（OM 05+）
 - OM 正式 Console integration
 - OM Excel import
 - OM JSON workspace
@@ -362,8 +443,8 @@ Docs Commit：尚未建立；不得虛構 Docs Commit hash。
 - OM ZIP
 - OM 全版位整合
 
-Google_Pmax_1200x1200 與 Google_Pmax_1200x628 standalone baselines 完成，不等於 OM item 全部完成。
+Google_Pmax_1200x1200、Google_Pmax_1200x628、Google_Pmax_960x1200 與 Line OA standalone baselines 完成，不等於 OM item 全部完成。
 
-## 17. 後續 OM 版位追加治理
+## 18. 後續 OM 版位追加治理
 
 新增 OM 版位時，先確認 source document 實際 PPI、document／Canvas dimensions、assets、geometry、typography 與 Manual Verification scope，再追加本文件對應章節與 completed layout table。未完成工作不得宣稱 Implemented；每個版位的 Code Commit 與 Manual Verification 必須以實際 repository evidence 記錄。
