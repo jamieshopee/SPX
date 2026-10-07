@@ -23,18 +23,7 @@ import "./renderers/index.js";
 
 const workspace = createWorkspace();
 const itemList = document.querySelector("#item-list");
-const previewTitle = document.querySelector("#preview-title");
-const previewMeta = document.querySelector("#preview-meta");
 const sharedControls = document.querySelector("#shared-controls");
-const controlsTitle = document.querySelector("#controls-title");
-// UI profile（Jamie 裁決）：右側「版位 Editor」由 registry controlsProfile 驅動，
-// 不以 item.id 判斷 UI profile；全域操作（匯入／下載完整專案／重設）不屬任何
-// profile group、01～15 永遠可見。
-const CONTROLS_TITLES = Object.freeze({
-  "shared-01-13": "共用控制",
-  "14-ar": "14_AR 專屬控制",
-  "15-msbn": "15_MSBN 專屬控制"
-});
 const previewController = createPreviewController(document.querySelector("#preview-viewport"));
 
 function setStatus(element, message, isError = false) {
@@ -423,11 +412,8 @@ function renderState(state) {
     if (selected) button.scrollIntoView({ block: "nearest" });
   });
 
-  previewTitle.textContent = formatItemDisplayName(item.name);
-  previewMeta.textContent = `${item.width}×${item.height} · ${item.format.toUpperCase()}`;
   // 右側版位 Editor 由 registry controlsProfile 驅動（Jamie 裁決）：
   // shared-01-13 → 共用控制；14-ar → AR 專屬；15-msbn → MSBN 專屬。
-  controlsTitle.textContent = CONTROLS_TITLES[item.controlsProfile];
   sharedControls.hidden = item.controlsProfile !== "shared-01-13";
   arControlsElement.hidden = item.controlsProfile !== "14-ar";
   msbnControlsElement.hidden = item.controlsProfile !== "15-msbn";

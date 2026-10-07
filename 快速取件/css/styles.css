@@ -226,9 +226,8 @@ h3 { font-weight: 700; }
 .preview-status-card p { margin-bottom: 0; font-size: 12px; }
 .preview-status-code { color: var(--accent); font-weight: 700; }
 
-.control-header { padding-bottom: 17px; }
-
 .control-scroll {
+  flex: 1;
   min-height: 0;
   padding: 14px;
   overflow-y: auto;
