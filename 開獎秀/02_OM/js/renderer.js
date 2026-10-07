@@ -61,7 +61,7 @@ async function ensureFontsReady(layout) {
   }
 }
 
-function loadImage(url, expected, label) {
+function loadImage(url, expected, label, { validateIntrinsic = true } = {}) {
   const href = url.href;
   if (!assetPromises.has(href)) {
     const promise = new Promise((resolve, reject) => {
@@ -70,7 +70,7 @@ function loadImage(url, expected, label) {
       image.addEventListener("error", () => reject(new Error(`${label} 載入失敗：${decodeURIComponent(url.pathname)}`)), { once: true });
       image.src = href;
     }).then((image) => {
-      if (image.naturalWidth !== expected.width || image.naturalHeight !== expected.height) {
+      if (validateIntrinsic && (image.naturalWidth !== expected.width || image.naturalHeight !== expected.height)) {
         throw new Error(`${label} 必須為 ${expected.width} × ${expected.height}px，實際為 ${image.naturalWidth} × ${image.naturalHeight}px。`);
       }
       return image;
@@ -174,7 +174,12 @@ export async function renderLayoutToCanvas({ styleId, state, layout = LAYOUT }) 
   await ensureFontsReady(layout);
   const variant = resolveLogoVariant(state.logoMode, state.colors.background);
   const [background, logo, secondaryLogo] = await Promise.all([
-    loadImage(style.backgroundSrc, style.backgroundPlacement, `${layout.name} 正式底圖`),
+    loadImage(
+      style.backgroundSrc,
+      style.backgroundPlacement,
+      `${layout.name} 正式底圖`,
+      { validateIntrinsic: !(layout.id === "line-oa" && styleId === "store") }
+    ),
     loadImage(layout.logo.src[variant], layout.logo.intrinsic, `${layout.name} 主 Logo`),
     layout.secondaryLogo
       ? loadImage(layout.secondaryLogo.src[variant], layout.secondaryLogo.intrinsic, `${layout.name} 第二 Logo`)
@@ -187,7 +192,15 @@ export async function renderLayoutToCanvas({ styleId, state, layout = LAYOUT }) 
   const context = canvas.getContext("2d");
   if (!context) throw new Error("瀏覽器無法建立 Canvas 2D context。");
   context.fillStyle = state.colors.background;
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  if (layout.backgroundShape?.type === "roundedRect") {
+    const shape = layout.backgroundShape;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.beginPath();
+    context.roundRect(shape.x, shape.y, shape.width, shape.height, shape.radius);
+    context.fill();
+  } else {
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
   context.drawImage(background, style.backgroundPlacement.x, style.backgroundPlacement.y, style.backgroundPlacement.width, style.backgroundPlacement.height);
 
   const logoRect = computeContainRect(layout.logo.box, logo.naturalWidth, logo.naturalHeight, layout.horizontalAlign);

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant" data-spx-lottery-show-om-01-viewer="true" data-spx-lottery-show-om-02-viewer="true" data-spx-lottery-show-om-03-viewer="true">
+<html lang="zh-Hant" data-spx-lottery-show-om-01-viewer="true" data-spx-lottery-show-om-02-viewer="true" data-spx-lottery-show-om-03-viewer="true" data-spx-lottery-show-om-04-viewer="true">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,16 @@
       .shell { display: grid; grid-template-columns: 300px minmax(0, 1fr); min-height: calc(100vh - 74px); }
       aside { padding: 20px; border-right: 1px solid rgb(255 255 255 / 12%); background: rgb(10 16 18 / 78%); overflow-y: auto; }
       .preview { display: grid; min-width: 0; place-items: center; padding: 32px; overflow: auto; }
-      .canvas-wrap { position: relative; display: inline-block; line-height: 0; box-shadow: 0 12px 40px rgb(0 0 0 / 40%); }
+      .canvas-wrap {
+        position: relative;
+        display: inline-block;
+        line-height: 0;
+        background-color: #f3f3f3;
+        background-image: linear-gradient(45deg, #d4d4d4 25%, transparent 25%, transparent 75%, #d4d4d4 75%), linear-gradient(45deg, #d4d4d4 25%, transparent 25%, transparent 75%, #d4d4d4 75%);
+        background-position: 0 0, 8px 8px;
+        background-size: 16px 16px;
+        box-shadow: 0 12px 40px rgb(0 0 0 / 40%);
+      }
       canvas, .overlay { display: block; width: min(78vw, 900px); height: auto; }
       .overlay { position: absolute; inset: 0; height: 100%; pointer-events: none; }
       fieldset { margin: 0 0 20px; padding: 12px; border: 1px solid rgb(255 255 255 / 14%); }
@@ -57,6 +66,7 @@
       import { LAYOUT_01_GOOGLE_PMAX_1200X1200 } from "./js/layout-01-google-pmax-1200x1200.js";
       import { LAYOUT_02_GOOGLE_PMAX_1200X628 } from "./js/layout-02-google-pmax-1200x628.js";
       import { LAYOUT_03_GOOGLE_PMAX_960X1200 } from "./js/layout-03-google-pmax-960x1200.js";
+      import { LAYOUT_04_LINE_OA } from "./js/layout-04-line-oa.js";
       import { createInitialState, renderLayoutToCanvas } from "./js/renderer.js";
       import { countTextUnits, formatUnits, isWithinLimit } from "./js/text-validation.js";
 
@@ -64,7 +74,8 @@
       const layouts = Object.freeze({
         [LAYOUT_01_GOOGLE_PMAX_1200X1200.id]: LAYOUT_01_GOOGLE_PMAX_1200X1200,
         [LAYOUT_02_GOOGLE_PMAX_1200X628.id]: LAYOUT_02_GOOGLE_PMAX_1200X628,
-        [LAYOUT_03_GOOGLE_PMAX_960X1200.id]: LAYOUT_03_GOOGLE_PMAX_960X1200
+        [LAYOUT_03_GOOGLE_PMAX_960X1200.id]: LAYOUT_03_GOOGLE_PMAX_960X1200,
+        [LAYOUT_04_LINE_OA.id]: LAYOUT_04_LINE_OA
       });
       const LAYOUT = layouts[params.get("layout")] || LAYOUT_01_GOOGLE_PMAX_1200X1200;
       const status = document.querySelector("#status");
