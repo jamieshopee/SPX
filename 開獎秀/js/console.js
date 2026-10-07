@@ -30,10 +30,13 @@ const MISSING_STYLE_MESSAGE = "缺少樣式參數。";
 const UNKNOWN_STYLE_MESSAGE = "找不到指定的樣式。";
 const UNSUPPORTED_STYLE_MESSAGE = "此項目不支援指定的樣式。";
 const ONLINE_BN_MOUNT_ERROR_MESSAGE = "線上／電子BN 版位載入失敗。";
+const OM_MOUNT_ERROR_MESSAGE = "OM 版位載入失敗。";
 
 // 只有這個 item 會載入自己的版位模組；其餘 item 維持 shell empty state。
 const ONLINE_BN_ITEM_ID = "online-bn";
 const ONLINE_BN_MODULE_URL = "../01_線上電子BN/js/online-bn.js";
+const OM_ITEM_ID = "om";
+const OM_MODULE_URL = "../02_OM/js/console-om.js";
 
 const consoleShell = document.querySelector("#console-shell");
 const errorView = document.querySelector("#console-error-view");
@@ -64,6 +67,19 @@ function failClosed(message, item) {
 async function mountOnlineBnLayouts(style) {
   const module = await import(ONLINE_BN_MODULE_URL);
   await module.mountOnlineBn({
+    styleId: style.id,
+    mounts: {
+      layoutList: document.querySelector("#item-list"),
+      layoutListEmpty: document.querySelector("#item-list-empty"),
+      previewBody: document.querySelector("#preview-body"),
+      controlBody: document.querySelector("#control-body")
+    }
+  });
+}
+
+async function mountOmLayouts(style) {
+  const module = await import(OM_MODULE_URL);
+  await module.mountOm({
     styleId: style.id,
     mounts: {
       layoutList: document.querySelector("#item-list"),
@@ -132,13 +148,20 @@ async function render() {
   errorView.hidden = true;
   consoleShell.hidden = false;
 
-  if (item.id !== ONLINE_BN_ITEM_ID) return;
+  if (item.id !== ONLINE_BN_ITEM_ID && item.id !== OM_ITEM_ID) return;
 
   try {
-    await mountOnlineBnLayouts(style);
+    if (item.id === ONLINE_BN_ITEM_ID) {
+      await mountOnlineBnLayouts(style);
+    } else {
+      await mountOmLayouts(style);
+    }
   } catch (error) {
-    console.error("線上／電子BN 版位模組掛載失敗。", error);
-    failClosed(ONLINE_BN_MOUNT_ERROR_MESSAGE, item);
+    const message = item.id === ONLINE_BN_ITEM_ID
+      ? ONLINE_BN_MOUNT_ERROR_MESSAGE
+      : OM_MOUNT_ERROR_MESSAGE;
+    console.error(`${item.name} 版位模組掛載失敗。`, error);
+    failClosed(message, item);
   }
 }
 
