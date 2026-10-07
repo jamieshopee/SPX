@@ -95,7 +95,7 @@ Auto 依目前 runtime background color 判斷，threshold 為 `0.498708`。亮�
 
 ## 9. Viewer / Launcher Precedent
 
-OM standalone Viewer：`開獎秀/02_OM/viewer.html`，目前支援 `Google_Pmax_1200x1200`、`Google_Pmax_1200x628`、`Google_Pmax_960x1200`、`Line OA` 與 `Line Voom`，透過 layout routing 選擇 active descriptor。
+OM standalone Viewer：`開獎秀/02_OM/viewer.html`，目前支援 `Google_Pmax_1200x1200`、`Google_Pmax_1200x628`、`Google_Pmax_960x1200`、`Line OA`、`Line Voom` 與 `Pixnet_Side sticker_side image`，透過 layout routing 選擇 active descriptor。
 
 目前支援：smart-locker／store、alignment overlay、overlay opacity、text editing、weighted text validation、runtime background color、title／subtitle／small color、logoMode Auto／Orange／White 與 Reset。Runtime background 先 fill Canvas，再繪製 style base asset；runtime text colors 即時 rerender；Auto Logo 使用 current runtime background。
 
@@ -106,6 +106,10 @@ OM 02 Launcher：`開獎秀/02_OM/launch/02_Google_Pmax_1200x628.command`。
 OM 03 Launcher：`開獎秀/02_OM/launch/03_Google_Pmax_960x1200.command`。
 
 OM 04 Launcher：`開獎秀/02_OM/launch/04_Line_OA.command`。
+
+OM 05 Launcher：`開獎秀/02_OM/launch/05_Line_Voom.command`。
+
+OM 06 Launcher：`開獎秀/02_OM/launch/06_Pixnet_Side_sticker_side_image.command`。
 
 - repo-root local server
 - marker check
@@ -125,6 +129,7 @@ OM port `4177` 與 online-bn port `4176` 刻意分離。後續每個 OM layout �
 | 03 | Google_Pmax_960x1200 | 960×1200 | Implemented | PASS | `ed2762d` |
 | 04 | Line OA | 1040×1040 | Implemented | PASS | `e9b3d6d` |
 | 05 | Line Voom | 1080×1080 | Implemented | PASS | `b2537ba` |
+| 06 | Pixnet_Side sticker_side image | 260×480 | Implemented | PASS | `8c8610e` |
 
 未完成版位不預先列為 Implemented；若未來需要列出，必須標示 `Not Implemented / Pending`。
 
@@ -512,3 +517,74 @@ Google_Pmax_1200x1200、Google_Pmax_1200x628、Google_Pmax_960x1200 與 Line OA 
 ## 19. 後續 OM 版位追加治理
 
 新增 OM 版位時，先確認 source document 實際 PPI、document／Canvas dimensions、assets、geometry、typography 與 Manual Verification scope，再追加本文件對應章節與 completed layout table。未完成工作不得宣稱 Implemented；每個版位的 Code Commit 與 Manual Verification 必須以實際 repository evidence 記錄。
+
+## 20. Pixnet_Side sticker_side image 正式規格
+
+### 20.1 Identity / Canvas / Status
+
+- Layout：Pixnet_Side sticker_side image
+- Status：Implemented / Technical Self-Test PASS / Manual Verification PASS
+- Canvas：260×480
+- Final output：260×480 PNG
+- Photoshop source：300 PPI
+- Photoshop document pixel → Canvas pixel：1:1
+- Typography conversion：`fontSizePx = Photoshop pt × 300 / 72`
+- Renderer 使用 px；不得使用 browser pt。
+
+Code Commit：
+
+- Full：`8c8610ee960f52dc919fa81a314aa63c6763bfed`
+- Short：`8c8610e`
+- Message：`feat(lottery-show): add OM Pixnet Side Sticker layout`
+- Parent：`24d1c0655773bc97cbe8132929541f48a3346795`
+- Docs Commit：Pending；不得虛構 Docs Commit hash。
+
+### 20.2 Typography
+
+| Field | Photoshop | `fontSizePx` | Font | Rendering |
+|---|---:|---:|---|---|
+| Title | 5.7pt @ 300 PPI | 23.75px | ShopeeNotoSans(content)-Medium | local 2× |
+| Subtitle | 7pt @ 300 PPI | 29.166666666666668px | ShopeeNotoSans(content)-Bold | direct |
+| Small1 | 2.8pt @ 300 PPI | 11.666666666666666px | ShopeeNotoSans(content)-Medium | local 2× |
+| Small2 | 2.8pt @ 300 PPI | 11.666666666666666px | ShopeeNotoSans(content)-Medium | local 2× |
+
+Medium local 2× 只負責 rendering quality，final logical scale = 1。沿用 actualBoundingBox ink-box semantics；不使用 auto-wrap 或 auto-shrink。
+
+### 20.3 Background / Geometry
+
+OM06 使用 descriptor-driven rounded `backgroundShape`，背景色取 `state.colors.background`；Canvas 外部保持透明，不使用 full-Canvas background。
+
+| Object | x | y | width | height | radius |
+|---|---:|---:|---:|---:|---:|
+| BackgroundShape | 8 | 55 | 245 | 409 | 20 |
+
+| Object | x | y | width | height |
+|---|---:|---:|---:|---:|
+| Main Lottery Logo | 49 | 76 | 162 | 26 |
+| Smart-locker base | 8 | 4 | 245 | 476 |
+| Store base | 4 | 4 | 253 | 476 |
+| Title | 26 | 112 | 206 | 22 |
+| Subtitle | 26 | 140 | 207 | 28 |
+| Small1 | 19 | 175 | 221 | 11 |
+| Small2 | 19 | 189 | 221 | 11 |
+
+Smart-locker source intrinsic：245×476。Store source intrinsic：253×476。Source intrinsic dimensions 與 destination placement 分開記錄。
+
+Secondary Logo：NONE。上方 Shopee 袋體與相關視覺屬於 style base content，不是 renderer-drawn Vertical Shopee Logo。
+
+### 20.4 Assets / Logo Behavior
+
+- Overlay：`開獎秀/02_OM/assets/對位/Pixnet_Side sticker_side image.png`，260×480，SHA-256 `a8488fc0f998c3bd3532e9151ee127c0612e0004dbf77a4b34de4c88f43dfd67`。
+- Smart-locker：`開獎秀/02_OM/assets/智取櫃/Pixnet_Side sticker_side image.png`，245×476，SHA-256 `3e1bb37cf11105cc6b531185806410719961902bf653dad57a5b9d13e1239999`。
+- Store：`開獎秀/02_OM/assets/門市/Pixnet_Side sticker_side image.png`，253×476，SHA-256 `bbaee9422be84906119600409fe1221fff2dbfc8271c3a319d0e81f980742507`。
+- Main Lottery Logo：`開獎秀/02_OM/assets/蝦皮大樂透_橘.png`、`開獎秀/02_OM/assets/蝦皮大樂透_白.png`。
+
+Main Lottery Logo 為 renderer-drawn，與 OM 共用唯一 `logoMode`：Auto／Orange／White；Auto threshold `0.498708`。OM06 沒有 renderer-drawn secondaryLogo。
+
+### 20.5 Defaults / Viewer / Verification
+
+OM06 沿用 OM 共用 text limits：Title 8、Subtitle 7、Small1 18、Small2 18；weighted count：Han = 1、non-Han = 0.5。Smart-locker defaults 為 background `#2660ad`、title `#fffac8`、subtitle `#fff000`、small `#fffac8`；Store defaults 為 background `#ffda46`、title `#472704`、subtitle `#eb1717`、small `#472704`。Default text 沿用本文件第 7 節。
+
+Viewer：`開獎秀/02_OM/viewer.html`，沿用 `.canvas-wrap` checkerboard presentation；checkerboard 只顯示 Canvas transparent margins，不畫入 Canvas pixels 或 output。Implementation descriptor：`開獎秀/02_OM/js/layout-06-pixnet-side-sticker-side-image.js`。Shared Renderer：`開獎秀/02_OM/js/renderer.js`，OM06 未修改。Launcher：`開獎秀/02_OM/launch/06_Pixnet_Side_sticker_side_image.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。
+
+OM06 Technical Self-Test：PASS。OM06 Manual Verification：PASS。OM01～OM05 Regression：PASS。BackgroundShape、transparent Canvas margins、checkerboard、Main Logo mode 與 shared logoMode 均 PASS。Console integration 保持 Pending；OM06 為 standalone Viewer／renderer baseline，不代表正式 Console integration 完成。Image Generation：NO；Images Modified By Codex：NO。
