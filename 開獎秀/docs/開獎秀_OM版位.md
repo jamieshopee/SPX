@@ -163,17 +163,17 @@ style 由 URL context 固定為 `smart-locker` 或 `store`，不是右欄 contro
 
 OM console 使用 shared shell：左欄 `250px`、中欄 Preview、右欄 `360px`、工作區 `100vh`、`body` `min-width: 1180px`。`開獎秀/js/console.js` 依 `item=om` dynamic import `開獎秀/02_OM/js/console-om.js`；`開獎秀/02_OM/css/om-console.css` 只在 OM mount 時載入。online-bn 不載入 OM module／CSS；live 維持 untouched／empty-state precedent。
 
-每個 layout 維持獨立 session state，包含 background、logoMode、title、subtitle、small1、small2、title color、subtitle color 與 shared small color；不使用 localStorage，不建立 Workspace persistence。OM common text limits 為 Title 8、Subtitle 7、Small1 18、Small2 18；weighted count 為 Han = 1、non-Han = 0.5；IME-safe，超限 rollback。
+OM01～OM08 共用同一組 editable state semantics：text.title、text.subtitle、text.small1、text.small2、colors.background、colors.title、colors.subtitle、colors.small 與 logoMode；state 僅在目前頁面 session 內共享，不使用 localStorage、sessionStorage 或跨頁 persistence。各 layout 的 descriptor、geometry、Canvas、asset placement 與 text box 仍獨立。OM standalone descriptor defaults 保留供 standalone Viewer；shared OM Console 初次進入的四個文字欄位為 empty string。OM common text limits 為 Title 8、Subtitle 7、Small1 18、Small2 18；weighted count 為 Han = 1、non-Han = 0.5；IME-safe，超限 rollback。
 
 OM 右欄最終為：
 
 | Section | 名稱 | 狀態 |
 |---:|---|---|
-| 01 | 匯入工單 Excel 或暫存檔 | UI PRESENT；功能 NOT YET IMPLEMENTED |
+| 01 | 匯入工單 Excel 或暫存檔 | IMPLEMENTED：Excel／JSON |
 | 02 | 背景色設定 | IMPLEMENTED |
 | 03 | Logo 模式 | IMPLEMENTED：Auto／Orange／White |
 | 04 | 編輯文字＋顏色 | IMPLEMENTED：title／subtitle／small1／small2 與 title／subtitle／shared small color |
-| 05 | 下載完整專案 | UI PRESENT；Export backend NOT YET IMPLEMENTED |
+| 05 | 下載完整專案 | IMPLEMENTED：current URL style |
 | 06 | 重設工作區域 | IMPLEMENTED；只 reset current selected layout |
 
 OM 沒有 QR Code section。若 layout 有 renderer-drawn `secondaryLogo`，它與 Main Logo 共用同一個 `logoMode`，不建立獨立 control。
@@ -187,6 +187,27 @@ Code Commit：
 - Message：`feat(lottery-show): integrate OM console`
 - Parent：`067e306fa1e62788d348b81a975ab2d23e927d9e`
 - Committed paths：`開獎秀/js/console.js`、`開獎秀/02_OM/js/console-om.js`、`開獎秀/02_OM/css/om-console.css`
+- Manual Verification：PASS
+- Docs Commit：Pending；本次 Documentation Update 尚未建立 commit。
+
+### 10.2 OM Work Order／Workspace／Export Current State
+
+OM Work Order Excel、shared editable state、Workspace JSON 與完整專案下載已完成，並通過 Technical Self-Test 與 Jamie Manual Verification。
+
+- Excel 固定讀取 Sheet `美術工單_OM`，使用正式 workbook identity markers、NFKC anchor normalization、merge-aware structural value lookup；四個欄位完整解析與 weighted limits 驗證成功後才 atomic commit。空白文字是合法值；公式／display region 不作為 canonical import source。
+- Excel 成功匯入只更新 shared text，保留目前 shared colors 與 logoMode；active Preview、Section 04 inputs、counters 與 OM01～OM08 同步更新。
+- Workspace JSON format 為 `SPX Lottery Show OM Workspace`、version `1`、item `om`，保存 styleId、activeLayoutId、shared text、shared colors 與 logoMode；unknown extra fields 可忽略，required field／style／layout／weighted validation fail closed。style mismatch 必須拒絕並顯示 `暫存檔樣式與目前樣式不一致`。
+- Reset 回到目前 URL style defaults：shared text 為 empty string，colors 與 logoMode 回正式預設；不回到 JSON snapshot。
+- Section 05 只輸出目前 URL style：8 個 layout images 加 1 個 Workspace JSON，ZIP 精確 9 entries；OM04／OM06 使用 native lossless PNG 並保留 alpha，其餘 6 個輸出使用 native Canvas JPEG quality 1.0。
+- Export 使用 immutable snapshot 與既有 `renderLayoutToCanvas({ layout, styleId, state })`，逐一 offscreen render，不切換 active layout；busy guard、dimension／encoding／ZIP failure 均 fail closed，不產生 partial-success ZIP。
+
+Code Commit：
+
+- Full：`3c31a84eaadfd0333bde37f0b433ea65fcab879c`
+- Short：`3c31a84`
+- Message：`feat(lottery-show): add OM workspace and project export`
+- Parent：`8abda94c9a50fa52be106c7d680ad7921cb658ea`
+- Scope：`開獎秀/02_OM/js/console-om.js`、`開獎秀/02_OM/js/export.js`、`開獎秀/02_OM/js/work-order-import.js`、`開獎秀/02_OM/js/workspace.js`
 - Manual Verification：PASS
 - Docs Commit：Pending；本次 Documentation Update 尚未建立 commit。
 
@@ -561,14 +582,7 @@ Docs Commit：尚未建立；不得虛構 Docs Commit hash。
 
 ## 18. Explicitly Deferred Work
 
-- OM 其餘 layouts（OM 06+）
-- OM Excel import
-- OM JSON workspace
-- OM formal Export
-- OM ZIP
-- OM 全版位整合
-
-Google_Pmax_1200x1200、Google_Pmax_1200x628、Google_Pmax_960x1200 與 Line OA standalone baselines 完成，不等於 OM item 全部完成。
+OM01～OM08、OM Work Order、Workspace JSON、完整專案 Export 與 ZIP 已完成；本文件目前沒有另列 OM Phase C deferred implementation。後續新增版位或功能仍須依 Jamie 裁決後追加，不得自行假設。
 
 ## 19. 後續 OM 版位追加治理
 
