@@ -95,7 +95,7 @@ Auto 依目前 runtime background color 判斷，threshold 為 `0.498708`。亮�
 
 ## 9. Viewer / Launcher Precedent
 
-OM standalone Viewer：`開獎秀/02_OM/viewer.html`，目前支援 `Google_Pmax_1200x1200`、`Google_Pmax_1200x628`、`Google_Pmax_960x1200`、`Line OA`、`Line Voom`、`Pixnet_Side sticker_side image` 與 `Pixnet_Side sticker_Banner`，透過 layout routing 選擇 active descriptor。
+OM standalone Viewer：`開獎秀/02_OM/viewer.html`，目前支援 `Google_Pmax_1200x1200`、`Google_Pmax_1200x628`、`Google_Pmax_960x1200`、`Line OA`、`Line Voom`、`Pixnet_Side sticker_side image`、`Pixnet_Side sticker_Banner` 與 `Yahoo_mbbanner`，透過 layout routing 選擇 active descriptor。
 
 目前支援：smart-locker／store、alignment overlay、overlay opacity、text editing、weighted text validation、runtime background color、title／subtitle／small color、logoMode Auto／Orange／White 與 Reset。Runtime background 先 fill Canvas，再繪製 style base asset；runtime text colors 即時 rerender；Auto Logo 使用 current runtime background。
 
@@ -112,6 +112,8 @@ OM 05 Launcher：`開獎秀/02_OM/launch/05_Line_Voom.command`。
 OM 06 Launcher：`開獎秀/02_OM/launch/06_Pixnet_Side_sticker_side_image.command`。
 
 OM 07 Launcher：`開獎秀/02_OM/launch/07_Pixnet_Side_sticker_Banner.command`。
+
+OM 08 Launcher：`開獎秀/02_OM/launch/08_Yahoo_mbbanner.command`。
 
 - repo-root local server
 - marker check
@@ -133,6 +135,7 @@ OM port `4177` 與 online-bn port `4176` 刻意分離。後續每個 OM layout �
 | 05 | Line Voom | 1080×1080 | Implemented | PASS | `b2537ba` |
 | 06 | Pixnet_Side sticker_side image | 260×480 | Implemented | PASS | `8c8610e` |
 | 07 | Pixnet_Side sticker_Banner | 672×560 | Implemented | PASS | `99b1fef` |
+| 08 | Yahoo_mbbanner | 300×250 | Implemented | PASS | `336a8ac` |
 
 未完成版位不預先列為 Implemented；若未來需要列出，必須標示 `Not Implemented / Pending`。
 
@@ -658,3 +661,70 @@ OM07 沿用 OM 共用 text limits：Title 8、Subtitle 7、Small1 18、Small2 18
 Viewer：`開獎秀/02_OM/viewer.html`。Implementation descriptor：`開獎秀/02_OM/js/layout-07-pixnet-side-sticker-banner.js`。Shared Renderer：`開獎秀/02_OM/js/renderer.js`，OM07 未修改。Launcher：`開獎秀/02_OM/launch/07_Pixnet_Side_sticker_Banner.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。
 
 OM07 Technical Self-Test：PASS。OM07 Manual Verification：PASS。OM01～OM06 Regression：PASS。Full Canvas background、Smart／Store base placement、Main Logo、Vertical Shopee Logo、shared logoMode 與無 independent secondary Logo control 均 PASS。Console integration 保持 Pending；OM07 為 standalone Viewer／renderer baseline，不代表正式 Console integration 完成。Image Generation：NO；Images Modified By Codex：NO。
+
+## 22. Yahoo_mbbanner 正式規格
+
+### 22.1 Identity / Canvas / Status
+
+- Layout：Yahoo_mbbanner
+- Status：Implemented / Technical Self-Test PASS / Manual Verification PASS
+- Canvas：300×250
+- Final output：300×250 PNG
+- Photoshop source：300 PPI
+- Photoshop document pixel → Canvas pixel：1:1
+- Typography conversion：`fontSizePx = Photoshop pt × 300 / 72`
+- Renderer 使用 px；不得使用 browser pt。
+
+Code Commit：
+
+- Full：`336a8acd0fa84b50a01089e6edeeeb08c05fbe4f`
+- Short：`336a8ac`
+- Message：`feat(lottery-show): add OM Yahoo mbbanner layout`
+- Parent：`1d68739cbac4081e7a732232a7212e99effcf68a`
+- Docs Commit：Pending；不得虛構 Docs Commit hash。
+
+### 22.2 Typography
+
+| Field | Photoshop | `fontSizePx` | Font | Rendering |
+|---|---:|---:|---|---|
+| Title | 5pt @ 300 PPI | 20.833333333333332px | ShopeeNotoSans(content)-Medium | local 2× |
+| Subtitle | 6.8pt @ 300 PPI | 28.333333333333332px | ShopeeNotoSans(content)-Bold | direct |
+| Small1 | 2.5pt @ 300 PPI | 10.416666666666666px | ShopeeNotoSans(content)-Medium | local 2× |
+| Small2 | 2.5pt @ 300 PPI | 10.416666666666666px | ShopeeNotoSans(content)-Medium | local 2× |
+
+Medium local 2× 只負責 rendering quality，final logical scale = 1。沿用 actualBoundingBox ink-box semantics；不使用 auto-wrap 或 auto-shrink。
+
+### 22.3 Background / Geometry
+
+OM08 使用 full Canvas editable background，Canvas 外部沒有透明 margin；不使用 `backgroundShape`。
+
+| Object | x | y | width | height |
+|---|---:|---:|---:|---:|
+| Smart-locker base | 0 | 130 | 300 | 120 |
+| Store base | 0 | 133 | 300 | 117 |
+| Main Lottery Logo | 76 | 10 | 148 | 24 |
+| Vertical Shopee Logo | 264 | 7 | 28 | 39 |
+| Title | 47 | 40 | 206 | 20 |
+| Subtitle | 47 | 67 | 206 | 26 |
+| Small1 | 47 | 100 | 206 | 10 |
+| Small2 | 47 | 112 | 206 | 10 |
+
+Smart-locker source intrinsic：300×120。Store source intrinsic：300×117。兩者原尺寸 1:1 並貼齊 Canvas 底部。上述 geometry 與 center ink-box alignment 已通過 Jamie Manual Verification。
+
+### 22.4 Assets / Logo Behavior
+
+- Overlay：`開獎秀/02_OM/assets/對位/Yahoo_mbbanner.png`，300×250，SHA-256 `c1cd27e9ae8027028f1563d4f8b23af68705da87d88fa3e7ad7a9de3d15dd37d`。
+- Smart-locker：`開獎秀/02_OM/assets/智取櫃/Yahoo_mbbanner.png`，300×120，SHA-256 `7b209f4abc8772d0718c15255042b50aa19c3d097abdf4f2a4da81e6fbd2d23b`。
+- Store：`開獎秀/02_OM/assets/門市/Yahoo_mbbanner.png`，300×117，SHA-256 `5970b5cf7bb38dc7b2f6d803db0ff7729f19aff73493396ed565fec22dcea2b`。
+- Main Lottery Logo：`開獎秀/02_OM/assets/蝦皮大樂透_橘.png`、`開獎秀/02_OM/assets/蝦皮大樂透_白.png`。
+- Vertical Shopee Logo：`開獎秀/02_OM/assets/直式蝦皮購物_橘.png`、`開獎秀/02_OM/assets/直式蝦皮購物_白.png`。
+
+Main Lottery Logo 與 Vertical Shopee Logo 均為 renderer-drawn，兩者共用唯一 `logoMode`：Auto／Orange／White；Auto threshold `0.498708`。White 會同時使用白色版本，Orange 會同時使用橘色版本，Auto 會使用同一 resolved variant；不存在 independent secondary Logo control。
+
+### 22.5 Defaults / Viewer / Verification
+
+OM08 沿用 OM 共用 text limits：Title 8、Subtitle 7、Small1 18、Small2 18；weighted count：Han = 1、non-Han = 0.5。Smart-locker defaults 為 background `#2660ad`、title `#fffac8`、subtitle `#fff000`、small `#fffac8`；Store defaults 為 background `#ffda46`、title `#472704`、subtitle `#eb1717`、small `#472704`。Default text 沿用本文件第 7 節。
+
+Viewer：`開獎秀/02_OM/viewer.html`。Implementation descriptor：`開獎秀/02_OM/js/layout-08-yahoo-mbbanner.js`。Shared Renderer：`開獎秀/02_OM/js/renderer.js`，OM08 未修改。Launcher：`開獎秀/02_OM/launch/08_Yahoo_mbbanner.command`，port `4177`、repo-root server、marker check、fail-closed、Chrome、mode `755`。
+
+OM08 Technical Self-Test：PASS。OM08 Manual Verification：PASS。OM01～OM07 Regression：PASS。Full Canvas background、Smart／Store base placement、Main Logo、Vertical Shopee Logo、shared logoMode 與無 independent secondary Logo control 均 PASS。Console integration 保持 Pending；OM08 為 standalone Viewer／renderer baseline，不代表正式 Console integration 完成。Image Generation：NO；Images Modified By Codex：NO。
