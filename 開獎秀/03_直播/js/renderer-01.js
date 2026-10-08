@@ -38,9 +38,9 @@ function registerFamily(familyKey) {
   return familyPromises.get(familyKey);
 }
 
-async function ensureFontsReady() {
+async function ensureFontsReady(layout) {
   if (!document.fonts) throw new Error("瀏覽器不支援正式字型載入檢查。");
-  const fields = Object.values(LIVE_01_LAYOUT.text);
+  const fields = Object.values(layout.text);
   await Promise.all([...new Set(fields.map((field) => field.family))].map(registerFamily));
   const checks = fields.map((field) => fontString(field));
   await Promise.all(checks.map((font) => document.fonts.load(font, FONT_TEST_TEXT)));
@@ -95,11 +95,11 @@ function drawText(context, text, field, color) {
   context.fillText(text, x, y);
 }
 
-function drawSupersampledTitle(context, text, field, color) {
+function drawSupersampledTitle(context, layout, text, field, color) {
   if (text === "") return;
   const offscreen = document.createElement("canvas");
-  offscreen.width = LIVE_01_LAYOUT.canvas.width * SUPERSAMPLE_SCALE;
-  offscreen.height = LIVE_01_LAYOUT.canvas.height * SUPERSAMPLE_SCALE;
+  offscreen.width = layout.canvas.width * SUPERSAMPLE_SCALE;
+  offscreen.height = layout.canvas.height * SUPERSAMPLE_SCALE;
   const offscreenContext = offscreen.getContext("2d");
   if (!offscreenContext) throw new Error("無法建立直播 01 supersampling Canvas。 ");
   offscreenContext.scale(SUPERSAMPLE_SCALE, SUPERSAMPLE_SCALE);
@@ -107,12 +107,12 @@ function drawSupersampledTitle(context, text, field, color) {
   context.save();
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
-  context.drawImage(offscreen, 0, 0, offscreen.width, offscreen.height, 0, 0, LIVE_01_LAYOUT.canvas.width, LIVE_01_LAYOUT.canvas.height);
+  context.drawImage(offscreen, 0, 0, offscreen.width, offscreen.height, 0, 0, layout.canvas.width, layout.canvas.height);
   context.restore();
 }
 
-export function createInitialState(styleId) {
-  const style = getLive01Style(styleId);
+export function createInitialState(styleId, layout = LIVE_01_LAYOUT) {
+  const style = layout.styles[styleId];
   if (!style) throw new Error(`直播 01 不支援的 style：${styleId}。`);
   return {
     text: {
@@ -125,11 +125,12 @@ export function createInitialState(styleId) {
   };
 }
 
-export async function renderLive01ToCanvas({ styleId, state }) {
-  const style = getLive01Style(styleId);
+export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYOUT }) {
+  const style = layout.styles[styleId];
   if (!style) throw new Error(`直播 01 不支援的 style：${styleId}。`);
-  await ensureFontsReady();
-  const background = await loadImage(style.backgroundSrc, { width: 1072, height: 360 }, "直播 01 底圖");
+  await ensureFontsReady(layout);
+  const placement = style.backgroundPlacement ?? layout.backgroundPlacement;
+  const background = await loadImage(style.backgroundSrc, { width: placement.width, height: placement.height }, `${layout.name} 底圖`);
   const logoVariant = resolveLogoVariant(state.logoMode ?? "auto", state.colors.background);
   const logo = await loadImage(LIVE_01_LAYOUT.logo.src[logoVariant], LIVE_01_LAYOUT.logo.intrinsic, `直播 01 ${logoVariant} Logo`);
   const canvas = document.createElement("canvas");
@@ -139,18 +140,22 @@ export async function renderLive01ToCanvas({ styleId, state }) {
   if (!context) throw new Error("瀏覽器無法建立直播 01 Canvas 2D context。");
   context.fillStyle = state.colors.background;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(background, 53, 0, 1072, 360);
-  const logoRect = computeContainRect(LIVE_01_LAYOUT.logo.box, logo.naturalWidth, logo.naturalHeight);
+  context.drawImage(background, placement.x, placement.y, placement.width, placement.height);
+  const logoRect = computeContainRect(layout.logo.box, logo.naturalWidth, logo.naturalHeight);
   context.save();
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
   context.drawImage(logo, logoRect.x, logoRect.y, logoRect.width, logoRect.height);
   context.restore();
-  drawSupersampledTitle(context, state.text.titleTime, LIVE_01_LAYOUT.text.titleTime, state.colors.titleTime);
-  drawText(context, state.text.subtitle, LIVE_01_LAYOUT.text.subtitle, state.colors.subtitle);
-  drawText(context, state.text.warning, LIVE_01_LAYOUT.text.warning, state.colors.warning);
-  if (canvas.width !== 1125 || canvas.height !== 360) throw new Error("直播 01 Canvas 尺寸不符。");
+  drawSupersampledTitle(context, layout, state.text.titleTime, layout.text.titleTime, state.colors.titleTime);
+  drawText(context, state.text.subtitle, layout.text.subtitle, state.colors.subtitle);
+  drawText(context, state.text.warning, layout.text.warning, state.colors.warning);
+  if (canvas.width !== layout.canvas.width || canvas.height !== layout.canvas.height) throw new Error(`${layout.name} Canvas 尺寸不符。`);
   return canvas;
+}
+
+export function renderLive01ToCanvas(args) {
+  return renderLiveToCanvas({ ...args, layout: LIVE_01_LAYOUT });
 }
 
 export function canvasToJpegBlob(canvas) {

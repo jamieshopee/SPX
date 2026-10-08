@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>開獎秀 — 直播 01 Viewer</title>
+    <title>開獎秀 — 直播 Viewer</title>
     <style>
       :root { color-scheme: dark; font-family: sans-serif; }
       * { box-sizing: border-box; }
@@ -31,7 +31,7 @@
   <body>
     <main data-spx-lottery-show-live-01-viewer="true">
       <aside>
-        <h1>直播 01：直播大廳 LPBN_立即看</h1>
+        <h1 id="viewer-title">直播 Viewer</h1>
         <p id="error" role="alert"></p>
         <div id="editor" hidden>
           <h2>Style</h2>
@@ -50,11 +50,16 @@
     </main>
     <script type="module">
       import { LIVE_01_LAYOUT, getLive01Style } from "./js/layout-01-live-lpbn.js";
-      import { canvasToJpegBlob, createInitialState, renderLive01ToCanvas } from "./js/renderer-01.js";
+      import { LIVE_02_LAYOUT, getLive02Style } from "./js/layout-02-live-system-cta.js";
+      import { canvasToJpegBlob, createInitialState, renderLiveToCanvas } from "./js/renderer-01.js";
 
       const params = new URLSearchParams(location.search);
       const layoutId = params.get("layout");
       const initialStyleId = params.get("style");
+      const layouts = new Map([
+        [LIVE_01_LAYOUT.id, [LIVE_01_LAYOUT, getLive01Style]],
+        [LIVE_02_LAYOUT.id, [LIVE_02_LAYOUT, getLive02Style]]
+      ]);
       const error = document.querySelector("#error");
       const editor = document.querySelector("#editor");
       const wrap = document.querySelector("#preview-wrap");
@@ -64,18 +69,21 @@
       const countTextUnits = (value) => [...String(value ?? "")].reduce((sum, ch) => sum + (/\p{Script=Han}/u.test(ch) ? 1 : 0.5), 0);
       const formatUnits = (value) => Number.isInteger(value) ? String(value) : value.toFixed(1);
 
-      if (layoutId !== LIVE_01_LAYOUT.id || !getLive01Style(initialStyleId)) {
-        error.textContent = "找不到指定的直播 01 layout 或 style。";
+      const layoutEntry = layouts.get(layoutId);
+      if (!layoutEntry || !layoutEntry[1](initialStyleId)) {
+        error.textContent = "找不到指定的直播 layout 或 style。";
       } else {
+        const [activeLayout, getStyle] = layoutEntry;
         editor.hidden = false; wrap.hidden = false;
         let styleId = initialStyleId;
-        let state = createInitialState(styleId);
+        let state = createInitialState(styleId, activeLayout);
         const logoMode = document.querySelector("#logo-mode");
         const styleInputs = [...document.querySelectorAll("input[name=style]")];
         const textControls = new Map();
         const colorControls = new Map();
+        document.querySelector("#viewer-title").textContent = `直播 ${activeLayout.id}：${activeLayout.name}`;
         styleInputs.find((input) => input.value === styleId).checked = true;
-        overlay.src = LIVE_01_LAYOUT.alignmentOverlaySrc.href; overlay.style.opacity = "0.5";
+        overlay.src = activeLayout.alignmentOverlaySrc.href; overlay.style.opacity = "0.5";
 
         function syncUrl() {
           const nextUrl = new URL(location.href);
@@ -85,16 +93,16 @@
 
         async function render() {
           try {
-            const rendered = await renderLive01ToCanvas({ styleId, state });
+            const rendered = await renderLiveToCanvas({ styleId, state, layout: activeLayout });
             canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height); canvas.getContext("2d").drawImage(rendered, 0, 0);
-            status.textContent = `${LIVE_01_LAYOUT.name} · ${styleId}`;
-          } catch (renderError) { wrap.hidden = true; error.textContent = renderError instanceof Error ? renderError.message : "直播 01 render 失敗。"; }
+            status.textContent = `${activeLayout.name} · ${styleId}`;
+          } catch (renderError) { wrap.hidden = true; error.textContent = renderError instanceof Error ? renderError.message : "直播 render 失敗。"; }
         }
 
         function switchStyle(nextStyleId) {
-          if (!getLive01Style(nextStyleId) || nextStyleId === styleId) return;
+          if (!getStyle(nextStyleId) || nextStyleId === styleId) return;
           styleId = nextStyleId;
-          state = createInitialState(styleId);
+          state = createInitialState(styleId, activeLayout);
           textControls.forEach((control) => control.reset());
           colorControls.forEach((control) => control.reset());
           logoMode.value = state.logoMode;
@@ -107,8 +115,8 @@
           if (input.checked) switchStyle(input.value);
         }));
 
-        LIVE_01_LAYOUT.textOrder.forEach((id) => {
-          const field = LIVE_01_LAYOUT.text[id]; const label = document.createElement("label"); label.className = "field";
+        activeLayout.textOrder.forEach((id) => {
+          const field = activeLayout.text[id]; const label = document.createElement("label"); label.className = "field";
           const head = document.createElement("span"); head.className = "head"; const title = document.createElement("span"); title.textContent = field.label; const counter = document.createElement("span"); counter.className = "counter"; head.append(title, counter);
           const input = document.createElement("input"); input.type = "text"; input.value = state.text[id]; let lastValid = input.value; let composing = false;
           const paint = () => { counter.textContent = `${formatUnits(countTextUnits(input.value))} / ${field.limit}`; };
@@ -132,8 +140,9 @@
         document.querySelector("#overlay-toggle").addEventListener("change", (event) => { overlay.hidden = !event.target.checked; });
         document.querySelector("#overlay-opacity").addEventListener("input", (event) => { overlay.style.opacity = String(Number(event.target.value) / 100); });
         document.querySelector("#download").addEventListener("click", async () => {
-          const blob = await canvasToJpegBlob(await renderLive01ToCanvas({ styleId, state: structuredClone(state) }));
-          const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = "直播大廳LPBN_立即看.jpg"; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
+          const outputName = activeLayout.id === "02" ? "直播大廳LPBN_系統CTA.jpg" : "直播大廳LPBN_立即看.jpg";
+          const blob = await canvasToJpegBlob(await renderLiveToCanvas({ styleId, state: structuredClone(state), layout: activeLayout }));
+          const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = outputName; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
         });
         render();
       }
