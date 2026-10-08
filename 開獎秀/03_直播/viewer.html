@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>開獎秀 — 直播 01 Viewer</title>
+    <style>
+      :root { color-scheme: dark; font-family: sans-serif; }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-width: 1100px; color: #f3f8f7; background: #080d0f; }
+      main { display: grid; min-height: 100vh; grid-template-columns: 300px minmax(0, 1fr); }
+      aside { padding: 24px; border-right: 1px solid rgb(255 255 255 / 12%); }
+      section { min-width: 0; padding: 32px; }
+      h1, h2, p { margin-top: 0; }
+      h1 { font-size: 20px; } h2 { margin: 22px 0 10px; font-size: 16px; }
+      .field, .color-field { display: grid; gap: 6px; margin-top: 14px; font-size: 13px; }
+      .head { display: flex; justify-content: space-between; gap: 8px; }
+      .counter, #status { color: rgb(235 242 241 / 76%); font-size: 12px; }
+      input[type="text"] { width: 100%; padding: 8px; color: inherit; border: 1px solid rgb(255 255 255 / 18%); border-radius: 5px; background: rgb(0 0 0 / 24%); }
+      .color-field { grid-template-columns: 1fr auto; align-items: center; }
+      .logo-mode { display: grid; gap: 6px; margin-top: 14px; font-size: 13px; }
+      select { padding: 8px; color: inherit; border: 1px solid rgb(255 255 255 / 18%); border-radius: 5px; background: rgb(0 0 0 / 24%); }
+      canvas { display: block; width: min(100%, 1125px); height: auto; }
+      .preview-wrap { position: relative; width: min(100%, 1125px); }
+      #overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+      button { margin-top: 14px; padding: 9px 12px; border: 0; border-radius: 5px; color: white; background: #ee4d2d; cursor: pointer; }
+      input:focus-visible, button:focus-visible { outline: 2px solid #ee4d2d; outline-offset: 2px; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <main data-spx-lottery-show-live-01-viewer="true">
+      <aside>
+        <h1>直播 01：直播大廳 LPBN_立即看</h1>
+        <p id="error" role="alert"></p>
+        <div id="editor" hidden>
+          <h2>Style</h2>
+          <label><input type="radio" name="style" value="smart-locker"> 智取櫃</label>
+          <label><input type="radio" name="style" value="store"> 門市</label>
+          <h2>文字</h2><div id="text-fields"></div>
+          <h2>Logo</h2><label class="logo-mode">Logo 模式<select id="logo-mode"><option value="auto">Auto</option><option value="orange">橘色</option><option value="white">白色</option></select></label>
+          <h2>顏色</h2><div id="color-fields"></div>
+          <label><input id="overlay-toggle" type="checkbox"> 顯示對位圖</label>
+          <label class="field">對位圖透明度<input id="overlay-opacity" type="range" min="0" max="100" value="50"></label>
+          <button id="download" type="button">下載 JPG</button>
+          <p id="status" role="status" aria-live="polite"></p>
+        </div>
+      </aside>
+      <section><div class="preview-wrap" id="preview-wrap" hidden><canvas id="preview" width="1125" height="360"></canvas><img id="overlay" alt="對位圖" hidden></div></section>
+    </main>
+    <script type="module">
+      import { LIVE_01_LAYOUT, getLive01Style } from "./js/layout-01-live-lpbn.js";
+      import { canvasToJpegBlob, createInitialState, renderLive01ToCanvas } from "./js/renderer-01.js";
+
+      const params = new URLSearchParams(location.search);
+      const layoutId = params.get("layout");
+      const initialStyleId = params.get("style");
+      const error = document.querySelector("#error");
+      const editor = document.querySelector("#editor");
+      const wrap = document.querySelector("#preview-wrap");
+      const canvas = document.querySelector("#preview");
+      const overlay = document.querySelector("#overlay");
+      const status = document.querySelector("#status");
+      const countTextUnits = (value) => [...String(value ?? "")].reduce((sum, ch) => sum + (/\p{Script=Han}/u.test(ch) ? 1 : 0.5), 0);
+      const formatUnits = (value) => Number.isInteger(value) ? String(value) : value.toFixed(1);
+
+      if (layoutId !== LIVE_01_LAYOUT.id || !getLive01Style(initialStyleId)) {
+        error.textContent = "找不到指定的直播 01 layout 或 style。";
+      } else {
+        editor.hidden = false; wrap.hidden = false;
+        let styleId = initialStyleId;
+        let state = createInitialState(styleId);
+        const logoMode = document.querySelector("#logo-mode");
+        const styleInputs = [...document.querySelectorAll("input[name=style]")];
+        const textControls = new Map();
+        const colorControls = new Map();
+        styleInputs.find((input) => input.value === styleId).checked = true;
+        overlay.src = LIVE_01_LAYOUT.alignmentOverlaySrc.href; overlay.style.opacity = "0.5";
+
+        function syncUrl() {
+          const nextUrl = new URL(location.href);
+          nextUrl.searchParams.set("style", styleId);
+          history.replaceState(null, "", nextUrl);
+        }
+
+        async function render() {
+          try {
+            const rendered = await renderLive01ToCanvas({ styleId, state });
+            canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height); canvas.getContext("2d").drawImage(rendered, 0, 0);
+            status.textContent = `${LIVE_01_LAYOUT.name} · ${styleId}`;
+          } catch (renderError) { wrap.hidden = true; error.textContent = renderError instanceof Error ? renderError.message : "直播 01 render 失敗。"; }
+        }
+
+        function switchStyle(nextStyleId) {
+          if (!getLive01Style(nextStyleId) || nextStyleId === styleId) return;
+          styleId = nextStyleId;
+          state = createInitialState(styleId);
+          textControls.forEach((control) => control.reset());
+          colorControls.forEach((control) => control.reset());
+          logoMode.value = state.logoMode;
+          styleInputs.forEach((input) => { input.checked = input.value === styleId; });
+          syncUrl();
+          render();
+        }
+
+        styleInputs.forEach((input) => input.addEventListener("change", () => {
+          if (input.checked) switchStyle(input.value);
+        }));
+
+        LIVE_01_LAYOUT.textOrder.forEach((id) => {
+          const field = LIVE_01_LAYOUT.text[id]; const label = document.createElement("label"); label.className = "field";
+          const head = document.createElement("span"); head.className = "head"; const title = document.createElement("span"); title.textContent = field.label; const counter = document.createElement("span"); counter.className = "counter"; head.append(title, counter);
+          const input = document.createElement("input"); input.type = "text"; input.value = state.text[id]; let lastValid = input.value; let composing = false;
+          const paint = () => { counter.textContent = `${formatUnits(countTextUnits(input.value))} / ${field.limit}`; };
+          const rollback = () => { input.value = lastValid; paint(); };
+          const commit = () => { lastValid = input.value; state.text[id] = input.value; paint(); render(); };
+          input.addEventListener("compositionstart", () => { composing = true; });
+          input.addEventListener("compositionend", () => { composing = false; if (countTextUnits(input.value) > field.limit) rollback(); else commit(); });
+          input.addEventListener("input", () => { if (composing) { state.text[id] = input.value; paint(); render(); } else if (countTextUnits(input.value) > field.limit) rollback(); else commit(); });
+          textControls.set(id, { reset: () => { input.value = state.text[id]; lastValid = input.value; composing = false; paint(); } });
+          paint(); label.append(head, input); document.querySelector("#text-fields").append(label);
+        });
+
+        logoMode.addEventListener("change", () => { state.logoMode = logoMode.value; render(); });
+
+        [["背景色", "background"], ["主標＋時間", "titleTime"], ["副標", "subtitle"], ["警語", "warning"]].forEach(([labelText, key]) => {
+          const label = document.createElement("label"); label.className = "color-field"; label.append(document.createTextNode(labelText));
+          const input = document.createElement("input"); input.type = "color"; input.value = state.colors[key]; input.addEventListener("input", () => { state.colors[key] = input.value; render(); });
+          colorControls.set(key, { reset: () => { input.value = state.colors[key]; } });
+          label.append(input); document.querySelector("#color-fields").append(label);
+        });
+        document.querySelector("#overlay-toggle").addEventListener("change", (event) => { overlay.hidden = !event.target.checked; });
+        document.querySelector("#overlay-opacity").addEventListener("input", (event) => { overlay.style.opacity = String(Number(event.target.value) / 100); });
+        document.querySelector("#download").addEventListener("click", async () => {
+          const blob = await canvasToJpegBlob(await renderLive01ToCanvas({ styleId, state: structuredClone(state) }));
+          const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = "直播大廳LPBN_立即看.jpg"; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
+        });
+        render();
+      }
+    </script>
+  </body>
+</html>

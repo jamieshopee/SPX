@@ -37,6 +37,8 @@ const ONLINE_BN_ITEM_ID = "online-bn";
 const ONLINE_BN_MODULE_URL = "../01_線上電子BN/js/online-bn.js";
 const OM_ITEM_ID = "om";
 const OM_MODULE_URL = "../02_OM/js/console-om.js";
+const LIVE_ITEM_ID = "live";
+const LIVE_MODULE_URL = "../03_直播/js/console-live-01.js";
 
 const consoleShell = document.querySelector("#console-shell");
 const errorView = document.querySelector("#console-error-view");
@@ -80,6 +82,19 @@ async function mountOnlineBnLayouts(style) {
 async function mountOmLayouts(style) {
   const module = await import(OM_MODULE_URL);
   await module.mountOm({
+    styleId: style.id,
+    mounts: {
+      layoutList: document.querySelector("#item-list"),
+      layoutListEmpty: document.querySelector("#item-list-empty"),
+      previewBody: document.querySelector("#preview-body"),
+      controlBody: document.querySelector("#control-body")
+    }
+  });
+}
+
+async function mountLive01(style) {
+  const module = await import(LIVE_MODULE_URL);
+  await module.mountLive01({
     styleId: style.id,
     mounts: {
       layoutList: document.querySelector("#item-list"),
@@ -148,18 +163,20 @@ async function render() {
   errorView.hidden = true;
   consoleShell.hidden = false;
 
-  if (item.id !== ONLINE_BN_ITEM_ID && item.id !== OM_ITEM_ID) return;
+  if (item.id !== ONLINE_BN_ITEM_ID && item.id !== OM_ITEM_ID && item.id !== LIVE_ITEM_ID) return;
 
   try {
     if (item.id === ONLINE_BN_ITEM_ID) {
       await mountOnlineBnLayouts(style);
-    } else {
+    } else if (item.id === OM_ITEM_ID) {
       await mountOmLayouts(style);
+    } else {
+      await mountLive01(style);
     }
   } catch (error) {
     const message = item.id === ONLINE_BN_ITEM_ID
       ? ONLINE_BN_MOUNT_ERROR_MESSAGE
-      : OM_MOUNT_ERROR_MESSAGE;
+      : item.id === OM_ITEM_ID ? OM_MOUNT_ERROR_MESSAGE : "直播 01 版位載入失敗。";
     console.error(`${item.name} 版位模組掛載失敗。`, error);
     failClosed(message, item);
   }
