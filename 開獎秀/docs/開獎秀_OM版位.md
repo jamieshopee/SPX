@@ -83,13 +83,15 @@ OM 只有一個 `logoMode`：`Auto`、`Orange`、`White`。Main Logo 使用共�
 
 Main Logo：
 
-- `assets/蝦皮大樂透_橘.png`
-- `assets/蝦皮大樂透_白.png`
+- `開獎秀/assets/蝦皮大樂透_橘.png`
+- `開獎秀/assets/蝦皮大樂透_白.png`
 
 Shopping Logo：
 
-- `assets/直式蝦皮購物_橘.png`
-- `assets/直式蝦皮購物_白.png`
+- `開獎秀/assets/直式蝦皮購物_橘.png`
+- `開獎秀/assets/直式蝦皮購物_白.png`
+
+四張皆為平台共用 PNG RGBA：Main Logo 1678×272、Shopping Logo 83×112。8 個 OM descriptor 從各自 `js/` 目錄以 `new URL("../../assets/<檔名>.png", import.meta.url)` 解析 Main Logo 的 16 個橘／白 variant URL；`layout-01`、`03`、`04`、`05`、`07`、`08` 另以同一方式解析 12 個 Shopping Logo variant URL。原 `02_OM/assets/` 下四張 Logo 副本已移除；本段是 current-state，既有歷史 commit path 記錄仍保留其當時事實。完整共用資產治理見 `開獎秀_正式規格.md` 第 9.7 節。
 
 Auto 依目前 runtime background color 判斷，threshold 為 `0.498708`。亮度公式為 sRGB relative luminance；`L >= 0.498708` 使用 Orange，否則使用 White。
 
@@ -364,8 +366,8 @@ Formal conversion：`fontSizePx = Photoshop pt × 300 / 72`。Descriptor 使用 
 | Alignment overlay | `開獎秀/02_OM/assets/對位/Google_Pmax_960x1200.png` | 960×1200 |
 | smart-locker base | `開獎秀/02_OM/assets/智取櫃/Google_Pmax_960x1200.png` | 960×634 |
 | store base | `開獎秀/02_OM/assets/門市/Google_Pmax_960x1200.png` | 960×631 |
-| Main Logo Orange / White | `開獎秀/02_OM/assets/蝦皮大樂透_橘.png` / `_白.png` | 1678×272 |
-| Shopping Logo Orange / White | `開獎秀/02_OM/assets/直式蝦皮購物_橘.png` / `_白.png` | 83×112 |
+| Main Logo Orange / White | `開獎秀/assets/蝦皮大樂透_橘.png` / `_白.png` | 1678×272 |
+| Shopping Logo Orange / White | `開獎秀/assets/直式蝦皮購物_橘.png` / `_白.png` | 83×112 |
 
 ### 13.6 Logo contract
 
@@ -539,8 +541,8 @@ Background：full Canvas editable background；OM05 不使用 `backgroundShape`�
 - Overlay：`開獎秀/02_OM/assets/對位/Line Voom.png`，1080×1080，SHA-256 `2623e4d99e44243ceea86b4e5223b6258f517cb4dbd31bfb250c2a1cc551d21a`。
 - Smart-locker：`開獎秀/02_OM/assets/智取櫃/Line Voom.png`，1080×1080，SHA-256 `bdd51f660494f9f80d74692785ef42402d36ec2514934b6574d05ef8e37bd1ff`。
 - Store：`開獎秀/02_OM/assets/門市/Line Voom.png`，1080×530，SHA-256 `5886a9852dd45b171d8fa276ecdbaef56fac1ff62611cb0c3cfa291e0e5f488b`。
-- Main Lottery Logo：`開獎秀/02_OM/assets/蝦皮大樂透_橘.png`、`開獎秀/02_OM/assets/蝦皮大樂透_白.png`。
-- Vertical Shopee Logo：`開獎秀/02_OM/assets/直式蝦皮購物_橘.png`、`開獎秀/02_OM/assets/直式蝦皮購物_白.png`。
+- Main Lottery Logo：`開獎秀/assets/蝦皮大樂透_橘.png`、`開獎秀/assets/蝦皮大樂透_白.png`。
+- Vertical Shopee Logo：`開獎秀/assets/直式蝦皮購物_橘.png`、`開獎秀/assets/直式蝦皮購物_白.png`。
 
 Main Lottery Logo 與 Vertical Shopee Logo 共用唯一 `logoMode`：Auto／Orange／White；Auto threshold `0.498708`。Vertical Shopee Logo 不建立獨立控制。
 
@@ -557,10 +559,10 @@ Implementation：`開獎秀/02_OM/js/layout-05-line-voom.js`。Shared Viewer：`
 | Alignment overlay | `開獎秀/02_OM/assets/對位/Google_Pmax_1200x1200.png` | 1200×1200 |
 | smart-locker base | `開獎秀/02_OM/assets/智取櫃/Google_Pmax_1200x1200.png` | 1200×1191 |
 | store base | `開獎秀/02_OM/assets/門市/Google_Pmax_1200x1200.png` | 1200×575 |
-| Main Logo Orange | `開獎秀/02_OM/assets/蝦皮大樂透_橘.png` | 1678×272 |
-| Main Logo White | `開獎秀/02_OM/assets/蝦皮大樂透_白.png` | 1678×272 |
-| Shopping Logo Orange | `開獎秀/02_OM/assets/直式蝦皮購物_橘.png` | 83×112 |
-| Shopping Logo White | `開獎秀/02_OM/assets/直式蝦皮購物_白.png` | 83×112 |
+| Main Logo Orange | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678×272 |
+| Main Logo White | `開獎秀/assets/蝦皮大樂透_白.png` | 1678×272 |
+| Shopping Logo Orange | `開獎秀/assets/直式蝦皮購物_橘.png` | 83×112 |
+| Shopping Logo White | `開獎秀/assets/直式蝦皮購物_白.png` | 83×112 |
 
 ## 17. Code Commit / Manual Verification
 
@@ -647,7 +649,7 @@ Secondary Logo：NONE。上方 Shopee 袋體與相關視覺屬於 style base con
 - Overlay：`開獎秀/02_OM/assets/對位/Pixnet_Side sticker_side image.png`，260×480，SHA-256 `a8488fc0f998c3bd3532e9151ee127c0612e0004dbf77a4b34de4c88f43dfd67`。
 - Smart-locker：`開獎秀/02_OM/assets/智取櫃/Pixnet_Side sticker_side image.png`，245×476，SHA-256 `3e1bb37cf11105cc6b531185806410719961902bf653dad57a5b9d13e1239999`。
 - Store：`開獎秀/02_OM/assets/門市/Pixnet_Side sticker_side image.png`，253×476，SHA-256 `bbaee9422be84906119600409fe1221fff2dbfc8271c3a319d0e81f980742507`。
-- Main Lottery Logo：`開獎秀/02_OM/assets/蝦皮大樂透_橘.png`、`開獎秀/02_OM/assets/蝦皮大樂透_白.png`。
+- Main Lottery Logo：`開獎秀/assets/蝦皮大樂透_橘.png`、`開獎秀/assets/蝦皮大樂透_白.png`。
 
 Main Lottery Logo 為 renderer-drawn，與 OM 共用唯一 `logoMode`：Auto／Orange／White；Auto threshold `0.498708`。OM06 沒有 renderer-drawn secondaryLogo。
 
@@ -713,8 +715,8 @@ Smart-locker source intrinsic：672×328。Store source intrinsic：672×323。S
 - Overlay：`開獎秀/02_OM/assets/對位/Pixnet_Side sticker_Banner.png`，672×560，SHA-256 `a2090884d142c858b409d99a9adb33d5c1f030135d2f0cc8a5be6b5fe2413de6`。
 - Smart-locker：`開獎秀/02_OM/assets/智取櫃/Pixnet_Side sticker_Banner.png`，672×328，SHA-256 `665d18d8fbbf1ba9c34f8f2d496ac29491acb83c5ef8d4f454e8b0ada201f544`。
 - Store：`開獎秀/02_OM/assets/門市/Pixnet_Side sticker_Banner.png`，672×323，SHA-256 `6942b4c8907051b5d0813827a6e23b7c2d1247ef9872fc4478e3b0ae2d101e6d`。
-- Main Lottery Logo：`開獎秀/02_OM/assets/蝦皮大樂透_橘.png`、`開獎秀/02_OM/assets/蝦皮大樂透_白.png`。
-- Vertical Shopee Logo：`開獎秀/02_OM/assets/直式蝦皮購物_橘.png`、`開獎秀/02_OM/assets/直式蝦皮購物_白.png`。
+- Main Lottery Logo：`開獎秀/assets/蝦皮大樂透_橘.png`、`開獎秀/assets/蝦皮大樂透_白.png`。
+- Vertical Shopee Logo：`開獎秀/assets/直式蝦皮購物_橘.png`、`開獎秀/assets/直式蝦皮購物_白.png`。
 
 Main Lottery Logo 與 Vertical Shopee Logo 均為 renderer-drawn，兩者共用唯一 `logoMode`：Auto／Orange／White；Auto threshold `0.498708`。White 會同時使用白色版本，Orange 會同時使用橘色版本，Auto 會使用同一 resolved variant；不存在 independent secondary Logo control。
 
@@ -780,8 +782,8 @@ Smart-locker source intrinsic：300×120。Store source intrinsic：300×117。�
 - Overlay：`開獎秀/02_OM/assets/對位/Yahoo_mbbanner.png`，300×250，SHA-256 `c1cd27e9ae8027028f1563d4f8b23af68705da87d88fa3e7ad7a9de3d15dd37d`。
 - Smart-locker：`開獎秀/02_OM/assets/智取櫃/Yahoo_mbbanner.png`，300×120，SHA-256 `7b209f4abc8772d0718c15255042b50aa19c3d097abdf4f2a4da81e6fbd2d23b`。
 - Store：`開獎秀/02_OM/assets/門市/Yahoo_mbbanner.png`，300×117，SHA-256 `5970b5cf7bb38dc7b2f6d803db0ff7729f19aff73493396ed565fec22dcea2b`。
-- Main Lottery Logo：`開獎秀/02_OM/assets/蝦皮大樂透_橘.png`、`開獎秀/02_OM/assets/蝦皮大樂透_白.png`。
-- Vertical Shopee Logo：`開獎秀/02_OM/assets/直式蝦皮購物_橘.png`、`開獎秀/02_OM/assets/直式蝦皮購物_白.png`。
+- Main Lottery Logo：`開獎秀/assets/蝦皮大樂透_橘.png`、`開獎秀/assets/蝦皮大樂透_白.png`。
+- Vertical Shopee Logo：`開獎秀/assets/直式蝦皮購物_橘.png`、`開獎秀/assets/直式蝦皮購物_白.png`。
 
 Main Lottery Logo 與 Vertical Shopee Logo 均為 renderer-drawn，兩者共用唯一 `logoMode`：Auto／Orange／White；Auto threshold `0.498708`。White 會同時使用白色版本，Orange 會同時使用橘色版本，Auto 會使用同一 resolved variant；不存在 independent secondary Logo control。
 

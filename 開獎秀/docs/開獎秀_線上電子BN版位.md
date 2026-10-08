@@ -54,10 +54,12 @@ console.html?item=online-bn&style=store
 
 ### 2.3 Logo
 
-正式 Logo assets（online-bn 全版位共用）：
+正式 Logo assets 由平台共用層管理（完整共用資產治理見 `開獎秀_正式規格.md` 第 9.7 節）：
 
-- 橘：`開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png`（1678 × 272）
-- 白：`開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png`（1678 × 272）
+- Main Logo 橘／白：`開獎秀/assets/蝦皮大樂透_橘.png`／`開獎秀/assets/蝦皮大樂透_白.png`（1678 × 272，PNG RGBA）。
+- Vertical Shopee Logo 橘／白：`開獎秀/assets/直式蝦皮購物_橘.png`／`開獎秀/assets/直式蝦皮購物_白.png`（83 × 112，PNG RGBA；僅 `layout-06-fb-post.js` 使用）。
+
+16 個 online-bn descriptor 從各自 `js/` 目錄以 `new URL("../../assets/<檔名>.png", import.meta.url)` 解析 Main Logo 的 32 個橘／白 variant URL；`layout-06-fb-post.js` 另以相同方式解析 2 個 Vertical Logo variant URL。原 `01_線上電子BN/assets/` 下四張 Logo 副本已移除；本段是 current-state，既有歷史 commit path 記錄仍保留其當時事實。
 
 Logo 模式三種：`Auto`／`Orange`／`White`。`Orange` 與 `White` 為強制指定；`Auto` 依目前背景色自動判定。
 
@@ -490,8 +492,8 @@ sample text 經 Viewer 以既有 controls 的 input 事件寫入，完整走正�
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/01_DDcard BN.png` | 531 × 792 |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/01_DDcard BN.png` | 531 × 792 |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/01_DDcard BN.png` | 531 × 438 |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 |
 
 對位圖只供 Manual Verification Viewer 作 DOM overlay，不是 renderer 或輸出的一部分。
 
@@ -652,8 +654,8 @@ M  開獎秀/js/console.js
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/02_Mall HBN.png` | 1200 × 360 |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/02_Mall HBN.png` | 1200 × 360 |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/02_Mall HBN.png` | **1153 × 360** |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 |
 
 Logo 沿用 online-bn 全版位共用素材（第 2.3 節），未新增 02 專屬 Logo。
 
@@ -874,8 +876,8 @@ layout id：`03-lpbn`。
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/03_LPBN.png` | 1200 × 550 |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/03_LPBN.png` | 1200 × 550 |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/03_LPBN.png` | **688 × 550** |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 |
 
 Logo 沿用 online-bn 全版位共用素材（第 2.3 節），未新增 03 專屬 Logo。
 
@@ -1054,8 +1056,8 @@ layout id：`04-pop-up`。
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/04_POP UP.png` | 580 × 720 |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/04_POP UP.png` | **475 × 347** |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/04_POP UP.png` | **475 × 338** |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 |
 
 Logo 沿用 online-bn 全版位共用素材（第 2.3 節），未新增 04 專屬 Logo。
 
@@ -1227,8 +1229,8 @@ layout id：`05-ig`。
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/05_IG.png` | 900 × 1600 |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/05_IG.png` | **900 × 1481** |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/05_IG.png` | **900 × 1481** |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 |
 
 Logo 沿用 online-bn 全版位共用素材（第 2.3 節），未新增 05 專屬 Logo。
 
@@ -1416,10 +1418,10 @@ layout id：`06-fb-post`。
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/06_FB Post.png` | 1200 × 630 |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/06_FB Post.png` | 1200 × 630 |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/06_FB Post.png` | **654 × 630** |
-| 主 Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
-| 主 Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 |
-| 第二 Logo 橘 | `開獎秀/01_線上電子BN/assets/直式蝦皮購物_橘.png` | **83 × 112** |
-| 第二 Logo 白 | `開獎秀/01_線上電子BN/assets/直式蝦皮購物_白.png` | **83 × 112** |
+| 主 Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 |
+| 主 Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 |
+| 第二 Logo 橘 | `開獎秀/assets/直式蝦皮購物_橘.png` | **83 × 112** |
+| 第二 Logo 白 | `開獎秀/assets/直式蝦皮購物_白.png` | **83 × 112** |
 
 主 Logo 沿用 online-bn 全版位共用素材（第 2.3 節）。兩張直式蝦皮購物素材由兩個 style 共用，隨 06 Code Commit 首次納入版本控制。`assets/蝦皮購物_橘.png`／`_白.png`（橫式 1119 × 275）**06 不使用**。
 
@@ -1485,7 +1487,7 @@ Logo 橘／白兩個 variant 的 geometry 一致。模式與 Auto 判定依第 2
 |---|---|
 | box | x = 28、y = 502、width = 82、height = 112 |
 | intrinsic | **83 × 112** |
-| 素材 | `assets/直式蝦皮購物_橘.png`／`_白.png`（兩 style 共用同一組） |
+| 素材 | `開獎秀/assets/直式蝦皮購物_橘.png`／`_白.png`（兩 style 共用同一組） |
 | fit | contain |
 | 對齊 | 沿用 `layout.horizontalAlign = "left"`（destX = 28）、垂直置中 |
 | 規則 | 不 crop、不 stretch、destination 座標不取整 |
@@ -1636,8 +1638,8 @@ layout id：`07-om-feed`。
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/07_OM與FEED.png` | 1000 × 1000 | `f2018b438c8e3c2fb26328f2f43fdfe398803635cb355d516de9676601a24717` |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/07_OM與FEED.png` | **1000 × 501** | `4d25e17bcf3648a784975fbe08ddc9e4212bf1ba0d759393ead748d03320924a` |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/07_OM與FEED.png` | **1000 × 499** | `65a1756ad372766e91232d1f6406432950523b652637fa203b146de4364d8ca9` |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
 
 Logo 沿用 online-bn 全版位共用素材（第 2.3 節），未新增 07 專屬 Logo。**兩張底圖高度不同（501 / 499）。**
 
@@ -1822,8 +1824,8 @@ layout id：`08-skbn-app-lr`。
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/08_SKBN_APP左右.png` | 358 × 360 | `cb3a049c6ec8d74f761dc23407001c24ac1aed41b9294a1914344499a95529b7` |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/08_SKBN_APP左右.png` | 358 × 360 | `b180625bac3790b6e74b10b860c50b75d8bbe8bc03a03ae97db315de8604f307` |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/08_SKBN_APP左右.png` | 358 × 360 | `0d57e519e73898ca4d26c512222bb4324618ee3f4cf268250f83feceee15a7b8` |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
 
 **三張 08 素材於 Code Commit 前後 SHA-256 完全不變**；Logo 沿用 online-bn 全版位共用素材（第 2.3 節）。
 
@@ -2025,8 +2027,8 @@ layout id：`09-skbn-app-mid`。
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/09_SKBN_APP中.png` | 484 × 360 | `305bb4aa458ee221183c6a1570489eca7852481b41619141944100aa84b2dd1c` |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/09_SKBN_APP中.png` | 484 × 360 | `dcd396c34d14f440d7707f262518d550665a6ff6e3d1c29ea56a0cb91f989ec3` |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/09_SKBN_APP中.png` | 484 × 360 | `c179e5c84fee5c89d12283952e02ac1074bee123ca11767d489e8e8e290e8e71` |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
 
 **三張 09 素材於 Code Commit 前後 SHA-256 完全不變**；Logo 沿用 online-bn 全版位共用素材（第 2.3 節）。
 
@@ -2231,8 +2233,8 @@ layout id：`10-skbn-pc`。
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/10_SKBN_PC.png` | 400 × 110 RGBA | `3a6aef158eb11bb02e2d42d963f8db3252e5a397a30c58f0e605419f5e930156` |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/10_SKBN_PC.png` | 172 × 96 | `9a6b990f7297ef1cd12b9f2baf5515de4f58ba6c2fc93e3d1f50c3ca8b46381f` |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/10_SKBN_PC.png` | 163 × 96 | `437b9d4d160139eb5d9d06dafbe3a9489210f52144b6a570065b1685d87b1532` |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
 
 **三張 10 素材於 Code Commit 前後 SHA-256 完全不變**；Logo 沿用 online-bn 全版位共用素材（第 2.3 節）。
 
@@ -2446,8 +2448,8 @@ layout id：`11-msbn`。
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/11_遊戲大廳 MSBN.png` | 1200 × 380 RGBA | `b1f650b100b693bf5e411694ce8c7b006406f5a61ec66aae435fdfd52de679e5` |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/11_遊戲大廳 MSBN.png` | 1090 × 366 | `2467bb91d23695373c41f9219ce8ebd9ffc5d5a08b32a7f48df5a9de05d34d5e` |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/11_遊戲大廳 MSBN.png` | 1090 × 366 | `9c71eaa42fe339a998b68e3a9f87c6adf536c06263d540fad925a9fede569025` |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
 
 **三張 11 素材於 Code Commit 前後 SHA-256 完全不變**；Logo 沿用 online-bn 全版位共用素材（第 2.3 節）。
 
@@ -2649,8 +2651,8 @@ layout id：`12-tvbn-store`。兩個 style 為 `smart-locker` 與 `store`，共�
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/12_TVBN_一般門市.png` | 1599 × 1080 | `e50c63cc3f4f451280cb0bdaa8e14860067a0528c70b11518d9199d045192f4e` |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/12_TVBN_一般門市.png` | 1599 × 1080 | `f7601e3ca1b7f08a663a5dac699214f5372d31af9540af2db9e05604681d4cdb` |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/12_TVBN_一般門市.png` | 1539 × 1080 | `81da90c1630ee338fd9db4cddd9007160674e3c44aeca46b02b3303de51c918d` |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
 
 三張 12 PNG 於 Code Commit 前後 SHA-256 不變；對位圖僅供 Viewer DOM overlay，不進正式 renderer。底圖與 Logo 沿用 static asset readiness／intrinsic validation，載入失敗或尺寸不符即 render fail-closed。
 
@@ -2876,8 +2878,8 @@ layout id：`13-tvbn-smart-store`。兩個 style 為 `smart-locker` 與 `store`�
 | 對位圖 | `開獎秀/01_線上電子BN/assets/對位/13_TVBN_智取店.png` | 1080 × 1920 | `3101c8388025707137865f7bdb982a20204ef7f49f9d9599924fb60842593ac0` |
 | smart-locker 底圖 | `開獎秀/01_線上電子BN/assets/智取櫃/13_TVBN_智取店.png` | 1080 × 1100 | `6948e014846a730f6963d3f984fe6e2bd6955458452bd7bb99c2d751b7b0a242` |
 | store 底圖 | `開獎秀/01_線上電子BN/assets/門市/13_TVBN_智取店.png` | 1080 × 1147 | `6d5fedf21525e2ec2dc544c989903a5beaadde193fe319a26867c78d701e3eb6` |
-| Logo 橘 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
-| Logo 白 | `開獎秀/01_線上電子BN/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
+| Logo 橘 | `開獎秀/assets/蝦皮大樂透_橘.png` | 1678 × 272 | — |
+| Logo 白 | `開獎秀/assets/蝦皮大樂透_白.png` | 1678 × 272 | — |
 
 三張 13 PNG **未修改 bytes**，只是於 Code Commit 納入版本控制；stage 前、staged 與 committed SHA-256 均與 locked values 一致。對位圖僅供 Viewer DOM overlay，不進正式 renderer。底圖與 Logo 沿用既有 static asset readiness／intrinsic validation。
 
