@@ -1,6 +1,6 @@
 // SPX 開獎秀 — 直播 01 renderer
 
-import { LIVE_01_LAYOUT, getLive01Style } from "./layout-01-live-lpbn.js";
+import { LIVE_01_LAYOUT } from "./layout-01-live-lpbn.js";
 import { resolveLogoVariant } from "../../02_OM/js/renderer.js";
 
 export const SUPERSAMPLE_SCALE = 2;
@@ -89,19 +89,24 @@ function drawText(context, text, field, color) {
   const inkTop = -metrics.actualBoundingBoxAscent;
   const inkBottom = metrics.actualBoundingBoxDescent;
   const { box } = field;
-  const x = field.align === "right" ? box.x + box.width - inkRight : box.x - inkLeft;
+  const inkWidth = inkRight - inkLeft;
+  const x = field.align === "right"
+    ? box.x + box.width - inkRight
+    : field.align === "center"
+      ? box.x + (box.width - inkWidth) / 2 - inkLeft
+      : box.x - inkLeft;
   const y = box.y + box.height / 2 - (inkTop + inkBottom) / 2;
   context.fillStyle = color;
   context.fillText(text, x, y);
 }
 
-function drawSupersampledTitle(context, layout, text, field, color) {
+function drawSupersampledField(context, layout, text, field, color) {
   if (text === "") return;
   const offscreen = document.createElement("canvas");
   offscreen.width = layout.canvas.width * SUPERSAMPLE_SCALE;
   offscreen.height = layout.canvas.height * SUPERSAMPLE_SCALE;
   const offscreenContext = offscreen.getContext("2d");
-  if (!offscreenContext) throw new Error("無法建立直播 01 supersampling Canvas。 ");
+  if (!offscreenContext) throw new Error(`無法建立 ${layout.name} supersampling Canvas。`);
   offscreenContext.scale(SUPERSAMPLE_SCALE, SUPERSAMPLE_SCALE);
   drawText(offscreenContext, text, field, color);
   context.save();
@@ -113,31 +118,33 @@ function drawSupersampledTitle(context, layout, text, field, color) {
 
 export function createInitialState(styleId, layout = LIVE_01_LAYOUT) {
   const style = layout.styles[styleId];
-  if (!style) throw new Error(`直播 01 不支援的 style：${styleId}。`);
+  if (!style) throw new Error(`${layout.name} 不支援的 style：${styleId}。`);
+  const defaultText = layout.defaultText ?? {
+    titleTime: "12/12直播開獎 12:00-12:30",
+    subtitle: "取件最高抽百萬",
+    warning: "※百萬獎金均分，詳情依活動規則為準"
+  };
+  const defaultColors = style.defaultColors ?? { background: style.background, ...style.colors };
   return {
-    text: {
-      titleTime: "12/12直播開獎 12:00-12:30",
-      subtitle: "取件最高抽百萬",
-      warning: "※百萬獎金均分，詳情依活動規則為準"
-    },
-    colors: { background: style.background, ...style.colors },
+    text: { ...defaultText },
+    colors: { ...defaultColors },
     logoMode: "auto"
   };
 }
 
 export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYOUT }) {
   const style = layout.styles[styleId];
-  if (!style) throw new Error(`直播 01 不支援的 style：${styleId}。`);
+  if (!style) throw new Error(`${layout.name} 不支援的 style：${styleId}。`);
   await ensureFontsReady(layout);
   const placement = style.backgroundPlacement ?? layout.backgroundPlacement;
   const background = await loadImage(style.backgroundSrc, { width: placement.width, height: placement.height }, `${layout.name} 底圖`);
   const logoVariant = resolveLogoVariant(state.logoMode ?? "auto", state.colors.background);
-  const logo = await loadImage(LIVE_01_LAYOUT.logo.src[logoVariant], LIVE_01_LAYOUT.logo.intrinsic, `直播 01 ${logoVariant} Logo`);
+  const logo = await loadImage(layout.logo.src[logoVariant], layout.logo.intrinsic, `${layout.name} ${logoVariant} Logo`);
   const canvas = document.createElement("canvas");
-  canvas.width = LIVE_01_LAYOUT.canvas.width;
-  canvas.height = LIVE_01_LAYOUT.canvas.height;
+  canvas.width = layout.canvas.width;
+  canvas.height = layout.canvas.height;
   const context = canvas.getContext("2d");
-  if (!context) throw new Error("瀏覽器無法建立直播 01 Canvas 2D context。");
+  if (!context) throw new Error(`瀏覽器無法建立 ${layout.name} Canvas 2D context。`);
   context.fillStyle = state.colors.background;
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(background, placement.x, placement.y, placement.width, placement.height);
@@ -147,9 +154,15 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
   context.imageSmoothingQuality = "high";
   context.drawImage(logo, logoRect.x, logoRect.y, logoRect.width, logoRect.height);
   context.restore();
-  drawSupersampledTitle(context, layout, state.text.titleTime, layout.text.titleTime, state.colors.titleTime);
-  drawText(context, state.text.subtitle, layout.text.subtitle, state.colors.subtitle);
-  drawText(context, state.text.warning, layout.text.warning, state.colors.warning);
+  layout.textOrder.forEach((id) => {
+    const field = layout.text[id];
+    const color = state.colors[field.colorKey];
+    if (field.rendering === "supersampled") {
+      drawSupersampledField(context, layout, state.text[id], field, color);
+    } else {
+      drawText(context, state.text[id], field, color);
+    }
+  });
   if (canvas.width !== layout.canvas.width || canvas.height !== layout.canvas.height) throw new Error(`${layout.name} Canvas 尺寸不符。`);
   return canvas;
 }

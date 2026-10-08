@@ -2,10 +2,11 @@
 
 import { LIVE_01_LAYOUT } from "./layout-01-live-lpbn.js";
 import { LIVE_02_LAYOUT } from "./layout-02-live-system-cta.js";
+import { LIVE_03_LAYOUT } from "./layout-03-live-thumbnail-specified-day.js";
 import { canvasToJpegBlob, createInitialState, renderLiveToCanvas } from "./renderer-01.js";
 
 const LIVE_STYLESHEET_URL = new URL("../css/live-01.css", import.meta.url);
-const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT]);
+const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT]);
 let stylesheetPromise = null;
 
 function ensureStylesheet() {
@@ -73,6 +74,15 @@ function createLogoModeField(state, onChange) {
   label.append(select); return label;
 }
 
+function getColorFields(layout) {
+  return layout.colorFields ?? [
+    { id: "background", label: "背景色" },
+    { id: "titleTime", label: "主標＋時間" },
+    { id: "subtitle", label: "副標" },
+    { id: "warning", label: "警語" }
+  ];
+}
+
 export async function mountLive01({ styleId, mounts }) {
   if (!LIVE_LAYOUTS.every((layout) => layout.styles[styleId])) throw new Error(`直播不支援的 style：${styleId}。`);
   const { layoutList, layoutListEmpty, previewBody, controlBody } = mounts;
@@ -125,7 +135,7 @@ export async function mountLive01({ styleId, mounts }) {
     const colorCard = document.createElement("section"); colorCard.className = "live-01-card";
     const colorHeading = document.createElement("h3"); colorHeading.className = "live-01-heading"; colorHeading.textContent = "顏色";
     const colors = document.createElement("div"); colors.className = "live-01-colors";
-    [["背景色", "background"], ["主標＋時間", "titleTime"], ["副標", "subtitle"], ["警語", "warning"]].forEach(([label, key]) => colors.append(createColorField(label, key, state, renderSafely)));
+    getColorFields(activeLayout).forEach(({ label, id }) => colors.append(createColorField(label, id, state, renderSafely)));
     colorCard.append(colorHeading, colors);
     const exportButton = document.createElement("button"); exportButton.type = "button"; exportButton.className = "live-01-button"; exportButton.textContent = "下載 JPG";
     status = document.createElement("p"); status.className = "live-01-status"; status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite"); status.textContent = "準備就緒";
@@ -134,7 +144,7 @@ export async function mountLive01({ styleId, mounts }) {
       exportBusy = true; exportButton.disabled = true; status.textContent = "正在建立 JPG…";
       try {
         const rendered = await renderLiveToCanvas({ styleId, state: structuredClone(state), layout: activeLayout });
-        const name = activeLayout.id === "02" ? "直播大廳LPBN_系統CTA.jpg" : "直播大廳LPBN_立即看.jpg";
+        const name = activeLayout.outputName ?? (activeLayout.id === "02" ? "直播大廳LPBN_系統CTA.jpg" : "直播大廳LPBN_立即看.jpg");
         downloadBlob(await canvasToJpegBlob(rendered), name); status.textContent = `已下載：${name}`;
       } catch (error) { status.textContent = error instanceof Error ? error.message : "JPG 下載失敗。"; }
       finally { exportBusy = false; exportButton.disabled = false; }

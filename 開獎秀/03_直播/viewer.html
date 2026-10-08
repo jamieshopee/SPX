@@ -51,6 +51,7 @@
     <script type="module">
       import { LIVE_01_LAYOUT, getLive01Style } from "./js/layout-01-live-lpbn.js";
       import { LIVE_02_LAYOUT, getLive02Style } from "./js/layout-02-live-system-cta.js";
+      import { LIVE_03_LAYOUT, getLive03Style } from "./js/layout-03-live-thumbnail-specified-day.js";
       import { canvasToJpegBlob, createInitialState, renderLiveToCanvas } from "./js/renderer-01.js";
 
       const params = new URLSearchParams(location.search);
@@ -58,7 +59,8 @@
       const initialStyleId = params.get("style");
       const layouts = new Map([
         [LIVE_01_LAYOUT.id, [LIVE_01_LAYOUT, getLive01Style]],
-        [LIVE_02_LAYOUT.id, [LIVE_02_LAYOUT, getLive02Style]]
+        [LIVE_02_LAYOUT.id, [LIVE_02_LAYOUT, getLive02Style]],
+        [LIVE_03_LAYOUT.id, [LIVE_03_LAYOUT, getLive03Style]]
       ]);
       const error = document.querySelector("#error");
       const editor = document.querySelector("#editor");
@@ -68,6 +70,12 @@
       const status = document.querySelector("#status");
       const countTextUnits = (value) => [...String(value ?? "")].reduce((sum, ch) => sum + (/\p{Script=Han}/u.test(ch) ? 1 : 0.5), 0);
       const formatUnits = (value) => Number.isInteger(value) ? String(value) : value.toFixed(1);
+      const getColorFields = (layout) => layout.colorFields ?? [
+        { id: "background", label: "背景色" },
+        { id: "titleTime", label: "主標＋時間" },
+        { id: "subtitle", label: "副標" },
+        { id: "warning", label: "警語" }
+      ];
 
       const layoutEntry = layouts.get(layoutId);
       if (!layoutEntry || !layoutEntry[1](initialStyleId)) {
@@ -77,6 +85,8 @@
         editor.hidden = false; wrap.hidden = false;
         let styleId = initialStyleId;
         let state = createInitialState(styleId, activeLayout);
+        canvas.width = activeLayout.canvas.width;
+        canvas.height = activeLayout.canvas.height;
         const logoMode = document.querySelector("#logo-mode");
         const styleInputs = [...document.querySelectorAll("input[name=style]")];
         const textControls = new Map();
@@ -131,7 +141,7 @@
 
         logoMode.addEventListener("change", () => { state.logoMode = logoMode.value; render(); });
 
-        [["背景色", "background"], ["主標＋時間", "titleTime"], ["副標", "subtitle"], ["警語", "warning"]].forEach(([labelText, key]) => {
+        getColorFields(activeLayout).forEach(({ label: labelText, id: key }) => {
           const label = document.createElement("label"); label.className = "color-field"; label.append(document.createTextNode(labelText));
           const input = document.createElement("input"); input.type = "color"; input.value = state.colors[key]; input.addEventListener("input", () => { state.colors[key] = input.value; render(); });
           colorControls.set(key, { reset: () => { input.value = state.colors[key]; } });
@@ -140,7 +150,7 @@
         document.querySelector("#overlay-toggle").addEventListener("change", (event) => { overlay.hidden = !event.target.checked; });
         document.querySelector("#overlay-opacity").addEventListener("input", (event) => { overlay.style.opacity = String(Number(event.target.value) / 100); });
         document.querySelector("#download").addEventListener("click", async () => {
-          const outputName = activeLayout.id === "02" ? "直播大廳LPBN_系統CTA.jpg" : "直播大廳LPBN_立即看.jpg";
+          const outputName = activeLayout.outputName ?? (activeLayout.id === "02" ? "直播大廳LPBN_系統CTA.jpg" : "直播大廳LPBN_立即看.jpg");
           const blob = await canvasToJpegBlob(await renderLiveToCanvas({ styleId, state: structuredClone(state), layout: activeLayout }));
           const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = outputName; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
         });
