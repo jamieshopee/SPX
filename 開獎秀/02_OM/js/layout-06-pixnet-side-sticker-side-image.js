@@ -19,8 +19,8 @@ export const LAYOUT_06_PIXNET_SIDE_STICKER_SIDE_IMAGE = Object.freeze({
     box: Object.freeze({ x: 49, y: 76, width: 162, height: 26 }),
     intrinsic: Object.freeze({ width: 1678, height: 272 }),
     src: Object.freeze({
-      orange: new URL("../assets/蝦皮大樂透_橘.png", import.meta.url),
-      white: new URL("../assets/蝦皮大樂透_白.png", import.meta.url)
+      orange: new URL("../../assets/蝦皮大樂透_橘.png", import.meta.url),
+      white: new URL("../../assets/蝦皮大樂透_白.png", import.meta.url)
     })
   }),
 

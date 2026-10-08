@@ -10,8 +10,8 @@ export const LAYOUT_02_GOOGLE_PMAX_1200X628 = Object.freeze({
     box: Object.freeze({ x: 42, y: 192, width: 359, height: 58 }),
     intrinsic: Object.freeze({ width: 1678, height: 272 }),
     src: Object.freeze({
-      orange: new URL("../assets/蝦皮大樂透_橘.png", import.meta.url),
-      white: new URL("../assets/蝦皮大樂透_白.png", import.meta.url)
+      orange: new URL("../../assets/蝦皮大樂透_橘.png", import.meta.url),
+      white: new URL("../../assets/蝦皮大樂透_白.png", import.meta.url)
     })
   }),
 

@@ -10,8 +10,8 @@ export const LAYOUT_07_PIXNET_SIDE_STICKER_BANNER = Object.freeze({
     box: Object.freeze({ x: 166, y: 20, width: 340, height: 43 }),
     intrinsic: Object.freeze({ width: 1678, height: 272 }),
     src: Object.freeze({
-      orange: new URL("../assets/蝦皮大樂透_橘.png", import.meta.url),
-      white: new URL("../assets/蝦皮大樂透_白.png", import.meta.url)
+      orange: new URL("../../assets/蝦皮大樂透_橘.png", import.meta.url),
+      white: new URL("../../assets/蝦皮大樂透_白.png", import.meta.url)
     })
   }),
 
@@ -19,8 +19,8 @@ export const LAYOUT_07_PIXNET_SIDE_STICKER_BANNER = Object.freeze({
     box: Object.freeze({ x: 594, y: 17, width: 59, height: 81 }),
     intrinsic: Object.freeze({ width: 83, height: 112 }),
     src: Object.freeze({
-      orange: new URL("../assets/直式蝦皮購物_橘.png", import.meta.url),
-      white: new URL("../assets/直式蝦皮購物_白.png", import.meta.url)
+      orange: new URL("../../assets/直式蝦皮購物_橘.png", import.meta.url),
+      white: new URL("../../assets/直式蝦皮購物_白.png", import.meta.url)
     })
   }),
 

@@ -12,8 +12,8 @@ export const LAYOUT_12_TVBN_STORE = Object.freeze({
     box: Object.freeze({ x: 59, y: 242, width: 702, height: 113 }),
     intrinsic: Object.freeze({ width: 1678, height: 272 }),
     src: Object.freeze({
-      orange: new URL("../assets/蝦皮大樂透_橘.png", import.meta.url),
-      white: new URL("../assets/蝦皮大樂透_白.png", import.meta.url)
+      orange: new URL("../../assets/蝦皮大樂透_橘.png", import.meta.url),
+      white: new URL("../../assets/蝦皮大樂透_白.png", import.meta.url)
     })
   }),
 

@@ -40,8 +40,8 @@ export const LAYOUT_06_FB_POST = Object.freeze({
     box: Object.freeze({ x: 51, y: 170, width: 452, height: 75 }),
     intrinsic: Object.freeze({ width: 1678, height: 272 }),
     src: Object.freeze({
-      orange: new URL("../assets/蝦皮大樂透_橘.png", import.meta.url),
-      white: new URL("../assets/蝦皮大樂透_白.png", import.meta.url)
+      orange: new URL("../../assets/蝦皮大樂透_橘.png", import.meta.url),
+      white: new URL("../../assets/蝦皮大樂透_白.png", import.meta.url)
     })
   }),
 
@@ -54,8 +54,8 @@ export const LAYOUT_06_FB_POST = Object.freeze({
     box: Object.freeze({ x: 28, y: 502, width: 82, height: 112 }),
     intrinsic: Object.freeze({ width: 83, height: 112 }),
     src: Object.freeze({
-      orange: new URL("../assets/直式蝦皮購物_橘.png", import.meta.url),
-      white: new URL("../assets/直式蝦皮購物_白.png", import.meta.url)
+      orange: new URL("../../assets/直式蝦皮購物_橘.png", import.meta.url),
+      white: new URL("../../assets/直式蝦皮購物_白.png", import.meta.url)
     })
   }),
 

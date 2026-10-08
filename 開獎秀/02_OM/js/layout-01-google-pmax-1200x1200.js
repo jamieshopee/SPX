@@ -10,8 +10,8 @@ export const LAYOUT_01_GOOGLE_PMAX_1200X1200 = Object.freeze({
     box: Object.freeze({ x: 297, y: 123, width: 605, height: 98 }),
     intrinsic: Object.freeze({ width: 1678, height: 272 }),
     src: Object.freeze({
-      orange: new URL("../assets/蝦皮大樂透_橘.png", import.meta.url),
-      white: new URL("../assets/蝦皮大樂透_白.png", import.meta.url)
+      orange: new URL("../../assets/蝦皮大樂透_橘.png", import.meta.url),
+      white: new URL("../../assets/蝦皮大樂透_白.png", import.meta.url)
     })
   }),
 
@@ -19,8 +19,8 @@ export const LAYOUT_01_GOOGLE_PMAX_1200X1200 = Object.freeze({
     box: Object.freeze({ x: 1073, y: 25, width: 100, height: 136 }),
     intrinsic: Object.freeze({ width: 83, height: 112 }),
     src: Object.freeze({
-      orange: new URL("../assets/直式蝦皮購物_橘.png", import.meta.url),
-      white: new URL("../assets/直式蝦皮購物_白.png", import.meta.url)
+      orange: new URL("../../assets/直式蝦皮購物_橘.png", import.meta.url),
+      white: new URL("../../assets/直式蝦皮購物_白.png", import.meta.url)
     })
   }),
 

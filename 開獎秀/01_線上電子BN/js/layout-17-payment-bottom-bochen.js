@@ -15,8 +15,8 @@ export const LAYOUT_17_PAYMENT_BOTTOM_BOCHEN = Object.freeze({
     box: Object.freeze({ x: 46, y: 40, width: 374, height: 62 }),
     intrinsic: Object.freeze({ width: 1678, height: 272 }),
     src: Object.freeze({
-      orange: new URL("../assets/蝦皮大樂透_橘.png", import.meta.url),
-      white: new URL("../assets/蝦皮大樂透_白.png", import.meta.url)
+      orange: new URL("../../assets/蝦皮大樂透_橘.png", import.meta.url),
+      white: new URL("../../assets/蝦皮大樂透_白.png", import.meta.url)
     })
   }),
 

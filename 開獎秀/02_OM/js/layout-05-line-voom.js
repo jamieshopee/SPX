@@ -10,8 +10,8 @@ export const LAYOUT_05_LINE_VOOM = Object.freeze({
     box: Object.freeze({ x: 263, y: 121, width: 554, height: 90 }),
     intrinsic: Object.freeze({ width: 1678, height: 272 }),
     src: Object.freeze({
-      orange: new URL("../assets/蝦皮大樂透_橘.png", import.meta.url),
-      white: new URL("../assets/蝦皮大樂透_白.png", import.meta.url)
+      orange: new URL("../../assets/蝦皮大樂透_橘.png", import.meta.url),
+      white: new URL("../../assets/蝦皮大樂透_白.png", import.meta.url)
     })
   }),
 
@@ -19,8 +19,8 @@ export const LAYOUT_05_LINE_VOOM = Object.freeze({
     box: Object.freeze({ x: 929, y: 25, width: 107, height: 146 }),
     intrinsic: Object.freeze({ width: 83, height: 112 }),
     src: Object.freeze({
-      orange: new URL("../assets/直式蝦皮購物_橘.png", import.meta.url),
-      white: new URL("../assets/直式蝦皮購物_白.png", import.meta.url)
+      orange: new URL("../../assets/直式蝦皮購物_橘.png", import.meta.url),
+      white: new URL("../../assets/直式蝦皮購物_白.png", import.meta.url)
     })
   }),
 
