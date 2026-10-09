@@ -100,6 +100,106 @@ function drawText(context, text, field, color) {
   context.fillText(text, x, y);
 }
 
+function getTextMetrics(context, text, field) {
+  context.font = fontString(field);
+  return context.measureText(text);
+}
+
+function getInkWidth(metrics) {
+  return metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft;
+}
+
+function validateTextWidth(context, text, field, maxWidth) {
+  if (text === "" || !maxWidth) return;
+  const width = getInkWidth(getTextMetrics(context, text, field));
+  if (width > maxWidth) {
+    throw new Error(`${field.label} 寬度超過可用範圍。`);
+  }
+}
+
+function getStepField(row, kind) {
+  return {
+    fontSizePx: kind === "big" ? row.bigFontSizePx : row.smallFontSizePx,
+    family: kind === "big" ? row.bigFamily : row.smallFamily,
+    label: row.label
+  };
+}
+
+function getStepKind(row, text) {
+  let units = 0;
+  for (const character of String(text ?? "")) {
+    units += /\p{Script=Han}/u.test(character) ? 1 : 0.5;
+  }
+  if (units > row.limit) throw new Error(`${row.label}超過 ${row.limit} 字限制。`);
+  return units <= row.bigLimit ? "big" : "small";
+}
+
+function drawStepGroup(context, layout, state, group) {
+  const active = group.rows
+    .map((row) => ({ row, text: state.text.steps[group.id][row.id] ?? "" }))
+    .filter(({ text }) => text !== "")
+    .map(({ row, text }) => ({ row, text, kind: getStepKind(row, text) }));
+  if (active.length === 0) return;
+
+  const lines = active.map(({ row, text, kind }) => {
+    const field = getStepField(row, kind);
+    const metrics = getTextMetrics(context, text, field);
+    const inkHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+    return { row, text, kind, field, metrics, inkHeight };
+  });
+  const gaps = lines.slice(0, -1).map((line, index) => {
+    const next = lines[index + 1];
+    if (group.id === "step2" && index === 0 && line.kind === "big" && next.kind === "big") {
+      return 7;
+    }
+    if (line.kind === "big" && next.kind === "big") {
+      return Math.max(0, layout.cardTypography.bigBaselineInterval - line.metrics.actualBoundingBoxDescent - next.metrics.actualBoundingBoxAscent);
+    }
+    const gapKey = `${line.kind}${next.kind === "big" ? "Big" : "Small"}`;
+    const gap = layout.cardTypography.inkGaps[gapKey] ?? layout.cardTypography.inkGaps.smallSmall;
+    return group.id === "step2" && index === 1 && line.kind === "big" && next.kind === "small" ? 14 : gap;
+  });
+  const groupHeight = lines.reduce((sum, line) => sum + line.inkHeight, 0) + gaps.reduce((sum, gap) => sum + gap, 0);
+  const top = group.safeBox.y + (group.safeBox.height - groupHeight) / 2;
+  const drawLine = (line, baseline) => {
+    context.font = fontString(line.field);
+    context.textAlign = "left";
+    context.textBaseline = "alphabetic";
+    const inkLeft = -line.metrics.actualBoundingBoxLeft;
+    const inkWidth = getInkWidth(line.metrics);
+    const x = group.safeBox.x + (group.safeBox.width - inkWidth) / 2 - inkLeft;
+    context.fillStyle = state.colors[line.kind === "big" ? "stepBig" : "stepSmall"];
+    context.fillText(line.text, x, baseline);
+  };
+
+  let cursor = top;
+  lines.forEach((line, index) => {
+    drawLine(line, cursor + line.metrics.actualBoundingBoxAscent);
+    cursor += line.inkHeight + (gaps[index] ?? 0);
+  });
+}
+
+function validateStepGroups(context, layout, state) {
+  if (!layout.stepGroups) return;
+  layout.stepGroups.forEach((group) => {
+    group.rows.forEach((row) => {
+      const text = state.text.steps[group.id][row.id] ?? "";
+      if (text === "") return;
+      const kind = getStepKind(row, text);
+      validateTextWidth(context, text, getStepField(row, kind), group.safeBox.width);
+    });
+  });
+}
+
+export function validateLiveTextState(layout, state) {
+  const measureCanvas = document.createElement("canvas");
+  const context = measureCanvas.getContext("2d");
+  if (!context) throw new Error("無法建立文字寬度檢查 Canvas。");
+  Object.values(layout.text).forEach((field) => validateTextWidth(context, state.text[field.id] ?? "", field, field.maxWidth));
+  validateStepGroups(context, layout, state);
+  return true;
+}
+
 function drawSupersampledField(context, layout, text, field, color) {
   if (text === "") return;
   const offscreen = document.createElement("canvas");
@@ -125,8 +225,12 @@ export function createInitialState(styleId, layout = LIVE_01_LAYOUT) {
     warning: "※百萬獎金均分，詳情依活動規則為準"
   };
   const defaultColors = style.defaultColors ?? { background: style.background, ...style.colors };
+  const text = Object.fromEntries(Object.entries(defaultText).map(([key, value]) => [
+    key,
+    value && typeof value === "object" ? Object.fromEntries(Object.entries(value).map(([nestedKey, nestedValue]) => [nestedKey, { ...nestedValue }])) : value
+  ]));
   return {
-    text: { ...defaultText },
+    text,
     colors: { ...defaultColors },
     logoMode: "auto"
   };
@@ -140,11 +244,15 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
   const background = await loadImage(style.backgroundSrc, { width: placement.width, height: placement.height }, `${layout.name} 底圖`);
   const logoVariant = resolveLogoVariant(state.logoMode ?? "auto", state.colors.background);
   const logo = await loadImage(layout.logo.src[logoVariant], layout.logo.intrinsic, `${layout.name} ${logoVariant} Logo`);
+  const secondaryLogo = layout.secondaryLogo
+    ? await loadImage(layout.secondaryLogo.src[logoVariant], layout.secondaryLogo.intrinsic, `${layout.name} ${logoVariant} 次 Logo`)
+    : null;
   const canvas = document.createElement("canvas");
   canvas.width = layout.canvas.width;
   canvas.height = layout.canvas.height;
   const context = canvas.getContext("2d");
   if (!context) throw new Error(`瀏覽器無法建立 ${layout.name} Canvas 2D context。`);
+  validateLiveTextState(layout, state);
   context.fillStyle = state.colors.background;
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(background, placement.x, placement.y, placement.width, placement.height);
@@ -153,6 +261,10 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
   context.drawImage(logo, logoRect.x, logoRect.y, logoRect.width, logoRect.height);
+  if (secondaryLogo) {
+    const secondaryLogoRect = computeContainRect(layout.secondaryLogo.box, secondaryLogo.naturalWidth, secondaryLogo.naturalHeight);
+    context.drawImage(secondaryLogo, secondaryLogoRect.x, secondaryLogoRect.y, secondaryLogoRect.width, secondaryLogoRect.height);
+  }
   context.restore();
   layout.textOrder.forEach((id) => {
     const field = layout.text[id];
@@ -163,6 +275,7 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
       drawText(context, state.text[id], field, color);
     }
   });
+  layout.stepGroups?.forEach((group) => drawStepGroup(context, layout, state, group));
   if (canvas.width !== layout.canvas.width || canvas.height !== layout.canvas.height) throw new Error(`${layout.name} Canvas 尺寸不符。`);
   return canvas;
 }

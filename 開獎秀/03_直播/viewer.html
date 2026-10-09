@@ -53,7 +53,8 @@
       import { LIVE_02_LAYOUT, getLive02Style } from "./js/layout-02-live-system-cta.js";
       import { LIVE_03_LAYOUT, getLive03Style } from "./js/layout-03-live-thumbnail-specified-day.js";
       import { LIVE_04_LAYOUT, getLive04Style } from "./js/layout-04-live-msbn-kv.js";
-      import { canvasToJpegBlob, createInitialState, renderLiveToCanvas } from "./js/renderer-01.js";
+      import { LIVE_05_LAYOUT, getLive05Style } from "./js/layout-05-live-msbn-case-card.js";
+      import { canvasToJpegBlob, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./js/renderer-01.js";
 
       const params = new URLSearchParams(location.search);
       const layoutId = params.get("layout");
@@ -62,7 +63,8 @@
         [LIVE_01_LAYOUT.id, [LIVE_01_LAYOUT, getLive01Style]],
         [LIVE_02_LAYOUT.id, [LIVE_02_LAYOUT, getLive02Style]],
         [LIVE_03_LAYOUT.id, [LIVE_03_LAYOUT, getLive03Style]],
-        [LIVE_04_LAYOUT.id, [LIVE_04_LAYOUT, getLive04Style]]
+        [LIVE_04_LAYOUT.id, [LIVE_04_LAYOUT, getLive04Style]],
+        [LIVE_05_LAYOUT.id, [LIVE_05_LAYOUT, getLive05Style]]
       ]);
       const error = document.querySelector("#error");
       const editor = document.querySelector("#editor");
@@ -89,7 +91,7 @@
         let state = createInitialState(styleId, activeLayout);
         canvas.width = activeLayout.canvas.width;
         canvas.height = activeLayout.canvas.height;
-        wrap.style.setProperty("--live-preview-max-width", activeLayout.id === "04" ? "1200px" : "1125px");
+        wrap.style.setProperty("--live-preview-max-width", activeLayout.id === "04" ? "1200px" : activeLayout.id === "05" ? "1920px" : "1125px");
         const logoMode = document.querySelector("#logo-mode");
         const styleInputs = [...document.querySelectorAll("input[name=style]")];
         const textControls = new Map();
@@ -128,19 +130,37 @@
           if (input.checked) switchStyle(input.value);
         }));
 
-        activeLayout.textOrder.forEach((id) => {
-          const field = activeLayout.text[id]; const label = document.createElement("label"); label.className = "field";
+        const readField = (field) => field.group ? state.text.steps[field.group][field.id] : state.text[field.id];
+        const writeField = (field, value) => { if (field.group) state.text.steps[field.group][field.id] = value; else state.text[field.id] = value; };
+        const mountTextField = (field, container, controlKey = field.id, onCommitted = () => {}) => {
+          const label = document.createElement("label"); label.className = "field";
           const head = document.createElement("span"); head.className = "head"; const title = document.createElement("span"); title.textContent = field.label; const counter = document.createElement("span"); counter.className = "counter"; head.append(title, counter);
-          const input = document.createElement("input"); input.type = "text"; input.value = state.text[id]; let lastValid = input.value; let composing = false;
+          const input = document.createElement("input"); input.type = "text"; input.value = readField(field); let lastValid = input.value; let composing = false;
           const paint = () => { counter.textContent = `${formatUnits(countTextUnits(input.value))} / ${field.limit}`; };
           const rollback = () => { input.value = lastValid; paint(); };
-          const commit = () => { lastValid = input.value; state.text[id] = input.value; paint(); render(); };
+          const commit = () => {
+            const previous = lastValid;
+            writeField(field, input.value);
+            try { validateLiveTextState(activeLayout, state); } catch { writeField(field, previous); rollback(); return; }
+            lastValid = input.value; paint(); onCommitted(); render();
+          };
           input.addEventListener("compositionstart", () => { composing = true; });
           input.addEventListener("compositionend", () => { composing = false; if (countTextUnits(input.value) > field.limit) rollback(); else commit(); });
-          input.addEventListener("input", () => { if (composing) { state.text[id] = input.value; paint(); render(); } else if (countTextUnits(input.value) > field.limit) rollback(); else commit(); });
-          textControls.set(id, { reset: () => { input.value = state.text[id]; lastValid = input.value; composing = false; paint(); } });
-          paint(); label.append(head, input); document.querySelector("#text-fields").append(label);
-        });
+          input.addEventListener("input", () => { if (composing) { writeField(field, input.value); paint(); render(); } else if (countTextUnits(input.value) > field.limit) rollback(); else commit(); });
+          textControls.set(controlKey, { reset: () => { input.value = readField(field); lastValid = input.value; composing = false; paint(); } });
+          paint(); label.append(head, input); container.append(label);
+        };
+        activeLayout.textOrder.forEach((id) => mountTextField(activeLayout.text[id], document.querySelector("#text-fields")));
+        if (activeLayout.stepGroups) {
+          activeLayout.stepGroups.forEach((group) => {
+            const details = document.createElement("details"); details.className = "live-05-step-group";
+            const summary = document.createElement("summary"); const title = document.createElement("span"); title.textContent = group.label; const summaryText = document.createElement("span"); summaryText.className = "live-05-step-summary";
+            const updateSummary = () => { const values = group.rows.map((row) => readField(row)).filter(Boolean); summaryText.textContent = values.length ? values.join("／") : "尚未填寫"; };
+            summary.append(title, summaryText); details.append(summary);
+            group.rows.forEach((row) => mountTextField(row, details, `${group.id}.${row.id}`, updateSummary));
+            details.addEventListener("toggle", updateSummary); updateSummary(); document.querySelector("#text-fields").append(details);
+          });
+        }
 
         logoMode.addEventListener("change", () => { state.logoMode = logoMode.value; render(); });
 

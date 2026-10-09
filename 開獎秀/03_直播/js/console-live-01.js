@@ -4,10 +4,11 @@ import { LIVE_01_LAYOUT } from "./layout-01-live-lpbn.js";
 import { LIVE_02_LAYOUT } from "./layout-02-live-system-cta.js";
 import { LIVE_03_LAYOUT } from "./layout-03-live-thumbnail-specified-day.js";
 import { LIVE_04_LAYOUT } from "./layout-04-live-msbn-kv.js";
-import { canvasToJpegBlob, createInitialState, renderLiveToCanvas } from "./renderer-01.js";
+import { LIVE_05_LAYOUT } from "./layout-05-live-msbn-case-card.js";
+import { canvasToJpegBlob, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./renderer-01.js";
 
 const LIVE_STYLESHEET_URL = new URL("../css/live-01.css", import.meta.url);
-const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT]);
+const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT]);
 let stylesheetPromise = null;
 
 function ensureStylesheet() {
@@ -37,21 +38,48 @@ function downloadBlob(blob, fileName) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function createTextField(field, state, onChange) {
+function readTextField(field, state) {
+  return field.group ? state.text.steps[field.group][field.id] : state.text[field.id];
+}
+
+function writeTextField(field, state, value) {
+  if (field.group) state.text.steps[field.group][field.id] = value;
+  else state.text[field.id] = value;
+}
+
+function createTextField(field, state, onChange, layout) {
   const wrapper = document.createElement("label"); wrapper.className = "live-01-field";
   const head = document.createElement("span"); head.className = "live-01-field-head";
   const label = document.createElement("span"); label.textContent = field.label;
   const counter = document.createElement("span"); counter.className = "live-01-counter"; head.append(label, counter);
-  const input = document.createElement("input"); input.type = "text"; input.value = state.text[field.id]; input.autocomplete = "off";
+  const input = document.createElement("input"); input.type = "text"; input.value = readTextField(field, state); input.autocomplete = "off";
   let lastValid = input.value; let composing = false;
   const paint = (value) => { counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit}`; };
   const rollback = () => { input.value = lastValid; paint(lastValid); };
-  const commit = (value) => { lastValid = value; state.text[field.id] = value; paint(value); onChange(); };
+  const commit = (value) => {
+    const previous = lastValid;
+    writeTextField(field, state, value);
+    try {
+      validateLiveTextState(layout, state);
+      lastValid = value; paint(value); onChange();
+    } catch (error) {
+      writeTextField(field, state, previous);
+      input.value = previous;
+      paint(previous);
+      return false;
+    }
+    return true;
+  };
   input.addEventListener("compositionstart", () => { composing = true; });
-  input.addEventListener("compositionend", () => { composing = false; if (countTextUnits(input.value) > field.limit) rollback(); else commit(input.value); });
+  input.addEventListener("compositionend", () => {
+    composing = false;
+    if (countTextUnits(input.value) > field.limit) { rollback(); return; }
+    commit(input.value);
+  });
   input.addEventListener("input", () => {
-    if (composing) { state.text[field.id] = input.value; paint(input.value); onChange(); return; }
-    if (countTextUnits(input.value) > field.limit) rollback(); else commit(input.value);
+    if (composing) { writeTextField(field, state, input.value); paint(input.value); onChange(); return; }
+    if (countTextUnits(input.value) > field.limit) { rollback(); return; }
+    commit(input.value);
   });
   paint(input.value);
   wrapper.append(head, input);
@@ -82,6 +110,22 @@ function getColorFields(layout) {
     { id: "subtitle", label: "副標" },
     { id: "warning", label: "警語" }
   ];
+}
+
+function createStepAccordion(group, state, onChange, layout) {
+  const details = document.createElement("details");
+  details.className = "live-05-step-group";
+  const summary = document.createElement("summary");
+  const title = document.createElement("span"); title.textContent = group.label;
+  const summaryText = document.createElement("span"); summaryText.className = "live-05-step-summary";
+  const updateSummary = () => {
+    const values = group.rows.map((row) => readTextField(row, state)).filter(Boolean);
+    summaryText.textContent = values.length ? values.join("／") : "尚未填寫";
+  };
+  summary.append(title, summaryText); details.append(summary);
+  group.rows.forEach((row) => details.append(createTextField(row, state, () => { updateSummary(); onChange(); }, layout).wrapper));
+  updateSummary();
+  return details;
 }
 
 export async function mountLive01({ styleId, mounts }) {
@@ -132,8 +176,15 @@ export async function mountLive01({ styleId, mounts }) {
     const textHeading = document.createElement("h3"); textHeading.className = "live-01-heading"; textHeading.textContent = "編輯文字"; textCard.append(textHeading);
     activeLayout.textOrder.forEach((id) => {
       const field = activeLayout.text[id];
-      textCard.append(createTextField(field, state, renderSafely).wrapper);
+      textCard.append(createTextField(field, state, renderSafely, activeLayout).wrapper);
     });
+    if (activeLayout.stepGroups) {
+      const stepCard = document.createElement("section"); stepCard.className = "live-01-card live-05-step-card";
+      const stepHeading = document.createElement("h3"); stepHeading.className = "live-01-heading"; stepHeading.textContent = "STEP 文字";
+      stepCard.append(stepHeading);
+      activeLayout.stepGroups.forEach((group) => stepCard.append(createStepAccordion(group, state, renderSafely, activeLayout)));
+      controls.append(textCard, stepCard);
+    }
     const logoCard = document.createElement("section"); logoCard.className = "live-01-card";
     const logoHeading = document.createElement("h3"); logoHeading.className = "live-01-heading"; logoHeading.textContent = "Logo";
     logoCard.append(logoHeading, createLogoModeField(state, renderSafely));
@@ -154,7 +205,8 @@ export async function mountLive01({ styleId, mounts }) {
       } catch (error) { status.textContent = error instanceof Error ? error.message : "JPG 下載失敗。"; }
       finally { exportBusy = false; exportButton.disabled = false; }
     });
-    controls.append(textCard, logoCard, colorCard, exportButton, status); controlBody.replaceChildren(controls);
+    if (!activeLayout.stepGroups) controls.append(textCard);
+    controls.append(logoCard, colorCard, exportButton, status); controlBody.replaceChildren(controls);
   }
 
   mountLayoutButtons(); buildControls(); await render();

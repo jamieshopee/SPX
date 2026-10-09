@@ -17,3 +17,6 @@
 .live-01-status { margin: 0; color: var(--text-tertiary); font-size: 12px; line-height: 1.5; }
 .live-01-layout-button { width: 100%; padding: 10px 12px; color: var(--text-secondary); background: rgb(255 255 255 / 7%); text-align: left; }
 .live-01-layout-button[aria-current="true"] { color: var(--text-primary); background: rgb(238 77 45 / 24%); box-shadow: inset 3px 0 var(--accent); }
+.live-05-step-group { display: grid; gap: 10px; padding: 10px; border: 1px solid rgb(255 255 255 / 10%); border-radius: 8px; background: rgb(0 0 0 / 12%); }
+.live-05-step-group summary { display: flex; justify-content: space-between; gap: 8px; cursor: pointer; color: var(--text-primary); font-size: 12px; font-weight: 700; }
+.live-05-step-summary { min-width: 0; overflow: hidden; color: var(--text-tertiary); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
