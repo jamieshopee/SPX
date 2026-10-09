@@ -20,8 +20,8 @@
       .color-field { grid-template-columns: 1fr auto; align-items: center; }
       .logo-mode { display: grid; gap: 6px; margin-top: 14px; font-size: 13px; }
       select { padding: 8px; color: inherit; border: 1px solid rgb(255 255 255 / 18%); border-radius: 5px; background: rgb(0 0 0 / 24%); }
-      canvas { display: block; width: min(100%, 1125px); height: auto; }
-      .preview-wrap { position: relative; width: min(100%, 1125px); }
+      canvas { display: block; width: min(100%, var(--live-preview-max-width, 1125px)); height: auto; }
+      .preview-wrap { position: relative; width: min(100%, var(--live-preview-max-width, 1125px)); }
       #overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
       button { margin-top: 14px; padding: 9px 12px; border: 0; border-radius: 5px; color: white; background: #ee4d2d; cursor: pointer; }
       input:focus-visible, button:focus-visible { outline: 2px solid #ee4d2d; outline-offset: 2px; }
@@ -52,6 +52,7 @@
       import { LIVE_01_LAYOUT, getLive01Style } from "./js/layout-01-live-lpbn.js";
       import { LIVE_02_LAYOUT, getLive02Style } from "./js/layout-02-live-system-cta.js";
       import { LIVE_03_LAYOUT, getLive03Style } from "./js/layout-03-live-thumbnail-specified-day.js";
+      import { LIVE_04_LAYOUT, getLive04Style } from "./js/layout-04-live-msbn-kv.js";
       import { canvasToJpegBlob, createInitialState, renderLiveToCanvas } from "./js/renderer-01.js";
 
       const params = new URLSearchParams(location.search);
@@ -60,7 +61,8 @@
       const layouts = new Map([
         [LIVE_01_LAYOUT.id, [LIVE_01_LAYOUT, getLive01Style]],
         [LIVE_02_LAYOUT.id, [LIVE_02_LAYOUT, getLive02Style]],
-        [LIVE_03_LAYOUT.id, [LIVE_03_LAYOUT, getLive03Style]]
+        [LIVE_03_LAYOUT.id, [LIVE_03_LAYOUT, getLive03Style]],
+        [LIVE_04_LAYOUT.id, [LIVE_04_LAYOUT, getLive04Style]]
       ]);
       const error = document.querySelector("#error");
       const editor = document.querySelector("#editor");
@@ -87,6 +89,7 @@
         let state = createInitialState(styleId, activeLayout);
         canvas.width = activeLayout.canvas.width;
         canvas.height = activeLayout.canvas.height;
+        wrap.style.setProperty("--live-preview-max-width", activeLayout.id === "04" ? "1200px" : "1125px");
         const logoMode = document.querySelector("#logo-mode");
         const styleInputs = [...document.querySelectorAll("input[name=style]")];
         const textControls = new Map();

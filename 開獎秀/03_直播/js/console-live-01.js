@@ -3,10 +3,11 @@
 import { LIVE_01_LAYOUT } from "./layout-01-live-lpbn.js";
 import { LIVE_02_LAYOUT } from "./layout-02-live-system-cta.js";
 import { LIVE_03_LAYOUT } from "./layout-03-live-thumbnail-specified-day.js";
+import { LIVE_04_LAYOUT } from "./layout-04-live-msbn-kv.js";
 import { canvasToJpegBlob, createInitialState, renderLiveToCanvas } from "./renderer-01.js";
 
 const LIVE_STYLESHEET_URL = new URL("../css/live-01.css", import.meta.url);
-const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT]);
+const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT]);
 let stylesheetPromise = null;
 
 function ensureStylesheet() {
@@ -114,7 +115,11 @@ export async function mountLive01({ styleId, mounts }) {
       button.textContent = `${layout.id}｜${layout.name}`; button.setAttribute("aria-current", String(layout.id === activeLayout.id));
       button.addEventListener("click", () => {
         if (layout.id === activeLayout.id) return;
-        activeLayout = layout; state = createInitialState(styleId, activeLayout); mountLayoutButtons(); buildControls(); renderSafely();
+        activeLayout = layout;
+        state = createInitialState(styleId, activeLayout);
+        canvas.width = activeLayout.canvas.width;
+        canvas.height = activeLayout.canvas.height;
+        mountLayoutButtons(); buildControls(); renderSafely();
       });
       layoutList.append(button);
     });
