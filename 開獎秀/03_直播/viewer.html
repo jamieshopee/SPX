@@ -16,7 +16,8 @@
       .field, .color-field { display: grid; gap: 6px; margin-top: 14px; font-size: 13px; }
       .head { display: flex; justify-content: space-between; gap: 8px; }
       .counter, #status { color: rgb(235 242 241 / 76%); font-size: 12px; }
-      input[type="text"] { width: 100%; padding: 8px; color: inherit; border: 1px solid rgb(255 255 255 / 18%); border-radius: 5px; background: rgb(0 0 0 / 24%); }
+      input[type="text"], textarea { width: 100%; padding: 8px; color: inherit; border: 1px solid rgb(255 255 255 / 18%); border-radius: 5px; background: rgb(0 0 0 / 24%); font: inherit; }
+      textarea { min-height: 76px; resize: vertical; }
       .color-field { grid-template-columns: 1fr auto; align-items: center; }
       .logo-mode { display: grid; gap: 6px; margin-top: 14px; font-size: 13px; }
       select { padding: 8px; color: inherit; border: 1px solid rgb(255 255 255 / 18%); border-radius: 5px; background: rgb(0 0 0 / 24%); }
@@ -25,6 +26,12 @@
       #overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
       button { margin-top: 14px; padding: 9px 12px; border: 0; border-radius: 5px; color: white; background: #ee4d2d; cursor: pointer; }
       input:focus-visible, button:focus-visible { outline: 2px solid #ee4d2d; outline-offset: 2px; }
+      .live-06-selection-host { position: relative; }
+      .live-06-selection-layer, .live-06-interaction-layer { position: absolute; inset: 0; }
+      .live-06-selection-layer { z-index: 2; pointer-events: none; }
+      .live-06-interaction-layer { z-index: 3; cursor: text; touch-action: none; }
+      .live-06-selection-mark { position: absolute; border-radius: 3px; background: rgb(255 226 70 / 46%); box-shadow: inset 0 0 0 1px rgb(255 226 70 / 76%); }
+      .live-06-selection-action { position: absolute; z-index: 4; margin: 0; padding: 6px 9px; border: 0; border-radius: 5px; color: #182020; background: #ffe246; box-shadow: 0 2px 8px rgb(0 0 0 / 35%); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; }
       [hidden] { display: none !important; }
     </style>
   </head>
@@ -54,7 +61,9 @@
       import { LIVE_03_LAYOUT, getLive03Style } from "./js/layout-03-live-thumbnail-specified-day.js";
       import { LIVE_04_LAYOUT, getLive04Style } from "./js/layout-04-live-msbn-kv.js";
       import { LIVE_05_LAYOUT, getLive05Style } from "./js/layout-05-live-msbn-case-card.js";
-      import { canvasToJpegBlob, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./js/renderer-01.js";
+      import { LIVE_06_LAYOUT, getLive06Style } from "./js/layout-06-live-opening-card.js";
+      import { mountLive06TextSelection } from "./js/live-06-text-selection.js";
+      import { canvasToJpegBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./js/renderer-01.js";
 
       const params = new URLSearchParams(location.search);
       const layoutId = params.get("layout");
@@ -64,7 +73,8 @@
         [LIVE_02_LAYOUT.id, [LIVE_02_LAYOUT, getLive02Style]],
         [LIVE_03_LAYOUT.id, [LIVE_03_LAYOUT, getLive03Style]],
         [LIVE_04_LAYOUT.id, [LIVE_04_LAYOUT, getLive04Style]],
-        [LIVE_05_LAYOUT.id, [LIVE_05_LAYOUT, getLive05Style]]
+        [LIVE_05_LAYOUT.id, [LIVE_05_LAYOUT, getLive05Style]],
+        [LIVE_06_LAYOUT.id, [LIVE_06_LAYOUT, getLive06Style]]
       ]);
       const error = document.querySelector("#error");
       const editor = document.querySelector("#editor");
@@ -91,11 +101,12 @@
         let state = createInitialState(styleId, activeLayout);
         canvas.width = activeLayout.canvas.width;
         canvas.height = activeLayout.canvas.height;
-        wrap.style.setProperty("--live-preview-max-width", activeLayout.id === "04" ? "1200px" : activeLayout.id === "05" ? "1920px" : "1125px");
+        wrap.style.setProperty("--live-preview-max-width", activeLayout.id === "04" ? "1200px" : activeLayout.id === "05" ? "1920px" : activeLayout.id === "06" ? "1080px" : "1125px");
         const logoMode = document.querySelector("#logo-mode");
         const styleInputs = [...document.querySelectorAll("input[name=style]")];
         const textControls = new Map();
         const colorControls = new Map();
+        let cleanupSelection = () => {};
         document.querySelector("#viewer-title").textContent = `直播 ${activeLayout.id}：${activeLayout.name}`;
         styleInputs.find((input) => input.value === styleId).checked = true;
         overlay.src = activeLayout.alignmentOverlaySrc.href; overlay.style.opacity = "0.5";
@@ -114,15 +125,35 @@
           } catch (renderError) { wrap.hidden = true; error.textContent = renderError instanceof Error ? renderError.message : "直播 render 失敗。"; }
         }
 
+        function mountSelection() {
+          cleanupSelection(); cleanupSelection = () => {};
+          if (activeLayout.id === "06") {
+            cleanupSelection = mountLive06TextSelection({
+              container: wrap,
+              canvas,
+              layout: activeLayout,
+              getState: () => state,
+              render
+            });
+          }
+        }
+
         function switchStyle(nextStyleId) {
           if (!getStyle(nextStyleId) || nextStyleId === styleId) return;
+          const previousState = state;
           styleId = nextStyleId;
           state = createInitialState(styleId, activeLayout);
+          if (activeLayout.id === "06") {
+            state.text = structuredClone(previousState.text);
+            state.textRanges = structuredClone(previousState.textRanges);
+            state.logoMode = previousState.logoMode;
+          }
           textControls.forEach((control) => control.reset());
           colorControls.forEach((control) => control.reset());
           logoMode.value = state.logoMode;
           styleInputs.forEach((input) => { input.checked = input.value === styleId; });
           syncUrl();
+          mountSelection();
           render();
         }
 
@@ -135,18 +166,35 @@
         const mountTextField = (field, container, controlKey = field.id, onCommitted = () => {}) => {
           const label = document.createElement("label"); label.className = "field";
           const head = document.createElement("span"); head.className = "head"; const title = document.createElement("span"); title.textContent = field.label; const counter = document.createElement("span"); counter.className = "counter"; head.append(title, counter);
-          const input = document.createElement("input"); input.type = "text"; input.value = readField(field); let lastValid = input.value; let composing = false;
-          const paint = () => { counter.textContent = `${formatUnits(countTextUnits(input.value))} / ${field.limit}`; };
+          const input = field.multiline ? document.createElement("textarea") : document.createElement("input");
+          if (!field.multiline) input.type = "text";
+          if (field.multiline) { input.rows = field.maxLines; input.spellcheck = false; }
+          input.value = readField(field); let lastValid = input.value; let composing = false;
+          const exceedsLimit = (value) => field.multiline
+            ? String(value).split("\n").length > field.maxLines || String(value).split("\n").some((line) => countTextUnits(line) > field.maxCharsPerLine)
+            : countTextUnits(value) > field.limit;
+          const paint = () => {
+            if (field.multiline) {
+              const lines = String(input.value).split("\n");
+              counter.textContent = `${lines.length}/${field.maxLines} 行 · ${lines.map(countTextUnits).join("/")} / ${field.maxCharsPerLine}`;
+            } else counter.textContent = `${formatUnits(countTextUnits(input.value))} / ${field.limit}`;
+          };
           const rollback = () => { input.value = lastValid; paint(); };
           const commit = () => {
             const previous = lastValid;
-            writeField(field, input.value);
+            const nextValue = input.value;
+            writeField(field, nextValue);
             try { validateLiveTextState(activeLayout, state); } catch { writeField(field, previous); rollback(); return; }
-            lastValid = input.value; paint(); onCommitted(); render();
+            if (nextValue !== previous && activeLayout.id === "06") clearTextRangesForField(state, field);
+            lastValid = nextValue; paint(); onCommitted(); render();
           };
           input.addEventListener("compositionstart", () => { composing = true; });
-          input.addEventListener("compositionend", () => { composing = false; if (countTextUnits(input.value) > field.limit) rollback(); else commit(); });
-          input.addEventListener("input", () => { if (composing) { writeField(field, input.value); paint(); render(); } else if (countTextUnits(input.value) > field.limit) rollback(); else commit(); });
+          input.addEventListener("compositionend", () => { composing = false; if (exceedsLimit(input.value)) rollback(); else commit(); });
+          input.addEventListener("input", () => {
+            if (composing) { writeField(field, input.value); paint(); if (!field.multiline) render(); }
+            else if (exceedsLimit(input.value)) rollback();
+            else commit();
+          });
           textControls.set(controlKey, { reset: () => { input.value = readField(field); lastValid = input.value; composing = false; paint(); } });
           paint(); label.append(head, input); container.append(label);
         };
@@ -177,6 +225,7 @@
           const blob = await canvasToJpegBlob(await renderLiveToCanvas({ styleId, state: structuredClone(state), layout: activeLayout }));
           const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = outputName; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
         });
+        mountSelection();
         render();
       }
     </script>

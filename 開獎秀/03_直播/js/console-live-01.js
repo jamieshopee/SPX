@@ -5,10 +5,12 @@ import { LIVE_02_LAYOUT } from "./layout-02-live-system-cta.js";
 import { LIVE_03_LAYOUT } from "./layout-03-live-thumbnail-specified-day.js";
 import { LIVE_04_LAYOUT } from "./layout-04-live-msbn-kv.js";
 import { LIVE_05_LAYOUT } from "./layout-05-live-msbn-case-card.js";
-import { canvasToJpegBlob, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./renderer-01.js";
+import { LIVE_06_LAYOUT } from "./layout-06-live-opening-card.js";
+import { mountLive06TextSelection } from "./live-06-text-selection.js";
+import { canvasToJpegBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./renderer-01.js";
 
 const LIVE_STYLESHEET_URL = new URL("../css/live-01.css", import.meta.url);
-const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT]);
+const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT]);
 let stylesheetPromise = null;
 
 function ensureStylesheet() {
@@ -52,15 +54,27 @@ function createTextField(field, state, onChange, layout) {
   const head = document.createElement("span"); head.className = "live-01-field-head";
   const label = document.createElement("span"); label.textContent = field.label;
   const counter = document.createElement("span"); counter.className = "live-01-counter"; head.append(label, counter);
-  const input = document.createElement("input"); input.type = "text"; input.value = readTextField(field, state); input.autocomplete = "off";
+  const input = field.multiline ? document.createElement("textarea") : document.createElement("input");
+  if (!field.multiline) input.type = "text";
+  if (field.multiline) { input.rows = field.maxLines; input.spellcheck = false; }
+  input.value = readTextField(field, state); input.autocomplete = "off";
   let lastValid = input.value; let composing = false;
-  const paint = (value) => { counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit}`; };
+  const exceedsLimit = (value) => field.multiline
+    ? String(value).split("\n").length > field.maxLines || String(value).split("\n").some((line) => countTextUnits(line) > field.maxCharsPerLine)
+    : countTextUnits(value) > field.limit;
+  const paint = (value) => {
+    if (field.multiline) {
+      const lines = String(value).split("\n");
+      counter.textContent = `${lines.length}/${field.maxLines} 行 · ${lines.map(countTextUnits).join("/")} / ${field.maxCharsPerLine}`;
+    } else counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit}`;
+  };
   const rollback = () => { input.value = lastValid; paint(lastValid); };
   const commit = (value) => {
     const previous = lastValid;
     writeTextField(field, state, value);
     try {
       validateLiveTextState(layout, state);
+      if (value !== previous && layout.id === "06") clearTextRangesForField(state, field);
       lastValid = value; paint(value); onChange();
     } catch (error) {
       writeTextField(field, state, previous);
@@ -73,12 +87,12 @@ function createTextField(field, state, onChange, layout) {
   input.addEventListener("compositionstart", () => { composing = true; });
   input.addEventListener("compositionend", () => {
     composing = false;
-    if (countTextUnits(input.value) > field.limit) { rollback(); return; }
+    if (exceedsLimit(input.value)) { rollback(); return; }
     commit(input.value);
   });
   input.addEventListener("input", () => {
-    if (composing) { writeTextField(field, state, input.value); paint(input.value); onChange(); return; }
-    if (countTextUnits(input.value) > field.limit) { rollback(); return; }
+    if (composing) { writeTextField(field, state, input.value); paint(input.value); if (!field.multiline) onChange(); return; }
+    if (exceedsLimit(input.value)) { rollback(); return; }
     commit(input.value);
   });
   paint(input.value);
@@ -141,6 +155,7 @@ export async function mountLive01({ styleId, mounts }) {
   const canvas = document.createElement("canvas");
   canvas.width = activeLayout.canvas.width; canvas.height = activeLayout.canvas.height; canvas.className = "live-01-preview-canvas";
   canvas.style.display = "block"; canvas.style.width = "100%"; canvas.style.height = "auto"; previewBody.replaceChildren(canvas);
+  let cleanupSelection = () => {};
 
   let status = null;
   const render = async () => {
@@ -159,11 +174,19 @@ export async function mountLive01({ styleId, mounts }) {
       button.textContent = `${layout.id}｜${layout.name}`; button.setAttribute("aria-current", String(layout.id === activeLayout.id));
       button.addEventListener("click", () => {
         if (layout.id === activeLayout.id) return;
+        const previousState = state;
+        const previousLayout = activeLayout;
+        cleanupSelection(); cleanupSelection = () => {};
         activeLayout = layout;
         state = createInitialState(styleId, activeLayout);
+        if (previousLayout.id === "06" && activeLayout.id === "06") {
+          state.text = structuredClone(previousState.text);
+          state.textRanges = structuredClone(previousState.textRanges);
+          state.logoMode = previousState.logoMode;
+        }
         canvas.width = activeLayout.canvas.width;
         canvas.height = activeLayout.canvas.height;
-        mountLayoutButtons(); buildControls(); renderSafely();
+        mountLayoutButtons(); buildControls(); mountSelection(); renderSafely();
       });
       layoutList.append(button);
     });
@@ -209,5 +232,18 @@ export async function mountLive01({ styleId, mounts }) {
     controls.append(logoCard, colorCard, exportButton, status); controlBody.replaceChildren(controls);
   }
 
-  mountLayoutButtons(); buildControls(); await render();
+  function mountSelection() {
+    cleanupSelection(); cleanupSelection = () => {};
+    if (activeLayout.id === "06") {
+      cleanupSelection = mountLive06TextSelection({
+        container: previewBody,
+        canvas,
+        layout: activeLayout,
+        getState: () => state,
+        render: renderSafely
+      });
+    }
+  }
+
+  mountLayoutButtons(); buildControls(); mountSelection(); await render();
 }

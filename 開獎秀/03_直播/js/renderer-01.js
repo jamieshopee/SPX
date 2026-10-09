@@ -100,6 +100,152 @@ function drawText(context, text, field, color) {
   context.fillText(text, x, y);
 }
 
+function getTextUnits(text) {
+  let units = 0;
+  for (const character of String(text ?? "")) {
+    units += /\p{Script=Han}/u.test(character) ? 1 : 0.5;
+  }
+  return units;
+}
+
+function getMultilineLines(text, field) {
+  const lines = String(text ?? "").split("\n");
+  if (lines.length > field.maxLines) throw new Error(`${field.label}最多 ${field.maxLines} 行。`);
+  lines.forEach((line) => {
+    if (getTextUnits(line) > field.maxCharsPerLine) throw new Error(`${field.label}每行最多 ${field.maxCharsPerLine} 字。`);
+  });
+  return lines;
+}
+
+function getCodePoints(text) {
+  return Array.from(String(text ?? ""));
+}
+
+export function normalizeTextRanges(ranges, lineLength) {
+  const max = Math.max(0, Number.isInteger(lineLength) ? lineLength : 0);
+  const normalized = (Array.isArray(ranges) ? ranges : [])
+    .map((range) => ({
+      start: Math.max(0, Math.min(max, Math.floor(Number(range?.start) || 0))),
+      end: Math.max(0, Math.min(max, Math.floor(Number(range?.end) || 0)))
+    }))
+    .map(({ start, end }) => start <= end ? { start, end } : { start: end, end: start })
+    .filter(({ start, end }) => end > start)
+    .sort((left, right) => left.start - right.start || left.end - right.end);
+  return normalized.reduce((merged, range) => {
+    const previous = merged[merged.length - 1];
+    if (previous && range.start <= previous.end) previous.end = Math.max(previous.end, range.end);
+    else merged.push({ ...range });
+    return merged;
+  }, []);
+}
+
+export function isTextRangeFullySelected(ranges, start, end, lineLength) {
+  const normalized = normalizeTextRanges(ranges, lineLength);
+  const targetStart = Math.max(0, Math.min(lineLength, Math.floor(start)));
+  const targetEnd = Math.max(targetStart, Math.min(lineLength, Math.floor(end)));
+  if (targetEnd <= targetStart) return false;
+  return normalized.some((range) => range.start <= targetStart && range.end >= targetEnd);
+}
+
+export function updateTextRange(ranges, start, end, mode, lineLength) {
+  const normalized = normalizeTextRanges(ranges, lineLength);
+  const targetStart = Math.max(0, Math.min(lineLength, Math.floor(start)));
+  const targetEnd = Math.max(targetStart, Math.min(lineLength, Math.floor(end)));
+  if (targetEnd <= targetStart) return normalized;
+  if (mode === "remove") {
+    return normalizeTextRanges(normalized.flatMap((range) => {
+      if (range.end <= targetStart || range.start >= targetEnd) return [range];
+      return [
+        ...(range.start < targetStart ? [{ start: range.start, end: targetStart }] : []),
+        ...(range.end > targetEnd ? [{ start: targetEnd, end: range.end }] : [])
+      ];
+    }), lineLength);
+  }
+  return normalizeTextRanges([...normalized, { start: targetStart, end: targetEnd }], lineLength);
+}
+
+export function getMultilineTextGeometry(context, text, field) {
+  if (text === "") return;
+  const lines = getMultilineLines(text, field);
+  context.font = fontString(field);
+  context.textAlign = "left";
+  context.textBaseline = "alphabetic";
+  const measured = lines.map((line) => context.measureText(line));
+  const heights = measured.map((metrics) => metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+  const groupHeight = heights.reduce((sum, height) => sum + height, 0) + (field.lineGapPx * Math.max(0, lines.length - 1));
+  let cursor = field.box.y + (field.box.height - groupHeight) / 2;
+  return measured.map((metrics, index) => {
+    const inkLeft = -metrics.actualBoundingBoxLeft;
+    const inkWidth = getInkWidth(metrics);
+    const x = field.box.x + (field.box.width - inkWidth) / 2 - inkLeft;
+    const geometry = {
+      fieldId: field.id,
+      lineIndex: index,
+      text: lines[index],
+      metrics,
+      x,
+      baseline: cursor + metrics.actualBoundingBoxAscent,
+      inkLeft: x - metrics.actualBoundingBoxLeft,
+      inkRight: x + metrics.actualBoundingBoxRight,
+      inkTop: cursor,
+      inkBottom: cursor + metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent,
+      inkHeight: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+    };
+    cursor += heights[index] + field.lineGapPx;
+    return geometry;
+  });
+}
+
+export function getTextBoundaryIndex(context, line, canvasX) {
+  const characters = getCodePoints(line.text);
+  const boundaries = [0];
+  for (let index = 1; index <= characters.length; index += 1) {
+    boundaries.push(context.measureText(characters.slice(0, index).join("")).width);
+  }
+  const relativeX = canvasX - line.x;
+  if (relativeX <= boundaries[0]) return 0;
+  for (let index = 0; index < characters.length; index += 1) {
+    const midpoint = (boundaries[index] + boundaries[index + 1]) / 2;
+    if (relativeX < midpoint) return index;
+  }
+  return characters.length;
+}
+
+export function getTextRangePixelBounds(context, line, start, end) {
+  const characters = getCodePoints(line.text);
+  const safeStart = Math.max(0, Math.min(characters.length, Math.floor(start)));
+  const safeEnd = Math.max(safeStart, Math.min(characters.length, Math.floor(end)));
+  const prefix = characters.slice(0, safeStart).join("");
+  const selected = characters.slice(safeStart, safeEnd).join("");
+  const left = line.x + context.measureText(prefix).width;
+  const right = line.x + context.measureText(`${prefix}${selected}`).width;
+  return { left, right, top: line.inkTop, bottom: line.inkBottom };
+}
+
+function drawMultilineText(context, text, field, color, highlightColor, rangesByLine) {
+  if (text === "") return;
+  const geometry = getMultilineTextGeometry(context, text, field);
+  if (!geometry) return;
+  geometry.forEach((line) => {
+    context.font = fontString(field);
+    context.textAlign = "left";
+    context.textBaseline = "alphabetic";
+    context.fillStyle = color;
+    context.fillText(line.text, line.x, line.baseline);
+    const ranges = normalizeTextRanges(rangesByLine?.[line.lineIndex], getCodePoints(line.text).length);
+    ranges.forEach((range) => {
+      const bounds = getTextRangePixelBounds(context, line, range.start, range.end);
+      context.save();
+      context.beginPath();
+      context.rect(bounds.left, bounds.top - 1, Math.max(0, bounds.right - bounds.left), (bounds.bottom - bounds.top) + 2);
+      context.clip();
+      context.fillStyle = highlightColor;
+      context.fillText(line.text, line.x, line.baseline);
+      context.restore();
+    });
+  });
+}
+
 function getTextMetrics(context, text, field) {
   context.font = fontString(field);
   return context.measureText(text);
@@ -195,7 +341,14 @@ export function validateLiveTextState(layout, state) {
   const measureCanvas = document.createElement("canvas");
   const context = measureCanvas.getContext("2d");
   if (!context) throw new Error("無法建立文字寬度檢查 Canvas。");
-  Object.values(layout.text).forEach((field) => validateTextWidth(context, state.text[field.id] ?? "", field, field.maxWidth));
+  Object.values(layout.text).forEach((field) => {
+    const text = state.text[field.id] ?? "";
+    if (field.multiline) {
+      getMultilineLines(text, field).forEach((line) => validateTextWidth(context, line, field, field.maxWidth));
+    } else {
+      validateTextWidth(context, text, field, field.maxWidth);
+    }
+  });
   validateStepGroups(context, layout, state);
   return true;
 }
@@ -229,11 +382,22 @@ export function createInitialState(styleId, layout = LIVE_01_LAYOUT) {
     key,
     value && typeof value === "object" ? Object.fromEntries(Object.entries(value).map(([nestedKey, nestedValue]) => [nestedKey, { ...nestedValue }])) : value
   ]));
-  return {
+  const state = {
     text,
     colors: { ...defaultColors },
     logoMode: "auto"
   };
+  if (layout.id === "06") {
+    state.textRanges = Object.fromEntries(Object.values(layout.text)
+      .filter((field) => field.multiline)
+      .map((field) => [field.id, Array.from({ length: field.maxLines }, () => [])]));
+  }
+  return state;
+}
+
+export function clearTextRangesForField(state, field) {
+  if (!field?.multiline || !state?.textRanges?.[field.id]) return;
+  state.textRanges[field.id] = Array.from({ length: field.maxLines }, () => []);
 }
 
 export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYOUT }) {
@@ -269,7 +433,9 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
   layout.textOrder.forEach((id) => {
     const field = layout.text[id];
     const color = state.colors[field.colorKey];
-    if (field.rendering === "supersampled") {
+    if (field.multiline) {
+      drawMultilineText(context, state.text[id], field, color, state.colors.highlight, state.textRanges?.[field.id]);
+    } else if (field.rendering === "supersampled") {
       drawSupersampledField(context, layout, state.text[id], field, color);
     } else {
       drawText(context, state.text[id], field, color);
