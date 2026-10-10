@@ -267,12 +267,29 @@ function getStepField(row, kind) {
   return {
     fontSizePx: kind === "big" ? row.bigFontSizePx : row.smallFontSizePx,
     family: kind === "big" ? row.bigFamily : row.smallFamily,
-    label: row.label
+    label: row.label,
+    maxWidth: row.maxWidth
   };
+}
+
+function getStepLines(row, text) {
+  if (!row.multiline) return [String(text ?? "")];
+  return getMultilineLines(text, {
+    label: row.label,
+    maxLines: row.maxLines,
+    maxCharsPerLine: row.maxCharsPerLine
+  });
 }
 
 function getStepKind(row, text) {
   let units = 0;
+  const lines = getStepLines(row, text);
+  if (row.kind) {
+    lines.forEach((line) => {
+      if (getTextUnits(line) > row.limit) throw new Error(`${row.label}超過 ${row.limit} 字限制。`);
+    });
+    return row.kind;
+  }
   for (const character of String(text ?? "")) {
     units += /\p{Script=Han}/u.test(character) ? 1 : 0.5;
   }
@@ -284,7 +301,12 @@ function drawStepGroup(context, layout, state, group) {
   const active = group.rows
     .map((row) => ({ row, text: state.text.steps[group.id][row.id] ?? "" }))
     .filter(({ text }) => text !== "")
-    .map(({ row, text }) => ({ row, text, kind: getStepKind(row, text) }));
+    .flatMap(({ row, text }) => {
+      const kind = getStepKind(row, text);
+      return getStepLines(row, text)
+        .filter((line) => line !== "")
+        .map((line) => ({ row, text: line, kind }));
+    });
   if (active.length === 0) return;
 
   const lines = active.map(({ row, text, kind }) => {
@@ -295,7 +317,7 @@ function drawStepGroup(context, layout, state, group) {
   });
   const gaps = lines.slice(0, -1).map((line, index) => {
     const next = lines[index + 1];
-    if (group.id === "step2" && index === 0 && line.kind === "big" && next.kind === "big") {
+    if (layout.id === "05" && group.id === "step2" && index === 0 && line.kind === "big" && next.kind === "big") {
       return 7;
     }
     if (line.kind === "big" && next.kind === "big") {
@@ -303,7 +325,7 @@ function drawStepGroup(context, layout, state, group) {
     }
     const gapKey = `${line.kind}${next.kind === "big" ? "Big" : "Small"}`;
     const gap = layout.cardTypography.inkGaps[gapKey] ?? layout.cardTypography.inkGaps.smallSmall;
-    return group.id === "step2" && index === 1 && line.kind === "big" && next.kind === "small" ? 14 : gap;
+    return layout.id === "05" && group.id === "step2" && index === 1 && line.kind === "big" && next.kind === "small" ? 14 : gap;
   });
   const groupHeight = lines.reduce((sum, line) => sum + line.inkHeight, 0) + gaps.reduce((sum, gap) => sum + gap, 0);
   const top = group.safeBox.y + (group.safeBox.height - groupHeight) / 2;
@@ -314,7 +336,8 @@ function drawStepGroup(context, layout, state, group) {
     const inkLeft = -line.metrics.actualBoundingBoxLeft;
     const inkWidth = getInkWidth(line.metrics);
     const x = group.safeBox.x + (group.safeBox.width - inkWidth) / 2 - inkLeft;
-    context.fillStyle = state.colors[line.kind === "big" ? "stepBig" : "stepSmall"];
+    const colorKey = group.colorKey ?? (line.kind === "big" ? "stepBig" : "stepSmall");
+    context.fillStyle = state.colors[colorKey];
     context.fillText(line.text, x, baseline);
   };
 
@@ -332,7 +355,9 @@ function validateStepGroups(context, layout, state) {
       const text = state.text.steps[group.id][row.id] ?? "";
       if (text === "") return;
       const kind = getStepKind(row, text);
-      validateTextWidth(context, text, getStepField(row, kind), group.safeBox.width);
+      getStepLines(row, text)
+        .filter((line) => line !== "")
+        .forEach((line) => validateTextWidth(context, line, getStepField(row, kind), group.safeBox.width));
     });
   });
 }

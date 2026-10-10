@@ -6,11 +6,12 @@ import { LIVE_03_LAYOUT } from "./layout-03-live-thumbnail-specified-day.js";
 import { LIVE_04_LAYOUT } from "./layout-04-live-msbn-kv.js";
 import { LIVE_05_LAYOUT } from "./layout-05-live-msbn-case-card.js";
 import { LIVE_06_LAYOUT } from "./layout-06-live-opening-card.js";
+import { LIVE_07_LAYOUT } from "./layout-07-live-case-card-process.js";
 import { mountLive06TextSelection } from "./live-06-text-selection.js";
 import { canvasToJpegBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./renderer-01.js";
 
 const LIVE_STYLESHEET_URL = new URL("../css/live-01.css", import.meta.url);
-const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT]);
+const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT, LIVE_07_LAYOUT]);
 let stylesheetPromise = null;
 
 function ensureStylesheet() {

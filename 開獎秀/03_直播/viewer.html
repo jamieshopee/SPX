@@ -62,6 +62,7 @@
       import { LIVE_04_LAYOUT, getLive04Style } from "./js/layout-04-live-msbn-kv.js";
       import { LIVE_05_LAYOUT, getLive05Style } from "./js/layout-05-live-msbn-case-card.js";
       import { LIVE_06_LAYOUT, getLive06Style } from "./js/layout-06-live-opening-card.js";
+      import { LIVE_07_LAYOUT, getLive07Style } from "./js/layout-07-live-case-card-process.js";
       import { mountLive06TextSelection } from "./js/live-06-text-selection.js";
       import { canvasToJpegBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./js/renderer-01.js";
 
@@ -74,7 +75,8 @@
         [LIVE_03_LAYOUT.id, [LIVE_03_LAYOUT, getLive03Style]],
         [LIVE_04_LAYOUT.id, [LIVE_04_LAYOUT, getLive04Style]],
         [LIVE_05_LAYOUT.id, [LIVE_05_LAYOUT, getLive05Style]],
-        [LIVE_06_LAYOUT.id, [LIVE_06_LAYOUT, getLive06Style]]
+        [LIVE_06_LAYOUT.id, [LIVE_06_LAYOUT, getLive06Style]],
+        [LIVE_07_LAYOUT.id, [LIVE_07_LAYOUT, getLive07Style]]
       ]);
       const error = document.querySelector("#error");
       const editor = document.querySelector("#editor");
@@ -101,7 +103,7 @@
         let state = createInitialState(styleId, activeLayout);
         canvas.width = activeLayout.canvas.width;
         canvas.height = activeLayout.canvas.height;
-        wrap.style.setProperty("--live-preview-max-width", activeLayout.id === "04" ? "1200px" : activeLayout.id === "05" ? "1920px" : activeLayout.id === "06" ? "1080px" : "1125px");
+        wrap.style.setProperty("--live-preview-max-width", activeLayout.id === "04" ? "1200px" : activeLayout.id === "05" ? "1920px" : activeLayout.id === "06" || activeLayout.id === "07" ? "1080px" : "1125px");
         const logoMode = document.querySelector("#logo-mode");
         const styleInputs = [...document.querySelectorAll("input[name=style]")];
         const textControls = new Map();
@@ -127,7 +129,7 @@
 
         function mountSelection() {
           cleanupSelection(); cleanupSelection = () => {};
-          if (activeLayout.id === "06") {
+          if (activeLayout.id === "06" || activeLayout.id === "07") {
             cleanupSelection = mountLive06TextSelection({
               container: wrap,
               canvas,
