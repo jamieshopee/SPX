@@ -7,11 +7,14 @@ import { LIVE_04_LAYOUT } from "./layout-04-live-msbn-kv.js";
 import { LIVE_05_LAYOUT } from "./layout-05-live-msbn-case-card.js";
 import { LIVE_06_LAYOUT } from "./layout-06-live-opening-card.js";
 import { LIVE_07_LAYOUT } from "./layout-07-live-case-card-process.js";
+import { LIVE_08_LAYOUT } from "./layout-08-live-award-explanation.js";
 import { mountLive06TextSelection } from "./live-06-text-selection.js";
+import { mountLive08TextSelection } from "./live-08-text-selection.js";
+import { mountLive08AwardEditor } from "./live-08-award-editor.js";
 import { canvasToJpegBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./renderer-01.js";
 
 const LIVE_STYLESHEET_URL = new URL("../css/live-01.css", import.meta.url);
-const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT, LIVE_07_LAYOUT]);
+const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT, LIVE_07_LAYOUT, LIVE_08_LAYOUT]);
 let stylesheetPromise = null;
 
 function ensureStylesheet() {
@@ -62,12 +65,14 @@ function createTextField(field, state, onChange, layout) {
   let lastValid = input.value; let composing = false;
   const exceedsLimit = (value) => field.multiline
     ? String(value).split("\n").length > field.maxLines || String(value).split("\n").some((line) => countTextUnits(line) > field.maxCharsPerLine)
-    : countTextUnits(value) > field.limit;
+    : field.limit != null && countTextUnits(value) > field.limit;
   const paint = (value) => {
     if (field.multiline) {
       const lines = String(value).split("\n");
       counter.textContent = `${lines.length}/${field.maxLines} 行 · ${lines.map(countTextUnits).join("/")} / ${field.maxCharsPerLine}`;
-    } else counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit}`;
+    } else counter.textContent = field.limit == null
+      ? formatUnits(countTextUnits(value))
+      : `${formatUnits(countTextUnits(value))} / ${field.limit}`;
   };
   const rollback = () => { input.value = lastValid; paint(lastValid); };
   const commit = (value) => {
@@ -157,6 +162,7 @@ export async function mountLive01({ styleId, mounts }) {
   canvas.width = activeLayout.canvas.width; canvas.height = activeLayout.canvas.height; canvas.className = "live-01-preview-canvas";
   canvas.style.display = "block"; canvas.style.width = "100%"; canvas.style.height = "auto"; previewBody.replaceChildren(canvas);
   let cleanupSelection = () => {};
+  let cleanupAwardEditor = () => {};
 
   let status = null;
   const render = async () => {
@@ -195,6 +201,7 @@ export async function mountLive01({ styleId, mounts }) {
   }
 
   function buildControls() {
+    cleanupAwardEditor(); cleanupAwardEditor = () => {};
     const controls = document.createElement("div"); controls.className = "live-01-controls";
     const textCard = document.createElement("section"); textCard.className = "live-01-card";
     const textHeading = document.createElement("h3"); textHeading.className = "live-01-heading"; textHeading.textContent = "編輯文字"; textCard.append(textHeading);
@@ -202,6 +209,11 @@ export async function mountLive01({ styleId, mounts }) {
       const field = activeLayout.text[id];
       textCard.append(createTextField(field, state, renderSafely, activeLayout).wrapper);
     });
+    if (activeLayout.id === "08") {
+      cleanupAwardEditor = mountLive08AwardEditor({
+        container: textCard, layout: activeLayout, getState: () => state, onChange: renderSafely
+      });
+    }
     if (activeLayout.stepGroups) {
       const stepCard = document.createElement("section"); stepCard.className = "live-01-card live-05-step-card";
       const stepHeading = document.createElement("h3"); stepHeading.className = "live-01-heading"; stepHeading.textContent = "STEP 文字";
@@ -209,9 +221,12 @@ export async function mountLive01({ styleId, mounts }) {
       activeLayout.stepGroups.forEach((group) => stepCard.append(createStepAccordion(group, state, renderSafely, activeLayout)));
       controls.append(textCard, stepCard);
     }
-    const logoCard = document.createElement("section"); logoCard.className = "live-01-card";
-    const logoHeading = document.createElement("h3"); logoHeading.className = "live-01-heading"; logoHeading.textContent = "Logo";
-    logoCard.append(logoHeading, createLogoModeField(state, renderSafely));
+    if (activeLayout.logo) {
+      const logoCard = document.createElement("section"); logoCard.className = "live-01-card";
+      const logoHeading = document.createElement("h3"); logoHeading.className = "live-01-heading"; logoHeading.textContent = "Logo";
+      logoCard.append(logoHeading, createLogoModeField(state, renderSafely));
+      controls.append(logoCard);
+    }
     const colorCard = document.createElement("section"); colorCard.className = "live-01-card";
     const colorHeading = document.createElement("h3"); colorHeading.className = "live-01-heading"; colorHeading.textContent = "顏色";
     const colors = document.createElement("div"); colors.className = "live-01-colors";
@@ -230,13 +245,21 @@ export async function mountLive01({ styleId, mounts }) {
       finally { exportBusy = false; exportButton.disabled = false; }
     });
     if (!activeLayout.stepGroups) controls.append(textCard);
-    controls.append(logoCard, colorCard, exportButton, status); controlBody.replaceChildren(controls);
+    controls.append(colorCard, exportButton, status); controlBody.replaceChildren(controls);
   }
 
   function mountSelection() {
     cleanupSelection(); cleanupSelection = () => {};
     if (activeLayout.id === "06") {
       cleanupSelection = mountLive06TextSelection({
+        container: previewBody,
+        canvas,
+        layout: activeLayout,
+        getState: () => state,
+        render: renderSafely
+      });
+    } else if (activeLayout.id === "08") {
+      cleanupSelection = mountLive08TextSelection({
         container: previewBody,
         canvas,
         layout: activeLayout,

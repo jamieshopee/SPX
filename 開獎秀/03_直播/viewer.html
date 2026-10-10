@@ -32,6 +32,31 @@
       .live-06-interaction-layer { z-index: 3; cursor: text; touch-action: none; }
       .live-06-selection-mark { position: absolute; border-radius: 3px; background: rgb(255 226 70 / 46%); box-shadow: inset 0 0 0 1px rgb(255 226 70 / 76%); }
       .live-06-selection-action { position: absolute; z-index: 4; margin: 0; padding: 6px 9px; border: 0; border-radius: 5px; color: #182020; background: #ffe246; box-shadow: 0 2px 8px rgb(0 0 0 / 35%); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; }
+      .live-08-selection-host { position: relative; }
+      .live-08-selection-layer, .live-08-interaction-layer { position: absolute; inset: 0; }
+      .live-08-selection-layer { z-index: 2; pointer-events: none; }
+      .live-08-interaction-layer { z-index: 3; cursor: text; touch-action: none; }
+      .live-08-selection-mark { position: absolute; border-radius: 3px; background: rgb(255 226 70 / 46%); box-shadow: inset 0 0 0 1px rgb(255 226 70 / 76%); }
+      .live-08-selection-action { position: absolute; z-index: 4; margin: 0; padding: 6px 9px; border: 0; border-radius: 5px; color: #182020; background: #ffe246; box-shadow: 0 2px 8px rgb(0 0 0 / 35%); cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; }
+      .live-08-award-dialog { width: min(1120px, 94vw); max-width: none; max-height: 88vh; padding: 0; overflow: hidden; color: #f3f8f7; border: 1px solid rgb(255 255 255 / 20%); border-radius: 14px; background: #11191d; box-shadow: 0 20px 70px rgb(0 0 0 / 55%); }
+      .live-08-award-dialog::backdrop { background: rgb(0 0 0 / 62%); backdrop-filter: blur(2px); }
+      .live-08-award-dialog-shell { display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: 88vh; }
+      .live-08-award-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; border-bottom: 1px solid rgb(255 255 255 / 12%); }
+      .live-08-award-dialog-header h2 { margin: 0; font-size: 18px; }
+      .live-08-award-close { margin: 0; padding: 8px 12px; color: white; border: 0; border-radius: 6px; background: #ee4d2d; cursor: pointer; }
+      .live-08-award-dialog-body { display: grid; grid-template-columns: minmax(190px, 250px) minmax(0, 1fr); min-height: 0; }
+      .live-08-award-nav { display: grid; align-content: start; gap: 6px; padding: 14px; overflow: auto; border-right: 1px solid rgb(255 255 255 / 12%); }
+      .live-08-award-nav-button { margin: 0; padding: 10px 12px; color: #cbd5d4; border: 0; border-radius: 7px; background: rgb(255 255 255 / 6%); cursor: pointer; text-align: left; font: inherit; }
+      .live-08-award-nav-button[aria-current="true"] { color: white; background: rgb(238 77 45 / 28%); box-shadow: inset 3px 0 #ee4d2d; }
+      .live-08-award-fields { display: grid; align-content: start; gap: 14px; padding: 20px 24px; overflow: auto; }
+      .live-08-award-fields h3 { margin: 0; font-size: 16px; }
+      .live-08-award-field { display: grid; gap: 6px; color: #cbd5d4; font-size: 12px; }
+      .live-08-award-field-head { display: flex; justify-content: space-between; gap: 10px; }
+      .live-08-award-counter { color: #a7b3b2; font-variant-numeric: tabular-nums; }
+      .live-08-award-field input, .live-08-award-field textarea { width: 100%; min-width: 0; padding: 10px 12px; color: #f3f8f7; border: 1px solid rgb(255 255 255 / 18%); border-radius: 6px; background: rgb(0 0 0 / 24%); font: inherit; }
+      .live-08-award-field textarea { min-height: 82px; resize: vertical; }
+      .live-08-editor-open { width: 100%; }
+      @media (max-width: 700px) { .live-08-award-dialog { width: 96vw; max-height: 94vh; } .live-08-award-dialog-shell { max-height: 94vh; } .live-08-award-dialog-body { grid-template-columns: minmax(130px, 36%) minmax(0, 1fr); } .live-08-award-nav { padding: 8px; } .live-08-award-fields { padding: 14px; } }
       [hidden] { display: none !important; }
     </style>
   </head>
@@ -63,7 +88,10 @@
       import { LIVE_05_LAYOUT, getLive05Style } from "./js/layout-05-live-msbn-case-card.js";
       import { LIVE_06_LAYOUT, getLive06Style } from "./js/layout-06-live-opening-card.js";
       import { LIVE_07_LAYOUT, getLive07Style } from "./js/layout-07-live-case-card-process.js";
+      import { LIVE_08_LAYOUT, getLive08Style } from "./js/layout-08-live-award-explanation.js";
       import { mountLive06TextSelection } from "./js/live-06-text-selection.js";
+      import { mountLive08TextSelection } from "./js/live-08-text-selection.js";
+      import { mountLive08AwardEditor } from "./js/live-08-award-editor.js";
       import { canvasToJpegBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./js/renderer-01.js";
 
       const params = new URLSearchParams(location.search);
@@ -76,7 +104,8 @@
         [LIVE_04_LAYOUT.id, [LIVE_04_LAYOUT, getLive04Style]],
         [LIVE_05_LAYOUT.id, [LIVE_05_LAYOUT, getLive05Style]],
         [LIVE_06_LAYOUT.id, [LIVE_06_LAYOUT, getLive06Style]],
-        [LIVE_07_LAYOUT.id, [LIVE_07_LAYOUT, getLive07Style]]
+        [LIVE_07_LAYOUT.id, [LIVE_07_LAYOUT, getLive07Style]],
+        [LIVE_08_LAYOUT.id, [LIVE_08_LAYOUT, getLive08Style]]
       ]);
       const error = document.querySelector("#error");
       const editor = document.querySelector("#editor");
@@ -103,8 +132,13 @@
         let state = createInitialState(styleId, activeLayout);
         canvas.width = activeLayout.canvas.width;
         canvas.height = activeLayout.canvas.height;
-        wrap.style.setProperty("--live-preview-max-width", activeLayout.id === "04" ? "1200px" : activeLayout.id === "05" ? "1920px" : activeLayout.id === "06" || activeLayout.id === "07" ? "1080px" : "1125px");
+        wrap.style.setProperty("--live-preview-max-width", activeLayout.id === "04" ? "1200px" : activeLayout.id === "05" ? "1920px" : activeLayout.id === "06" || activeLayout.id === "07" || activeLayout.id === "08" ? "1080px" : "1125px");
         const logoMode = document.querySelector("#logo-mode");
+        if (!activeLayout.logo) {
+          const logoField = logoMode.closest(".logo-mode");
+          logoField.hidden = true;
+          logoField.previousElementSibling.hidden = true;
+        }
         const styleInputs = [...document.querySelectorAll("input[name=style]")];
         const textControls = new Map();
         const colorControls = new Map();
@@ -137,6 +171,10 @@
               getState: () => state,
               render
             });
+          } else if (activeLayout.id === "08") {
+            cleanupSelection = mountLive08TextSelection({
+              container: wrap, canvas, layout: activeLayout, getState: () => state, render
+            });
           }
         }
 
@@ -146,6 +184,10 @@
           styleId = nextStyleId;
           state = createInitialState(styleId, activeLayout);
           if (activeLayout.id === "06") {
+            state.text = structuredClone(previousState.text);
+            state.textRanges = structuredClone(previousState.textRanges);
+            state.logoMode = previousState.logoMode;
+          } else if (activeLayout.id === "08") {
             state.text = structuredClone(previousState.text);
             state.textRanges = structuredClone(previousState.textRanges);
             state.logoMode = previousState.logoMode;
@@ -174,12 +216,14 @@
           input.value = readField(field); let lastValid = input.value; let composing = false;
           const exceedsLimit = (value) => field.multiline
             ? String(value).split("\n").length > field.maxLines || String(value).split("\n").some((line) => countTextUnits(line) > field.maxCharsPerLine)
-            : countTextUnits(value) > field.limit;
+            : field.limit != null && countTextUnits(value) > field.limit;
           const paint = () => {
             if (field.multiline) {
               const lines = String(input.value).split("\n");
               counter.textContent = `${lines.length}/${field.maxLines} 行 · ${lines.map(countTextUnits).join("/")} / ${field.maxCharsPerLine}`;
-            } else counter.textContent = `${formatUnits(countTextUnits(input.value))} / ${field.limit}`;
+            } else counter.textContent = field.limit == null
+              ? formatUnits(countTextUnits(input.value))
+              : `${formatUnits(countTextUnits(input.value))} / ${field.limit}`;
           };
           const rollback = () => { input.value = lastValid; paint(); };
           const commit = () => {
@@ -201,6 +245,14 @@
           paint(); label.append(head, input); container.append(label);
         };
         activeLayout.textOrder.forEach((id) => mountTextField(activeLayout.text[id], document.querySelector("#text-fields")));
+        if (activeLayout.id === "08") {
+          mountLive08AwardEditor({
+            container: document.querySelector("#text-fields"),
+            layout: activeLayout,
+            getState: () => state,
+            onChange: render
+          });
+        }
         if (activeLayout.stepGroups) {
           activeLayout.stepGroups.forEach((group) => {
             const details = document.createElement("details"); details.className = "live-05-step-group";

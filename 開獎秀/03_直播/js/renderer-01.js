@@ -40,7 +40,10 @@ function registerFamily(familyKey) {
 
 async function ensureFontsReady(layout) {
   if (!document.fonts) throw new Error("瀏覽器不支援正式字型載入檢查。");
-  const fields = Object.values(layout.text);
+  const fields = [
+    ...Object.values(layout.text),
+    ...(layout.awardTable?.fontFields ?? [])
+  ];
   await Promise.all([...new Set(fields.map((field) => field.family))].map(registerFamily));
   const checks = fields.map((field) => fontString(field));
   await Promise.all(checks.map((font) => document.fonts.load(font, FONT_TEST_TEXT)));
@@ -375,7 +378,94 @@ export function validateLiveTextState(layout, state) {
     }
   });
   validateStepGroups(context, layout, state);
+  if (layout.id === "08") validateLive08AwardTable(context, layout, state);
   return true;
+}
+
+function getLive08Path(root, path) {
+  return path.reduce((value, key) => value?.[key], root);
+}
+
+function getLive08AwardNameLines(value, field) {
+  const lines = String(value ?? "").split("\n").flatMap((line) => {
+    const characters = getCodePoints(line);
+    if (characters.length <= field.autoWrapAfter) return [line];
+    const wrapped = [];
+    for (let index = 0; index < characters.length; index += field.autoWrapAfter) {
+      wrapped.push(characters.slice(index, index + field.autoWrapAfter).join(""));
+    }
+    return wrapped;
+  });
+  if (lines.length > field.maxLines) throw new Error(field.label + "最多 " + field.maxLines + " 行。");
+  return lines;
+}
+
+function getLive08HeaderField(layout, field, text) {
+  if (field.headerRole !== "big") return field;
+  const typography = layout.awardTable.headerTypography;
+  const variant = getTextUnits(text) <= typography.threshold ? typography.short : typography.long;
+  return { ...field, fontSizePx: variant.fontSizePx, family: variant.family };
+}
+
+function getLive08HeaderGroupLines(context, layout, state, group) {
+  return [group.bigField, group.smallField]
+    .map((field) => ({ field, text: String(getLive08Path(state.text, field.path) ?? "") }))
+    .filter(({ text }) => text !== "")
+    .map(({ field, text }) => {
+      const resolvedField = getLive08HeaderField(layout, field, text);
+      const metrics = getTextMetrics(context, text, resolvedField);
+      return {
+        field: resolvedField,
+        text,
+        metrics,
+        height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent,
+        inkLeft: -metrics.actualBoundingBoxLeft,
+        inkWidth: getInkWidth(metrics)
+      };
+    });
+}
+
+function drawLive08HeaderGroup(context, layout, state, group) {
+  const lines = getLive08HeaderGroupLines(context, layout, state, group);
+  if (!lines.length) return;
+  const groupHeight = lines.reduce((sum, line) => sum + line.height, 0) +
+    group.lineGapPx * Math.max(0, lines.length - 1);
+  let cursor = group.box.y + (group.box.height - groupHeight) / 2;
+  context.textAlign = "left";
+  context.textBaseline = "alphabetic";
+  lines.forEach((line, index) => {
+    const x = group.box.x + (group.box.width - line.inkWidth) / 2 - line.inkLeft;
+    const baseline = cursor + line.metrics.actualBoundingBoxAscent;
+    context.font = fontString(line.field);
+    context.fillStyle = state.colors[line.field.colorKey];
+    context.fillText(line.text, x, baseline);
+    cursor += line.height + (index < lines.length - 1 ? group.lineGapPx : 0);
+  });
+}
+
+function validateLive08AwardTable(context, layout, state) {
+  const table = layout.awardTable;
+  table.headers.forEach((field) => {
+    const text = String(getLive08Path(state.text, field.path) ?? "");
+    if (text.split("\n").length > field.maxLines) {
+      throw new Error(field.label + "最多 " + field.maxLines + " 行。");
+    }
+    validateTextWidth(context, text, getLive08HeaderField(layout, field, text), field.maxWidth);
+  });
+  table.rows.forEach((row) => {
+    row.fields.forEach((field) => {
+      const text = String(getLive08Path(state.text, field.path) ?? "");
+      if (field.autoWrapAfter) {
+        getLive08AwardNameLines(text, field).forEach((line) => validateTextWidth(context, line, field, field.maxWidth));
+      } else if (field.limit != null && getTextUnits(text) > field.limit) {
+        throw new Error(field.label + "最多 " + field.limit + " 個加權字。");
+      } else if (field.multiline) {
+        getMultilineLines(text, field).forEach((line) => validateTextWidth(context, line, field, field.maxWidth));
+      } else {
+        validateTextWidth(context, text, field, field.maxWidth);
+      }
+    });
+  });
 }
 
 function drawSupersampledField(context, layout, text, field, color) {
@@ -403,10 +493,12 @@ export function createInitialState(styleId, layout = LIVE_01_LAYOUT) {
     warning: "※百萬獎金均分，詳情依活動規則為準"
   };
   const defaultColors = style.defaultColors ?? { background: style.background, ...style.colors };
-  const text = Object.fromEntries(Object.entries(defaultText).map(([key, value]) => [
-    key,
-    value && typeof value === "object" ? Object.fromEntries(Object.entries(value).map(([nestedKey, nestedValue]) => [nestedKey, { ...nestedValue }])) : value
-  ]));
+  const text = layout.id === "08"
+    ? structuredClone(defaultText)
+    : Object.fromEntries(Object.entries(defaultText).map(([key, value]) => [
+        key,
+        value && typeof value === "object" ? Object.fromEntries(Object.entries(value).map(([nestedKey, nestedValue]) => [nestedKey, { ...nestedValue }])) : value
+      ]));
   const state = {
     text,
     colors: { ...defaultColors },
@@ -416,6 +508,9 @@ export function createInitialState(styleId, layout = LIVE_01_LAYOUT) {
     state.textRanges = Object.fromEntries(Object.values(layout.text)
       .filter((field) => field.multiline)
       .map((field) => [field.id, Array.from({ length: field.maxLines }, () => [])]));
+  } else if (layout.id === "08") {
+    state.textRanges = Object.fromEntries(layout.awardTable.selectableFields
+      .map((field) => [field.id, Array.from({ length: field.geometry.maxLines }, () => [])]));
   }
   return state;
 }
@@ -432,7 +527,9 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
   const placement = style.backgroundPlacement ?? layout.backgroundPlacement;
   const background = await loadImage(style.backgroundSrc, { width: placement.width, height: placement.height }, `${layout.name} 底圖`);
   const logoVariant = resolveLogoVariant(state.logoMode ?? "auto", state.colors.background);
-  const logo = await loadImage(layout.logo.src[logoVariant], layout.logo.intrinsic, `${layout.name} ${logoVariant} Logo`);
+  const logo = layout.logo
+    ? await loadImage(layout.logo.src[logoVariant], layout.logo.intrinsic, layout.name + " " + logoVariant + " Logo")
+    : null;
   const secondaryLogo = layout.secondaryLogo
     ? await loadImage(layout.secondaryLogo.src[logoVariant], layout.secondaryLogo.intrinsic, `${layout.name} ${logoVariant} 次 Logo`)
     : null;
@@ -445,16 +542,18 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
   context.fillStyle = state.colors.background;
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(background, placement.x, placement.y, placement.width, placement.height);
-  const logoRect = computeContainRect(layout.logo.box, logo.naturalWidth, logo.naturalHeight);
-  context.save();
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
-  context.drawImage(logo, logoRect.x, logoRect.y, logoRect.width, logoRect.height);
-  if (secondaryLogo) {
-    const secondaryLogoRect = computeContainRect(layout.secondaryLogo.box, secondaryLogo.naturalWidth, secondaryLogo.naturalHeight);
-    context.drawImage(secondaryLogo, secondaryLogoRect.x, secondaryLogoRect.y, secondaryLogoRect.width, secondaryLogoRect.height);
+  if (logo) {
+    const logoRect = computeContainRect(layout.logo.box, logo.naturalWidth, logo.naturalHeight);
+    context.save();
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(logo, logoRect.x, logoRect.y, logoRect.width, logoRect.height);
+    if (secondaryLogo) {
+      const secondaryLogoRect = computeContainRect(layout.secondaryLogo.box, secondaryLogo.naturalWidth, secondaryLogo.naturalHeight);
+      context.drawImage(secondaryLogo, secondaryLogoRect.x, secondaryLogoRect.y, secondaryLogoRect.width, secondaryLogoRect.height);
+    }
+    context.restore();
   }
-  context.restore();
   layout.textOrder.forEach((id) => {
     const field = layout.text[id];
     const color = state.colors[field.colorKey];
@@ -466,6 +565,26 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
       drawText(context, state.text[id], field, color);
     }
   });
+  if (layout.id === "08") {
+    const table = layout.awardTable;
+    const drawAwardField = (field, resolvedField = field) => {
+      const text = String(getLive08Path(state.text, field.path) ?? "");
+      if (field.multiline) {
+        const displayText = field.autoWrapAfter ? getLive08AwardNameLines(text, field).join("\n") : text;
+        const displayField = field.autoWrapAfter
+          ? { ...resolvedField, maxCharsPerLine: field.autoWrapAfter }
+          : resolvedField;
+        drawMultilineText(
+          context, displayText, displayField, state.colors[field.colorKey],
+          state.colors.highlight, state.textRanges?.[field.id]
+        );
+      } else {
+        drawText(context, text, resolvedField, state.colors[field.colorKey]);
+      }
+    };
+    table.headerGroups.forEach((group) => drawLive08HeaderGroup(context, layout, state, group));
+    table.rows.forEach((row) => row.fields.forEach((field) => drawAwardField(field)));
+  }
   layout.stepGroups?.forEach((group) => drawStepGroup(context, layout, state, group));
   if (canvas.width !== layout.canvas.width || canvas.height !== layout.canvas.height) throw new Error(`${layout.name} Canvas 尺寸不符。`);
   return canvas;
