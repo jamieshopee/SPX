@@ -539,14 +539,16 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
   const context = canvas.getContext("2d");
   if (!context) throw new Error(`瀏覽器無法建立 ${layout.name} Canvas 2D context。`);
   validateLiveTextState(layout, state);
-  context.fillStyle = state.colors.background;
-  if (layout.backgroundShape?.type === "roundedRect") {
-    const shape = layout.backgroundShape;
-    context.beginPath();
-    context.roundRect(shape.x, shape.y, shape.width, shape.height, shape.radius);
-    context.fill();
-  } else {
-    context.fillRect(0, 0, canvas.width, canvas.height);
+  if (layout.transparentCanvas !== true) {
+    context.fillStyle = state.colors.background;
+    if (layout.backgroundShape?.type === "roundedRect") {
+      const shape = layout.backgroundShape;
+      context.beginPath();
+      context.roundRect(shape.x, shape.y, shape.width, shape.height, shape.radius);
+      context.fill();
+    } else {
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
   }
   context.drawImage(background, placement.x, placement.y, placement.width, placement.height);
   if (logo) {

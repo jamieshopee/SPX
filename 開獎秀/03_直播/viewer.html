@@ -100,6 +100,7 @@
       import { LIVE_11_LAYOUT, getLive11Style } from "./js/layout-11-tvbn-live-info.js";
       import { LIVE_12_LAYOUT, getLive12Style } from "./js/layout-12-new-live-room-fl-logo.js";
       import { LIVE_13_LAYOUT, getLive13Style } from "./js/layout-13-new-live-room-fl.js";
+      import { LIVE_14_LAYOUT, getLive14Style } from "./js/layout-14-live-mirror-logo.js";
       import { mountLive06TextSelection } from "./js/live-06-text-selection.js";
       import { mountLive08TextSelection } from "./js/live-08-text-selection.js";
       import { mountLive08AwardEditor } from "./js/live-08-award-editor.js";
@@ -121,7 +122,8 @@
         [LIVE_10_LAYOUT.id, [LIVE_10_LAYOUT, getLive10Style]],
         [LIVE_11_LAYOUT.id, [LIVE_11_LAYOUT, getLive11Style]],
         [LIVE_12_LAYOUT.id, [LIVE_12_LAYOUT, getLive12Style]],
-        [LIVE_13_LAYOUT.id, [LIVE_13_LAYOUT, getLive13Style]]
+        [LIVE_13_LAYOUT.id, [LIVE_13_LAYOUT, getLive13Style]],
+        [LIVE_14_LAYOUT.id, [LIVE_14_LAYOUT, getLive14Style]]
       ]);
       const error = document.querySelector("#error");
       const editor = document.querySelector("#editor");
@@ -144,10 +146,14 @@
       } else {
         const [activeLayout, getStyle] = layoutEntry;
         editor.hidden = false; wrap.hidden = false;
-        wrap.classList.toggle("live-12-checkerboard", activeLayout.id === "12" || activeLayout.id === "13");
+        wrap.classList.toggle("live-12-checkerboard", activeLayout.id === "12" || activeLayout.id === "13" || activeLayout.id === "14");
         const textFieldsContainer = document.querySelector("#text-fields");
         textFieldsContainer.previousElementSibling.hidden = activeLayout.textOrder.length === 0;
         textFieldsContainer.hidden = activeLayout.textOrder.length === 0;
+        const colorFieldsContainer = document.querySelector("#color-fields");
+        const colorFields = getColorFields(activeLayout);
+        colorFieldsContainer.previousElementSibling.hidden = colorFields.length === 0;
+        colorFieldsContainer.hidden = colorFields.length === 0;
         let styleId = initialStyleId;
         let state = createInitialState(styleId, activeLayout);
         canvas.width = activeLayout.canvas.width;
@@ -286,7 +292,7 @@
 
         logoMode.addEventListener("change", () => { state.logoMode = logoMode.value; render(); });
 
-        getColorFields(activeLayout).forEach(({ label: labelText, id: key }) => {
+        colorFields.forEach(({ label: labelText, id: key }) => {
           const label = document.createElement("label"); label.className = "color-field"; label.append(document.createTextNode(labelText));
           const input = document.createElement("input"); input.type = "color"; input.value = state.colors[key]; input.addEventListener("input", () => { state.colors[key] = input.value; render(); });
           colorControls.set(key, { reset: () => { input.value = state.colors[key]; } });
