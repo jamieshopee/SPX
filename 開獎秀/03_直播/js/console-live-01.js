@@ -12,13 +12,14 @@ import { LIVE_09_LAYOUT } from "./layout-09-live-next-event-promo.js";
 import { LIVE_10_LAYOUT } from "./layout-10-live-current-event.js";
 import { LIVE_11_LAYOUT } from "./layout-11-tvbn-live-info.js";
 import { LIVE_12_LAYOUT } from "./layout-12-new-live-room-fl-logo.js";
+import { LIVE_13_LAYOUT } from "./layout-13-new-live-room-fl.js";
 import { mountLive06TextSelection } from "./live-06-text-selection.js";
 import { mountLive08TextSelection } from "./live-08-text-selection.js";
 import { mountLive08AwardEditor } from "./live-08-award-editor.js";
 import { canvasToJpegBlob, canvasToPngBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./renderer-01.js";
 
 const LIVE_STYLESHEET_URL = new URL("../css/live-01.css", import.meta.url);
-const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT, LIVE_07_LAYOUT, LIVE_08_LAYOUT, LIVE_09_LAYOUT, LIVE_10_LAYOUT, LIVE_11_LAYOUT, LIVE_12_LAYOUT]);
+const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT, LIVE_07_LAYOUT, LIVE_08_LAYOUT, LIVE_09_LAYOUT, LIVE_10_LAYOUT, LIVE_11_LAYOUT, LIVE_12_LAYOUT, LIVE_13_LAYOUT]);
 let stylesheetPromise = null;
 
 function ensureStylesheet() {
