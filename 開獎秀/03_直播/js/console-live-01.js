@@ -10,13 +10,14 @@ import { LIVE_07_LAYOUT } from "./layout-07-live-case-card-process.js";
 import { LIVE_08_LAYOUT } from "./layout-08-live-award-explanation.js";
 import { LIVE_09_LAYOUT } from "./layout-09-live-next-event-promo.js";
 import { LIVE_10_LAYOUT } from "./layout-10-live-current-event.js";
+import { LIVE_11_LAYOUT } from "./layout-11-tvbn-live-info.js";
 import { mountLive06TextSelection } from "./live-06-text-selection.js";
 import { mountLive08TextSelection } from "./live-08-text-selection.js";
 import { mountLive08AwardEditor } from "./live-08-award-editor.js";
 import { canvasToJpegBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./renderer-01.js";
 
 const LIVE_STYLESHEET_URL = new URL("../css/live-01.css", import.meta.url);
-const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT, LIVE_07_LAYOUT, LIVE_08_LAYOUT, LIVE_09_LAYOUT, LIVE_10_LAYOUT]);
+const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT, LIVE_07_LAYOUT, LIVE_08_LAYOUT, LIVE_09_LAYOUT, LIVE_10_LAYOUT, LIVE_11_LAYOUT]);
 let stylesheetPromise = null;
 
 function ensureStylesheet() {
@@ -205,16 +206,19 @@ export async function mountLive01({ styleId, mounts }) {
   function buildControls() {
     cleanupAwardEditor(); cleanupAwardEditor = () => {};
     const controls = document.createElement("div"); controls.className = "live-01-controls";
-    const textCard = document.createElement("section"); textCard.className = "live-01-card";
-    const textHeading = document.createElement("h3"); textHeading.className = "live-01-heading"; textHeading.textContent = "編輯文字"; textCard.append(textHeading);
-    activeLayout.textOrder.forEach((id) => {
-      const field = activeLayout.text[id];
-      textCard.append(createTextField(field, state, renderSafely, activeLayout).wrapper);
-    });
-    if (activeLayout.id === "08") {
-      cleanupAwardEditor = mountLive08AwardEditor({
-        container: textCard, layout: activeLayout, getState: () => state, onChange: renderSafely
+    const textCard = activeLayout.textOrder.length > 0 ? document.createElement("section") : null;
+    if (textCard) {
+      textCard.className = "live-01-card";
+      const textHeading = document.createElement("h3"); textHeading.className = "live-01-heading"; textHeading.textContent = "編輯文字"; textCard.append(textHeading);
+      activeLayout.textOrder.forEach((id) => {
+        const field = activeLayout.text[id];
+        textCard.append(createTextField(field, state, renderSafely, activeLayout).wrapper);
       });
+      if (activeLayout.id === "08") {
+        cleanupAwardEditor = mountLive08AwardEditor({
+          container: textCard, layout: activeLayout, getState: () => state, onChange: renderSafely
+        });
+      }
     }
     if (activeLayout.stepGroups) {
       const stepCard = document.createElement("section"); stepCard.className = "live-01-card live-05-step-card";
@@ -246,7 +250,7 @@ export async function mountLive01({ styleId, mounts }) {
       } catch (error) { status.textContent = error instanceof Error ? error.message : "JPG 下載失敗。"; }
       finally { exportBusy = false; exportButton.disabled = false; }
     });
-    if (!activeLayout.stepGroups) controls.append(textCard);
+    if (!activeLayout.stepGroups && activeLayout.textOrder.length > 0) controls.append(textCard);
     controls.append(colorCard, exportButton, status); controlBody.replaceChildren(controls);
   }
 
