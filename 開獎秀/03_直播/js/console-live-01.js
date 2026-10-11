@@ -11,13 +11,14 @@ import { LIVE_08_LAYOUT } from "./layout-08-live-award-explanation.js";
 import { LIVE_09_LAYOUT } from "./layout-09-live-next-event-promo.js";
 import { LIVE_10_LAYOUT } from "./layout-10-live-current-event.js";
 import { LIVE_11_LAYOUT } from "./layout-11-tvbn-live-info.js";
+import { LIVE_12_LAYOUT } from "./layout-12-new-live-room-fl-logo.js";
 import { mountLive06TextSelection } from "./live-06-text-selection.js";
 import { mountLive08TextSelection } from "./live-08-text-selection.js";
 import { mountLive08AwardEditor } from "./live-08-award-editor.js";
-import { canvasToJpegBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./renderer-01.js";
+import { canvasToJpegBlob, canvasToPngBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./renderer-01.js";
 
 const LIVE_STYLESHEET_URL = new URL("../css/live-01.css", import.meta.url);
-const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT, LIVE_07_LAYOUT, LIVE_08_LAYOUT, LIVE_09_LAYOUT, LIVE_10_LAYOUT, LIVE_11_LAYOUT]);
+const LIVE_LAYOUTS = Object.freeze([LIVE_01_LAYOUT, LIVE_02_LAYOUT, LIVE_03_LAYOUT, LIVE_04_LAYOUT, LIVE_05_LAYOUT, LIVE_06_LAYOUT, LIVE_07_LAYOUT, LIVE_08_LAYOUT, LIVE_09_LAYOUT, LIVE_10_LAYOUT, LIVE_11_LAYOUT, LIVE_12_LAYOUT]);
 let stylesheetPromise = null;
 
 function ensureStylesheet() {
@@ -238,16 +239,18 @@ export async function mountLive01({ styleId, mounts }) {
     const colors = document.createElement("div"); colors.className = "live-01-colors";
     getColorFields(activeLayout).forEach(({ label, id }) => colors.append(createColorField(label, id, state, renderSafely)));
     colorCard.append(colorHeading, colors);
-    const exportButton = document.createElement("button"); exportButton.type = "button"; exportButton.className = "live-01-button"; exportButton.textContent = "下載 JPG";
+    const isPng = activeLayout.outputFormat === "png";
+    const exportButton = document.createElement("button"); exportButton.type = "button"; exportButton.className = "live-01-button"; exportButton.textContent = isPng ? "下載 PNG" : "下載 JPG";
     status = document.createElement("p"); status.className = "live-01-status"; status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite"); status.textContent = "準備就緒";
     exportButton.addEventListener("click", async () => {
       if (exportBusy) return;
-      exportBusy = true; exportButton.disabled = true; status.textContent = "正在建立 JPG…";
+      exportBusy = true; exportButton.disabled = true; status.textContent = `正在建立 ${isPng ? "PNG" : "JPG"}…`;
       try {
         const rendered = await renderLiveToCanvas({ styleId, state: structuredClone(state), layout: activeLayout });
         const name = activeLayout.outputName ?? (activeLayout.id === "02" ? "直播大廳LPBN_系統CTA.jpg" : "直播大廳LPBN_立即看.jpg");
-        downloadBlob(await canvasToJpegBlob(rendered), name); status.textContent = `已下載：${name}`;
-      } catch (error) { status.textContent = error instanceof Error ? error.message : "JPG 下載失敗。"; }
+        const blob = isPng ? await canvasToPngBlob(rendered) : await canvasToJpegBlob(rendered);
+        downloadBlob(blob, name); status.textContent = `已下載：${name}`;
+      } catch (error) { status.textContent = error instanceof Error ? error.message : `${isPng ? "PNG" : "JPG"} 下載失敗。`; }
       finally { exportBusy = false; exportButton.disabled = false; }
     });
     if (!activeLayout.stepGroups && activeLayout.textOrder.length > 0) controls.append(textCard);

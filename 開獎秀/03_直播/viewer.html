@@ -23,6 +23,12 @@
       select { padding: 8px; color: inherit; border: 1px solid rgb(255 255 255 / 18%); border-radius: 5px; background: rgb(0 0 0 / 24%); }
       canvas { display: block; width: min(100%, var(--live-preview-max-width, 1125px)); height: auto; }
       .preview-wrap { position: relative; width: min(100%, var(--live-preview-max-width, 1125px)); }
+      .preview-wrap.live-12-checkerboard {
+        background-color: #f3f3f3;
+        background-image: linear-gradient(45deg, #d4d4d4 25%, transparent 25%, transparent 75%, #d4d4d4 75%), linear-gradient(45deg, #d4d4d4 25%, transparent 25%, transparent 75%, #d4d4d4 75%);
+        background-position: 0 0, 8px 8px;
+        background-size: 16px 16px;
+      }
       #overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
       button { margin-top: 14px; padding: 9px 12px; border: 0; border-radius: 5px; color: white; background: #ee4d2d; cursor: pointer; }
       input:focus-visible, button:focus-visible { outline: 2px solid #ee4d2d; outline-offset: 2px; }
@@ -92,10 +98,11 @@
       import { LIVE_09_LAYOUT, getLive09Style } from "./js/layout-09-live-next-event-promo.js";
       import { LIVE_10_LAYOUT, getLive10Style } from "./js/layout-10-live-current-event.js";
       import { LIVE_11_LAYOUT, getLive11Style } from "./js/layout-11-tvbn-live-info.js";
+      import { LIVE_12_LAYOUT, getLive12Style } from "./js/layout-12-new-live-room-fl-logo.js";
       import { mountLive06TextSelection } from "./js/live-06-text-selection.js";
       import { mountLive08TextSelection } from "./js/live-08-text-selection.js";
       import { mountLive08AwardEditor } from "./js/live-08-award-editor.js";
-      import { canvasToJpegBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./js/renderer-01.js";
+      import { canvasToJpegBlob, canvasToPngBlob, clearTextRangesForField, createInitialState, renderLiveToCanvas, validateLiveTextState } from "./js/renderer-01.js";
 
       const params = new URLSearchParams(location.search);
       const layoutId = params.get("layout");
@@ -111,7 +118,8 @@
         [LIVE_08_LAYOUT.id, [LIVE_08_LAYOUT, getLive08Style]],
         [LIVE_09_LAYOUT.id, [LIVE_09_LAYOUT, getLive09Style]],
         [LIVE_10_LAYOUT.id, [LIVE_10_LAYOUT, getLive10Style]],
-        [LIVE_11_LAYOUT.id, [LIVE_11_LAYOUT, getLive11Style]]
+        [LIVE_11_LAYOUT.id, [LIVE_11_LAYOUT, getLive11Style]],
+        [LIVE_12_LAYOUT.id, [LIVE_12_LAYOUT, getLive12Style]]
       ]);
       const error = document.querySelector("#error");
       const editor = document.querySelector("#editor");
@@ -134,6 +142,7 @@
       } else {
         const [activeLayout, getStyle] = layoutEntry;
         editor.hidden = false; wrap.hidden = false;
+        wrap.classList.toggle("live-12-checkerboard", activeLayout.id === "12");
         const textFieldsContainer = document.querySelector("#text-fields");
         textFieldsContainer.previousElementSibling.hidden = activeLayout.textOrder.length === 0;
         textFieldsContainer.hidden = activeLayout.textOrder.length === 0;
@@ -283,9 +292,13 @@
         });
         document.querySelector("#overlay-toggle").addEventListener("change", (event) => { overlay.hidden = !event.target.checked; });
         document.querySelector("#overlay-opacity").addEventListener("input", (event) => { overlay.style.opacity = String(Number(event.target.value) / 100); });
-        document.querySelector("#download").addEventListener("click", async () => {
+        const downloadButton = document.querySelector("#download");
+        const isPng = activeLayout.outputFormat === "png";
+        downloadButton.textContent = isPng ? "下載 PNG" : "下載 JPG";
+        downloadButton.addEventListener("click", async () => {
           const outputName = activeLayout.outputName ?? (activeLayout.id === "02" ? "直播大廳LPBN_系統CTA.jpg" : "直播大廳LPBN_立即看.jpg");
-          const blob = await canvasToJpegBlob(await renderLiveToCanvas({ styleId, state: structuredClone(state), layout: activeLayout }));
+          const rendered = await renderLiveToCanvas({ styleId, state: structuredClone(state), layout: activeLayout });
+          const blob = isPng ? await canvasToPngBlob(rendered) : await canvasToJpegBlob(rendered);
           const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = outputName; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 0);
         });
         mountSelection();

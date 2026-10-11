@@ -540,7 +540,14 @@ export async function renderLiveToCanvas({ styleId, state, layout = LIVE_01_LAYO
   if (!context) throw new Error(`瀏覽器無法建立 ${layout.name} Canvas 2D context。`);
   validateLiveTextState(layout, state);
   context.fillStyle = state.colors.background;
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  if (layout.backgroundShape?.type === "roundedRect") {
+    const shape = layout.backgroundShape;
+    context.beginPath();
+    context.roundRect(shape.x, shape.y, shape.width, shape.height, shape.radius);
+    context.fill();
+  } else {
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
   context.drawImage(background, placement.x, placement.y, placement.width, placement.height);
   if (logo) {
     const logoRect = computeContainRect(layout.logo.box, logo.naturalWidth, logo.naturalHeight);
@@ -603,5 +610,17 @@ export function canvasToJpegBlob(canvas) {
       }
       resolve(blob);
     }, "image/jpeg", 1.0);
+  });
+}
+
+export function canvasToPngBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob || blob.type !== "image/png") {
+        reject(new Error("直播 PNG 編碼失敗。"));
+        return;
+      }
+      resolve(blob);
+    }, "image/png");
   });
 }
