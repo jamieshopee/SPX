@@ -106,10 +106,12 @@ export function mountLive08AwardEditor({ container, layout, getState, onChange }
       const paintCounter = () => {
         const lines = String(input.value).split("\n");
         if (renderField.maxCharsPerLine) {
-          counter.textContent = lines.length + "/" + renderField.maxLines + " 行 · " +
-            lines.map((line) => formatUnits(countTextUnits(line))).join("/") + " / " + renderField.maxCharsPerLine;
+          counter.textContent = renderField.maxLines === 1
+            ? lines.length + "/1 行 · " + formatUnits(countTextUnits(lines[0])) + " / " + renderField.maxCharsPerLine + " 字"
+            : lines.length + " / " + renderField.maxLines + " 行 · " +
+              lines.map((line, index) => `第${index + 1}行 ${formatUnits(countTextUnits(line))} / ${renderField.maxCharsPerLine} 字`).join(" · ");
         } else if (renderField.limit != null) {
-          counter.textContent = formatUnits(countTextUnits(input.value)) + " / " + renderField.limit;
+          counter.textContent = formatUnits(countTextUnits(input.value)) + " / " + renderField.limit + " 字";
         } else if (renderField.maxLines) {
           counter.textContent = lines.length + "/" + renderField.maxLines + " 行";
         } else {

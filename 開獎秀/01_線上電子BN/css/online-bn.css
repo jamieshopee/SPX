@@ -248,14 +248,18 @@
 
 .obn-text-color-row {
   display: grid;
-  align-items: center;
+  align-items: start;
   gap: 6px 10px;
-  grid-template-columns: minmax(0, 1fr) auto 44px;
+  grid-template-columns: minmax(0, 1fr) 32px;
   padding: 10px 0;
 }
 
 .obn-text-color-row + .obn-text-color-row {
   border-top: 1px solid rgb(255 255 255 / 10%);
+}
+
+.obn-text-color-row + .obn-shared-small2-row {
+  border-top-color: transparent;
 }
 
 .obn-text-color-row > .obn-field {
@@ -269,18 +273,26 @@
 .obn-text-color-row .obn-field-label {
   grid-column: 1;
   grid-row: 1;
+  align-self: center;
+}
+
+.obn-text-color-row .obn-color-picker-only {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
 }
 
 .obn-text-color-row .obn-text-input {
-  grid-column: 1;
+  grid-column: 1 / -1;
   grid-row: 2;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .obn-text-color-row .obn-field-counter {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: center;
-  white-space: nowrap;
+  grid-column: 1 / -1;
+  grid-row: 3;
+  align-self: start;
 }
 
 .obn-text-input {

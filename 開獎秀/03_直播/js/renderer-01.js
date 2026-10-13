@@ -450,6 +450,9 @@ function validateLive08AwardTable(context, layout, state) {
     if (text.split("\n").length > field.maxLines) {
       throw new Error(field.label + "最多 " + field.maxLines + " 行。");
     }
+    if (field.limit != null && getTextUnits(text) > field.limit) {
+      throw new Error(field.label + "最多 " + field.limit + " 個加權字。");
+    }
     validateTextWidth(context, text, getLive08HeaderField(layout, field, text), field.maxWidth);
   });
   table.rows.forEach((row) => {

@@ -142,9 +142,16 @@ function validateStateShape(layout, candidate, createInitialState, styleId, vali
     exactKeys(candidate.textRanges, template.textRanges, `layoutStates.${layout.id}.textRanges`);
     Object.entries(template.textRanges).forEach(([key, templateLines]) => {
       const candidateLines = candidate.textRanges[key];
-      if (!Array.isArray(candidateLines) || candidateLines.length !== templateLines.length) {
+      const legacyExampleField = layout.id === "08"
+        ? layout.awardTable.selectableFields.find((field) => field.id === key && field.id.endsWith(".example"))
+        : null;
+      const legacyThreeLineExample = Array.isArray(candidateLines) && legacyExampleField &&
+        templateLines.length === 4 && candidateLines.length === 3 &&
+        String(pathValue(candidate.text, legacyExampleField.path)).split("\n").length <= 3;
+      if (!Array.isArray(candidateLines) || (candidateLines.length !== templateLines.length && !legacyThreeLineExample)) {
         throw new Error(`layoutStates.${layout.id}.textRanges.${key} 行數無效。`);
       }
+      if (legacyThreeLineExample) candidateLines.push([]);
       candidateLines.forEach((ranges, lineIndex) => {
         if (!Array.isArray(ranges)) throw new Error(`layoutStates.${layout.id}.textRanges.${key}[${lineIndex}] 格式無效。`);
       });

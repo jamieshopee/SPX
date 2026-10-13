@@ -70,7 +70,7 @@ function awardRow(id, label, defaults, row, options = {}) {
         tableField(id + ".name", "獎項", "awards." + id + ".name", nameBox, 6, "bold", "prizeName", { multiline: true, maxLines: 2, autoWrapAfter: 3, maxWidth: nameBox.width, lineGapPx: 2 }),
         tableField(id + ".amount", "得獎金額", "awards." + id + ".amount", amountBox, 6.4, "bold", "amount", { limit: 6, maxWidth: amountBox.width }),
         tableField(id + ".method", "中獎方式", "awards." + id + ".method", methodBox, 4.47, "medium", "body", { multiline: true, maxLines: 3, maxCharsPerLine: 11, selectable: true, lineGapPx: 2 }),
-        tableField(id + ".example", "得獎範例", "awards." + id + ".example", exampleBox, 4.47, "medium", "body", { multiline: true, maxLines: 3, maxCharsPerLine: 11, selectable: true, lineGapPx: 2 })
+        tableField(id + ".example", "得獎範例", "awards." + id + ".example", exampleBox, 4.47, "medium", "body", { multiline: true, maxLines: id === "special" ? 4 : 3, maxCharsPerLine: 11, selectable: true, lineGapPx: 2 })
       ];
   return Object.freeze({
     id, label, kind: options.liveLimited ? "live-limited" : "award",
@@ -83,11 +83,11 @@ function awardRow(id, label, defaults, row, options = {}) {
 function headerCell(id, label, fieldBox, bigText, smallText = "") {
   const bigField = tableField(
     `header.${id}.big`, `${label}大字`, `headers.${id}.big`, fieldBox,
-    6, "bold", "header", { maxWidth: fieldBox.width, headerRole: "big" }
+    6, "bold", "header", { maxWidth: fieldBox.width, headerRole: "big", limit: 6 }
   );
   const smallField = tableField(
     `header.${id}.small`, `${label}小字`, `headers.${id}.small`, fieldBox,
-    3.2, "regular", "header", { maxWidth: fieldBox.width, headerRole: "small" }
+    3.2, "regular", "header", { maxWidth: fieldBox.width, headerRole: "small", limit: 16 }
   );
   return Object.freeze({ id, label, box: fieldBox, bigField, smallField, lineGapPx: 4 });
 }
@@ -178,9 +178,9 @@ export const LIVE_08_LAYOUT = Object.freeze({
     awards: Object.freeze(Object.fromEntries(rows.map((row) => [row.id, row.defaultText])))
   }),
   text: Object.freeze({
-    qualification: textField("qualification", "表格上方資格說明", box(145, 238, 790, 52), 10, "bold", "qualification", { maxWidth: 790 }),
-    qualificationNote: textField("qualificationNote", "上方括號小字", box(145, 287, 790, 38), 5.8, "regular", "qualificationNote", { maxWidth: 790 }),
-    footerNote: textField("footerNote", "表格下方註記", box(145, 996, 790, 48), 6.5, "medium", "footerNote", { maxWidth: 790 })
+    qualification: textField("qualification", "表格上方資格說明", box(145, 238, 790, 52), 10, "bold", "qualification", { limit: 18, maxWidth: 790 }),
+    qualificationNote: textField("qualificationNote", "上方括號小字", box(145, 287, 790, 38), 5.8, "regular", "qualificationNote", { limit: 30, maxWidth: 790 }),
+    footerNote: textField("footerNote", "表格下方註記", box(145, 996, 790, 48), 6.5, "medium", "footerNote", { limit: 30, maxWidth: 790 })
   }),
   colorFields: Object.freeze([Object.freeze({ id: "background", label: "背景色" })]),
   awardTable: Object.freeze({

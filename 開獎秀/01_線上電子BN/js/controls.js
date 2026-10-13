@@ -26,7 +26,6 @@
 // ---------------------------------------------------------------------------
 
 import { LOGO_MODES } from "./logo-auto.js";
-import { resolveLogoVariant } from "./logo-auto.js";
 import { normalize as normalizeQrUrl, isEmpty as isQrUrlEmpty } from "./qr-url-utils.js";
 import { countTextUnits, formatUnits } from "./text-validation.js";
 
@@ -60,7 +59,8 @@ function createTextField(field, state, onChange, onTextChange) {
   const label = document.createElement("label");
   label.className = "obn-field-label";
   label.htmlFor = `obn-text-${field.id}`;
-  label.textContent = field.label;
+  label.textContent = field.id === "small1" ? "小字 - 第一行"
+    : field.id === "small2" ? "小字 - 第二行" : field.label;
 
   const counter = document.createElement("span");
   counter.className = "obn-field-counter";
@@ -80,7 +80,7 @@ function createTextField(field, state, onChange, onTextChange) {
   let isComposing = false;
 
   function paintCounter(value) {
-    counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit}`;
+    counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit} 字`;
   }
 
   function commit(value) {
@@ -188,25 +188,10 @@ function createColorField(
 function createLogoModeField(state, onChange, onLogoModeChange) {
   const fieldset = document.createElement("fieldset");
   fieldset.className = "obn-logo-mode";
-
-  const legend = document.createElement("legend");
-  legend.className = "obn-field-label";
-  legend.textContent = "Logo";
-  fieldset.append(legend);
+  fieldset.setAttribute("aria-label", "Logo");
 
   const group = document.createElement("div");
   group.className = "obn-radio-group";
-
-  const feedback = document.createElement("p");
-  feedback.className = "obn-logo-feedback";
-  feedback.setAttribute("aria-live", "polite");
-
-  function paintResolved() {
-    const variant = resolveLogoVariant(state.logoMode, state.colors.background);
-    feedback.textContent = state.logoMode === "auto"
-      ? `目前自動判斷：${variant === "orange" ? "橘色" : "白色"}`
-      : `目前套用：${variant === "orange" ? "橘色" : "白色"}`;
-  }
 
   LOGO_MODES.forEach((mode) => {
     const label = document.createElement("label");
@@ -223,7 +208,6 @@ function createLogoModeField(state, onChange, onLogoModeChange) {
       // 只保存 mode；variant 一律由 renderer 於每次 render 當場解算。
       state.logoMode = mode;
       if (typeof onLogoModeChange === "function") onLogoModeChange(mode);
-      paintResolved();
       onChange();
     });
 
@@ -231,9 +215,8 @@ function createLogoModeField(state, onChange, onLogoModeChange) {
     group.append(label);
   });
 
-  fieldset.append(group, feedback);
-  paintResolved();
-  return { fieldset, refresh: paintResolved };
+  fieldset.append(group);
+  return { fieldset };
 }
 
 function createImportSection({ importStatus, onImportFile, onImportJson }) {
@@ -395,7 +378,7 @@ export function mountControls(
       backgroundField,
       state,
       onChange,
-      () => logoControl.refresh(),
+      undefined,
       onColorChange,
       pickerGroups,
       { compact: true }
@@ -411,9 +394,14 @@ export function mountControls(
     const field = layout.text[id];
     const row = document.createElement("div");
     row.className = "obn-text-color-row";
+    const sharesSmallColor = id === "small2"
+      && layout.textOrder.includes("small1")
+      && field.colorKey === "small"
+      && layout.text.small1.colorKey === "small";
+    if (sharesSmallColor) row.classList.add("obn-shared-small2-row");
     row.append(createTextField(field, state, onChange, onTextChange));
     const colorField = layout.colorFields.find((candidate) => candidate.id === field.colorKey);
-    if (colorField) {
+    if (colorField && !sharesSmallColor) {
       row.append(createColorField(
         colorField,
         state,

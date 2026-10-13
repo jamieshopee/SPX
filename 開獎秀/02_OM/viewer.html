@@ -143,7 +143,7 @@
           input.type = "text"; input.value = state.text[id]; input.autocomplete = "off";
           label.textContent = field.label; label.append(counter, input); textFields.append(label);
           let lastValid = input.value; let composing = false;
-          const paint = (value) => { counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit}`; };
+          const paint = (value) => { counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit} 字`; };
           const rollback = () => { input.value = lastValid; paint(lastValid); };
           const commit = (value) => { lastValid = value; state.text[id] = value; paint(value); render(); };
           input.addEventListener("compositionstart", () => { composing = true; });

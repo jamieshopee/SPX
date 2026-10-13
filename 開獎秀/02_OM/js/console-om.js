@@ -118,7 +118,8 @@ function createTextRow(field, state, onChange, onTextChange) {
   const label = document.createElement("label");
   label.className = "om-field-label";
   label.htmlFor = `om-text-${field.id}`;
-  label.textContent = field.label;
+  label.textContent = field.id === "small1" ? "小字 - 第一行"
+    : field.id === "small2" ? "小字 - 第二行" : field.label;
 
   const counter = document.createElement("span");
   counter.className = "om-field-counter";
@@ -134,7 +135,7 @@ function createTextRow(field, state, onChange, onTextChange) {
   let composing = false;
 
   const paintCounter = (value) => {
-    counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit}`;
+    counter.textContent = `${formatUnits(countTextUnits(value))} / ${field.limit} 字`;
   };
   const rollback = () => {
     input.value = lastValid;
@@ -204,10 +205,7 @@ function createColorInput(field, state, onChange, { compact = false, onColorChan
 function createLogoMode(state, onChange, onLogoModeChange) {
   const fieldset = document.createElement("fieldset");
   fieldset.className = "om-logo-mode";
-  const legend = document.createElement("legend");
-  legend.className = "om-field-label";
-  legend.textContent = "Logo";
-  fieldset.append(legend);
+  fieldset.setAttribute("aria-label", "Logo");
 
   const group = document.createElement("div");
   group.className = "om-radio-group";
@@ -305,8 +303,9 @@ function mountControls(root, layout, state, {
   layout.textOrder.forEach((id) => {
     const field = layout.text[id];
     const row = createTextRow(field, state, onChange, onTextChange);
+    if (id === "small2") row.classList.add("om-shared-small2-row");
     const color = colorInputs.get(field.colorKey);
-    if (color) row.append(color.wrapper);
+    if (color && (field.colorKey !== "small" || id === "small1")) row.append(color.wrapper);
     textSection.append(row);
   });
 

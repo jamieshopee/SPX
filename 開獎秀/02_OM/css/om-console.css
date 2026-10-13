@@ -113,6 +113,7 @@
   padding: 10px 0;
 }
 .console-shell[data-console-item="om"] .om-text-row + .om-text-row { border-top: 1px solid rgb(255 255 255 / 10%); }
+.console-shell[data-console-item="om"] .om-text-row + .om-shared-small2-row { border-top-color: transparent; }
 .console-shell[data-console-item="om"] .om-text-row > .om-field-label { grid-column: 1; grid-row: 1; }
 .console-shell[data-console-item="om"] .om-text-input { grid-column: 1; grid-row: 2; }
 .console-shell[data-console-item="om"] .om-field-counter {
@@ -280,20 +281,21 @@
   line-height: 1.5;
 }
 .console-shell[data-console-item="om"] .om-text-row {
-  grid-template-columns: minmax(0, 1fr) 44px 44px;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  align-items: start;
 }
 .console-shell[data-console-item="om"] .om-text-row > .om-field,
 .console-shell[data-console-item="om"] .om-text-row > .om-field-head {
   display: contents;
 }
 .console-shell[data-console-item="om"] .om-text-row .om-field-head { display: contents; }
-.console-shell[data-console-item="om"] .om-text-row .om-field-label { grid-column: 1; grid-row: 1; }
-.console-shell[data-console-item="om"] .om-text-row .om-text-input { grid-column: 1; grid-row: 2; }
+.console-shell[data-console-item="om"] .om-text-row .om-field-label { grid-column: 1; grid-row: 1; align-self: center; }
+.console-shell[data-console-item="om"] .om-text-row .om-color-picker-only { grid-column: 2; grid-row: 1; justify-self: end; }
+.console-shell[data-console-item="om"] .om-text-row .om-text-input { grid-column: 1 / -1; grid-row: 2; min-width: 0; box-sizing: border-box; }
 .console-shell[data-console-item="om"] .om-text-row .om-field-counter {
-  grid-column: 2;
-  grid-row: 2;
-  align-self: center;
-  white-space: nowrap;
+  grid-column: 1 / -1;
+  grid-row: 3;
+  align-self: start;
 }
 .console-shell[data-console-item="om"] .om-text-input {
   font-family: inherit;
