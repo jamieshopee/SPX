@@ -3415,6 +3415,8 @@ JSON restore 會驗證 format、version、目前 style exact match、active layo
 
 online-bn 不包含 KV。Reset confirmation 後清除 Excel／JSON imported state、import metadata、shared text／colors／logoMode／qrUrl、import status 與 export status；恢復目前 style defaults、空白文字、Logo auto 與正式 default QR，同時保持 active layout、style 與 URL。
 
+後續 Code Commit `46c11f2237ff916ccb66de9862994bcefac86887`（`feat(lottery-show): complete live editor features and align controls`）修改本 item 的 `css/online-bn.css` 與 `js/controls.js` 兩檔；右側既有文字控制改為標題在左／原色票在右、滿寬輸入框、下方動態計數三列，計數顯示為「目前加權字數 / 既有上限 字」，沿用 Han＝1、其他 Unicode code point＝0.5 與原有上限／rollback。小字標題顯示為「小字 - 第一行」「小字 - 第二行」；01～07、11～17 仍各有兩個獨立輸入與計數，08～10 仍只有副標。小字兩行仍共用唯一 `small` 顏色值：共用色票只顯示在小字第一行標題右側，小字第二行不重複顯示色票；兩行之間的原分隔線改為透明邊框，保留間距及其他分隔線。Logo 模式卡片移除選項上方獨立「Logo」文字及選項下方 Auto 判斷狀態說明，保留 radio 群組的 `aria-label="Logo"`、Auto／橘色／白色選項及既有 Logo 解算與 Preview／Export 作用範圍。本次沒有變更 descriptor、Renderer、顏色值或文字驗證。上述右側 UI 已由使用者於 Chrome 人工驗收 PASS；本 Code Commit 的其他功能與未測項目見直播文件 §18.6。Docs Commit 尚未建立。
+
 ### 20.1.6 Complete Project Export
 
 Export 只輸出目前 URL style，一次產生 17 images + 1 JSON，再封裝為一個 ZIP；不輸出另一個 style、HTML、JS、vendor 或 source files。檔名使用 descriptor name 加正式 extension，ZIP 為 `線上電子BN_MMDD.zip`，JSON 為 `線上電子BN_MMDD.json`，MMDD 取下載當下 browser local date。

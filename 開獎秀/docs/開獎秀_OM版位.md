@@ -101,6 +101,8 @@ OM standalone Viewer：`開獎秀/02_OM/viewer.html`，目前支援 `Google_Pmax
 
 目前支援：smart-locker／store、alignment overlay、overlay opacity、text editing、weighted text validation、runtime background color、title／subtitle／small color、logoMode Auto／Orange／White 與 Reset。Runtime background 先 fill Canvas，再繪製 style base asset；runtime text colors 即時 rerender；Auto Logo 使用 current runtime background。
 
+後續 Code Commit `46c11f2237ff916ccb66de9862994bcefac86887` 僅將獨立 Viewer 既有文字計數顯示補上「字」（目前加權字數 / 原上限 字）；加權演算法、上限與輸入互動不變。使用者已確認 OM 獨立 Viewer 人工驗收 PASS。
+
 OM 01 Launcher：`開獎秀/02_OM/launch/01_Google_Pmax_1200x1200.command`。
 
 OM 02 Launcher：`開獎秀/02_OM/launch/02_Google_Pmax_1200x628.command`。
@@ -191,6 +193,8 @@ Code Commit：
 - Committed paths：`開獎秀/js/console.js`、`開獎秀/02_OM/js/console-om.js`、`開獎秀/02_OM/css/om-console.css`
 - Manual Verification：PASS
 - Docs Commit：Pending；本次 Documentation Update 尚未建立 commit。
+
+後續 Code Commit `46c11f2237ff916ccb66de9862994bcefac86887`（`feat(lottery-show): complete live editor features and align controls`）中，OM 的變更限 `css/om-console.css`、`js/console-om.js` 及上記獨立 Viewer。正式共用編輯器右側四個既有文字欄改為標題在左／原色票在右、滿寬輸入框、下方動態計數三列，計數格式為「目前加權字數 / 既有上限 字」，沿用原加權規則與上限。小字標題顯示為「小字 - 第一行」「小字 - 第二行」；原本唯一的 `small` 色票由小字第二行移至第一行標題右側，兩行仍共用同一 `small` 顏色值，各自保留獨立輸入與計數。兩行之間的原分隔線改為透明邊框，保留間距與其他分隔線。Logo 模式卡片僅移除選項上方獨立「Logo」文字，保留 `aria-label="Logo"` 及 Auto／橘色／白色 radio 與原有切換功能。OM01～OM08 的兩種樣式右側 UI 已由使用者於 Chrome 人工驗收 PASS；本次未改 descriptor、Renderer、JSON／ZIP 或其他版位規格。Docs Commit 尚未建立。
 
 ### 10.2 OM Work Order／Workspace／Export Current State
 
