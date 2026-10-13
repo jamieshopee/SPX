@@ -61,7 +61,7 @@ export function createEditor(container, onValidChange, fields = EDITOR_FIELDS) {
     controls.set(field.id, control);
 
     const updateCounter = () => {
-      counter.textContent = `${formatUnits(countTextUnits(input.value))}／${field.limit}`;
+      counter.textContent = `${formatUnits(countTextUnits(input.value))} / ${field.limit} 字`;
     };
 
     const commit = () => {
@@ -145,7 +145,7 @@ export function createEditor(container, onValidChange, fields = EDITOR_FIELDS) {
           control.message.textContent = `匯入內容超過 ${control.field.limit} 字；後續編輯須符合上限。`;
           control.message.classList.add("is-error");
         }
-        control.counter.textContent = `${formatUnits(countTextUnits(value))}／${control.field.limit}`;
+        control.counter.textContent = `${formatUnits(countTextUnits(value))} / ${control.field.limit} 字`;
       });
     }
   };
