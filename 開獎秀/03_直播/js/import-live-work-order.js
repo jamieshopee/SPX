@@ -215,7 +215,7 @@ export async function parseLiveWorkOrderCandidate(file, XLSX, {
     "05": [["主標", "title"], ["副標", "subtitle"], ["警語", "warning"]],
     "06": [["警語", "warning"]],
     "07": [["主標", "title"], ["副標", "subtitle"], ["小字-第一行", "small1"], ["小字-第二行", "small2"], ["警語", "warning"]],
-    "08": [["大字", "qualification"], ["小字", "qualificationNote"], ["警語", "footerNote"]],
+    "08": [["表格上方資格說明", "qualification"], ["上方括號小字", "qualificationNote"], ["表格下方註記", "footerNote"]],
     "09": [["第一行", "line1"], ["第二行", "line2"]],
     "10": [["第一行", "line1"], ["第二行", "line2"]],
     "13": [["文案", "headline"]]
