@@ -41,7 +41,7 @@ const COLOR_SYNC_GROUPS = Object.freeze([
   Object.freeze(["01.subtitle", "02.subtitle", "03.big", "04.subtitle", "05.subtitle", "07.subtitle"]),
   Object.freeze(["04.title", "05.title", "07.title"]),
   Object.freeze(["03.small", "04.small", "07.small"]),
-  Object.freeze(["01.warning", "02.warning", "05.warning", "06.warning", "07.warning"])
+  Object.freeze(["01.warning", "02.warning"])
 ]);
 const LOGO_SYNC_GROUPS = Object.freeze([
   Object.freeze(["01", "02", "03", "04", "05", "07"]),
